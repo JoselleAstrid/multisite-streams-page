@@ -1,0 +1,204 @@
+html, body {
+  /* Needed for a contained iframe to fill up the height of the page
+  http://stackoverflow.com/questions/1303729/ */
+  height: 100%;
+  margin: 10px;
+}
+
+body {
+  background-color: #111;
+  color: #D3D3D3;
+}
+
+h2.section {
+  /* Go under any streams/videos of the previous section */
+  clear: both;
+  
+  /* Twitch */
+  font-family: "Helvetica Neue",Helvetica,Arial,sans-serif;
+}
+
+
+/* Container for all streams / all videos */
+.media-container {
+  /* Ensure that the element size includes the floating elements. This allows
+  the header of the next container to be decently spaced from this container. */
+  overflow: auto;
+}
+
+/* Container for single stream/video */
+.media-container a {
+  /* Allow media to be placed side by side */
+  float: left;
+  
+  /* Allow descendants to be absolute-positioned within this container. */
+  position: relative;
+  
+  /* Ensure that the clickable link area is restricted to the area we define */
+  display: block;
+  /* Ensure that this matches the media thumbnail width */
+  width: 240px;
+  
+  padding: 10px;
+  
+  /* No underlines below the link text */
+  text-decoration: none;
+}
+
+.media-container a:hover {
+  /* Makes the stream block's background color change. */
+  background-color: #222;
+}
+
+.media-container div {
+  /* Twitch */
+  color: #D3D3D3;
+  
+  /* Hitbox */
+  /*font-family: Roboto,sans-serif;*/
+  /* Twitch */
+  font-family: "Helvetica Neue",Helvetica,Arial,sans-serif;
+  
+  font-size: 0.9em;
+  line-height: 1.5em;
+}
+
+.media-container a div.thumbnail-ctnr {
+  /* Try to make the grid layout work by making all thumbnail containers
+  the same size.
+  Pick a height that goes well with the thumbnail width.
+  Hide any thumbnail overflow. */
+  height: 135px;
+  overflow: hidden;
+}
+.media-container a div.thumbnail-ctnr img {
+  /* Ensure that this matches the stream container width */
+  width: 240px;
+}
+.media-container a div.thumbnail-ctnr.twitch-stream img {
+  /* Twitch streams only:
+  Apparently we should squash the thumbnail to make it 16:9?
+  At least Twitch following does the same thing. I'm not sure why the
+  thumbnails are actually 14.4:9 though (e.g. 320x200).*/
+  height: 135px;
+}
+.media-container a div.thumbnail-ctnr.twitch-video img {
+  /* Twitch videos only:
+  Cut off the black bar on the top.
+  The parent's overflow:hidden hides the black bar on the bottom.
+  After cutting off the black bars, the result ends up being about 16:9. */
+  margin-top: -23px;
+}
+
+.media-container div.view-count {
+}
+
+.media-container div.channel-name {
+}
+
+.media-container span.site-indicator {
+  margin-left: 3px;
+}
+.media-container span.site-indicator.twitch {
+  color: rgb(100,65,165);
+}
+.media-container span.site-indicator.hitbox {
+  color: rgb(149,198,0);
+}
+
+.media-container div.media-title {
+  /* Just cut off any text that goes beyond the allotted space */
+  white-space: nowrap;
+  overflow: hidden;
+}
+
+.media-container div.media-game {
+  font-size: 0.8em;
+  font-style: italic;
+  
+  /* Just cut off any text that goes beyond the allotted space */
+  white-space: nowrap;
+  overflow: hidden;
+}
+
+.media-container div.media-description {
+  font-size: 0.8em;
+  
+  /* Just cut off any text that goes beyond the allotted space */
+  white-space: nowrap;
+  overflow: hidden;
+}
+
+.media-container div.video-view-count,
+.media-container div.video-duration {
+  position: absolute;
+  
+  background: black;
+  padding: 0 4px;
+  opacity: 0.75;
+  
+  font-size: 12px;
+}
+.media-container div.video-view-count {
+  left: 14px;
+  top: 14px;
+}
+.media-container div.video-duration {
+  right: 14px;
+  top: 14px;
+}
+
+
+
+#settings-button {
+  float: right;
+}
+
+div.form-footnote {
+  font-size: 12px;
+}
+
+
+
+#settings-form div {
+  margin-bottom: 0.5em;
+}
+
+
+
+
+
+
+/* Old code: frame-separated Twitch/Hitbox */
+
+/*#twitch-frame {
+  width: 50%;
+  height: 100%;
+  border: 0;
+}*/
+
+/* Widths need to add up to less than 100% for Chrome, apparently. Otherwise
+   one section just gets shoved below the other, instead of to the side. */
+/*#hitbox-container {
+  width: 49%;
+  height: 100%;
+  overflow-y: scroll;
+  float: right;
+  
+  background-color: #131;
+}*/
+
+/*#hitbox-streams a:hover {
+  background-color: #242;
+}*/
+
+
+
+
+
+
+
+
+
+
+

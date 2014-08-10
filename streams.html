@@ -1,0 +1,105 @@
+<!DOCTYPE html>
+  
+<html lang="en">
+  
+  <head>
+    
+    <title>Twitch+Hitbox Following</title>
+    <meta charset="utf-8" />
+    
+    <script src="//ajax.googleapis.com/ajax/libs/jquery/1.11.1/jquery.min.js"></script>
+    <script src="//ajax.googleapis.com/ajax/libs/jqueryui/1.11.0/jquery-ui.min.js"></script>
+    <script src="settings.js"></script>
+    <script src="main.js"></script>
+    
+    <link rel="stylesheet"
+          href="//ajax.googleapis.com/ajax/libs/jqueryui/1.11.0/themes/smoothness/jquery-ui.css" />
+    <link rel="stylesheet" type="text/css" media="screen"
+          href="main.css" />
+    
+  </head>
+  
+  
+  <body>
+    
+    <button type="button" id="settings-button">Settings</button>
+    
+    <h2 class="section">LIVE STREAMS</h2>
+    <div id="streams" class="media-container">
+    </div>
+    
+    <h2 class="section">RECORDINGS</h2>
+    <div id="videos" class="media-container">
+    </div>
+    
+    <div id="hidden-elements-container" style="display:none;">
+      <form id="settings-form">
+        
+        <div>
+        <input type="checkbox" name="twitchEnabled" />
+        <label for="twitchEnabled">Include Twitch in listing </label>
+        </div>
+        
+        <div>
+        <input type="checkbox" name="hitboxEnabled" />
+        <label for="hitboxEnabled">Include Hitbox in listing </label>
+        </div>
+        
+        <div>
+        <label for="hitboxUsername">Hitbox username: </label>
+        <input type="text" name="hitboxUsername" size="12" />
+        </div>
+        
+        <div>
+        <label for="streamLimit">Max streams from each site (1-100): </label>
+        <input type="text" name="streamLimit" size="3" />
+        </div>
+        
+        <div>
+        <label for="videoLimit">Max videos from each site (1-100): </label>
+        <input type="text" name="videoLimit" size="3" />
+        </div>
+        
+        <div class="form-footnote">(These settings are saved with a browser cookie.)</div>
+      </form>
+    </div>
+    
+    
+    <script type="text/javascript">
+      Main.init();
+    </script>
+    
+  </body>
+  
+  
+</html>
+
+
+
+
+
+
+
+    
+<!-- Unused: frame-separated Twitch/Hitbox version -->
+<!--
+<iframe src="http://www.twitch.tv/directory/following"
+        id="twitch-frame">
+  <p>Your browser does not support iframes.</p>
+</iframe>
+
+<div id="hitbox-container">
+  <img src="http://about.hitbox.tv/hitbox-periphery/img/logo-70.png"/>
+  <div id="hitbox-streams"></div>
+</div>
+-->
+
+
+
+
+
+
+
+
+
+
