@@ -48,12 +48,17 @@ var Main = (function() {
         if (urlFragment === "") {
             // Go to Twitch Settings -> Connections and create a new
             // dev app there. Enter this page's URI where it asks you to.
-            // Then put the Client ID here.
-            var clientId = FollowingPageSettings.clientId;
+            // Then put the Client ID in config.js, whose contents may look
+            // like this for example:
+            // Config = {
+            //     clientId: "abc1def2ghi3jkl4mno5pqr6stu7vw"
+            // };
+            var clientId = Config.clientId;
             
             var redirectUri = window.location;
             
-            // Don't need to request any special permission scopes.
+            // Don't need to request any special permission scopes,
+            // just reading non-sensitive data.
             var scopes = "user_read";
             
             var authUrl =
@@ -89,6 +94,11 @@ var Main = (function() {
         return true;
     }
     
+    /*
+    Set Ajax headers for Twitch.
+    At least that was the plan, but it seems that since JSONP is used for
+    Twitch, this may not really be needed.
+    */
     function setTwitchAjaxHeader(xhr) {
         // API version; must be v3 to get followed videos
         xhr.setRequestHeader('Accept', 'application/vnd.twitchtv.v3+json');
@@ -396,8 +406,6 @@ var Main = (function() {
         var followedStreams = streamsResponse.streams;
         twitchStreamDicts = [];
         
-        //console.log(streamsResponse);
-        
         var i;
         for (i = 0; i < followedStreams.length; i++) {
             
@@ -425,8 +433,6 @@ var Main = (function() {
         
         var followedVideos = videosResponse.videos;
         twitchVideoDicts = [];
-        
-        //console.log(videosResponse);
         
         var i;
         for (i = 0; i < followedVideos.length; i++) {
@@ -477,7 +483,6 @@ var Main = (function() {
         $.getJSON(url, getHitboxStreamsAndVideos);
     }
     function getHitboxStreamsAndVideos(liveInfo) {
-        //console.log(liveInfo);
         
         // TODO: Tolerate an error here? (Notify the user, suggesting that
         // perhaps the specified username wasn't found.)
@@ -490,11 +495,10 @@ var Main = (function() {
         var url = 'https://www.hitbox.tv/api/media/live/list?'
             + 'follower_id=' + userId
             + '&limit=' + getSettingFromForm('streamLimit');
-        // Uncomment the below if you want to test with all live streams instead.
-        //var url = 'https://www.hitbox.tv/api/media/live/list';
         
         // Use $.ajax() instead of $.getJSON() so that we can define a
-        // callback to handle "errors" (mainly no streams being live).
+        // callback to handle "errors" (mainly no streams being live;
+        // that results in an error for some reason).
         $.ajax({
             url: url,
             type: 'GET',
@@ -515,7 +519,6 @@ var Main = (function() {
         $.getJSON(url, collectHitboxVideos);
     }
     function collectHitboxStreams(liveList) {
-        //console.log(liveList);
         
         var livestreams = liveList.livestream;
         hitboxStreamDicts = [];
@@ -542,7 +545,6 @@ var Main = (function() {
         callback();
     }
     function collectHitboxVideos(videoList) {
-        //console.log(videoList);
         
         var videos = videoList.video;
         hitboxVideoDicts = [];
@@ -718,12 +720,6 @@ var Main = (function() {
             // This callback will list all streams/videos upon completion of
             // the final stream/video API call.
             
-            // TODO: Remove if not needed
-            //console.log((hitboxStreamDicts !== null).toString()
-            //    + (twitchStreamDicts !== null).toString()
-            //    + (hitboxVideoDicts !== null).toString()
-            //    + (twitchVideoDicts !== null).toString());
-            
             var haveTwitchMedia =
                 twitchStreamDicts !== null && twitchVideoDicts !== null;
             var haveHitboxMedia =
@@ -745,10 +741,6 @@ var Main = (function() {
                     streamDicts = streamDicts.concat(hitboxStreamDicts);
                     videoDicts = videoDicts.concat(hitboxVideoDicts);
                 }
-                
-                // TODO: Remove if not needed
-                //var streamDicts = twitchStreamDicts.concat(hitboxStreamDicts);
-                //var videoDicts = twitchVideoDicts.concat(hitboxVideoDicts);
                 
                 listStreams($streams, streamDicts);
                 listVideos($videos, videoDicts);
@@ -815,126 +807,3 @@ var Main = (function() {
         }
     }
 })();
-
-        
-        
-
-
-
-
-
-// Old non-OAuth2 Twitch code
-            
-//// Specify the Twitch username with a GET parameter.
-//// This way we avoid using OAuth2.
-//var getParamsDict = retrieveGetParams();
-//
-//if (!getParamsDict.hasOwnProperty('twitchuser')) {
-//    // TODO: Decide what to do here
-//}
-//
-//var username = getParamsDict['twitchuser'];
-        
-//// If CORS worked, we'd do this...
-//$.ajax({
-//    url: 'https://api.twitch.tv/kraken/users/' + username + '/follows/channels?limit=100',
-//    type: 'GET',
-//    dataType: 'json',
-//    success: twitchFollowingPart2,
-//    error: function() {console.log("Twitch channels - API call error.");},
-//    beforeSend: setTwitchAjaxHeader
-//});
-//
-//// But since we must use JSONP...
-//var scriptElmt = document.createElement("script");
-//scriptElmt.src = 'https://api.twitch.tv/kraken/users/' + username
-//    + '/follows/channels?callback=Main.twitchFollowingPart2&limit=100'
-//    + '&nocache=' + (new Date()).getTime();
-//    
-//document.getElementsByTagName("head")[0].appendChild(scriptElmt);
-
-//function twitchFollowingPart2(followedChannelsResponse) {
-//    
-//    // TODO: Get the rest of the followed channels, now that we know how
-//    // many there are total. (channels._total)
-//    //
-//    // Do the rest of the queries in one shot. We don't want to wait
-//    // one server round-trip for every multiple of 100 followed channels.
-//    
-//    var followedChannels = followedChannelsResponse.follows;
-//    var followedChannelNames = [];
-//    var i;
-//    for (i = 0; i < followedChannels.length; i++) {
-//        var channel = followedChannels[i].channel;
-//        followedChannelNames.push(channel.name);
-//    }
-//    
-//    var followedChannelNamesStr = followedChannelNames.join(',');
-//    
-//    
-//    // Twitch doesn't support CORS.
-//    // If CORS worked, we'd do this...
-//    //$.ajax({
-//    //    url: 'https://api.twitch.tv/kraken/streams?callback=Main.twitchFollowingPart3&channel='
-//    //         + followedChannelNamesStr,
-//    //    type: 'GET',
-//    //    dataType: 'json',
-//    //    success: twitchFollowingPart3,
-//    //    error: function() {console.log("Twitch streams - API call error.");},
-//    //    beforeSend: setTwitchAjaxHeader
-//    //});
-//    
-//    // But since we must use JSONP...
-//    //
-//    // The callback function 
-//    //
-//    // The anti-caching strategy is from:
-//    // http://stackoverflow.com/a/15041641
-//    var scriptElmt = document.createElement("script");
-//    scriptElmt.src = 'https://api.twitch.tv/kraken/streams?callback=Main.twitchFollowingPart3&channel='
-//        + followedChannelNamesStr + '&nocache=' + (new Date()).getTime();
-//        
-//    document.getElementsByTagName("head")[0].appendChild(scriptElmt);
-//}
-
-
-
-
-        
-// Old code: frame-separated Twitch/Hitbox
-
-//initSeparateVersion: function() {
-//    // Put Twitch and Hitbox streams/videos in separate frames or
-//    // something.
-//    //
-//    // This is no longer used, but such an approach could
-//    // eliminate the need for Twitch OAuth and make other
-//    // simplifications. The page wouldn't look nearly as nice though.
-//    
-//    // For Twitch.tv, we'll just use the Twitch following page
-//    // (which requires no code to set up).
-//    //
-//    // Customize the Hitbox page only.
-//    
-//    $hitboxStreams = $('#hitbox-streams');
-//    
-//    callback = function() {
-//        listStreams($hitboxStreams, hitboxStreamDicts);
-//    };
-//    
-//    // Hitbox streams.
-//    // After some Ajax calls, hitbox streams/videos should get filled,
-//    // and then the callback will be called.
-//    getHitboxUserId();
-//},
-
-
-
-
-
-
-
-
-
-
-
