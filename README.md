@@ -4,6 +4,14 @@ multisite-streams-page
 A single webpage showing the live streams and videos of channels you follow, from multiple sites (currently Twitch and Hitbox).
 
 
+Hosting status
+--------------
+
+Now hosted by Nmaster64 at http://speedruntools.com/following/, and not seeking an alternate host at this time.
+
+But feel free to test the page on your local machine (see "How to host the page" below) for educational purposes.
+
+
 Screenshots
 -----------
 
