@@ -41,3 +41,9 @@ Config = {
 Replace `yourclientidhere` with the "Client ID" of the Developer Application you registered with Twitch.
 
 Then serve the `site` subdirectory in a webserver. This is easy to test on your local machine if you have Python - open a command prompt in the `site` subdirectory, and then use one of the commands here: http://stackoverflow.com/a/532710
+
+
+Acknowledgments
+----------------
+
+Thanks to Hitakashi for guiding me to the right API calls to use, especially for Hitbox.
