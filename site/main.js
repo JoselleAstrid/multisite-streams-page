@@ -262,9 +262,10 @@ var Main = (function() {
     
     
     /* Date/time utility functions */
+    
     function hitboxDateStrToObj(dateStr) {
-        // From: API's date/time format
-        // To: Javascript Date obj
+        // From: API's date/time format, which is in UTC
+        // To: Javascript Date obj, in local timezone
         
         var results = hitboxDateRegex.exec(dateStr);
         var year = results[1];
@@ -274,7 +275,18 @@ var Main = (function() {
         var minute = results[5];
         var second = results[6];
         
-        return (new Date(year, month, day, hour, minute, second, 0));
+        var utcDate = new Date(year, month, day, hour, minute, second, 0);
+        
+        // getTimezoneOffset() returns the number of minutes that UTC
+        // is ahead of your local time. So subtract that amount to go
+        // from UTC to local.
+        //
+        // It doesn't matter what Date object you call getTimezoneOffset() from.
+        var utcTimestamp = utcDate.getTime();
+        var localTimestamp = utcTimestamp - (utcDate.getTimezoneOffset() * 60 * 1000);
+        var localDate = new Date(localTimestamp);
+        
+        return localDate;
     }
     
     function dateObjToTimeAgo(dateObj) {
@@ -284,8 +296,8 @@ var Main = (function() {
         // For more features (internationalization, auto refreshes),
         // possibly try http://timeago.yarp.com/ (uses MIT license)
         
-        time = dateObj.getTime();
-        currentTime = Date.now();
+        var time = dateObj.getTime();
+        var currentTime = Date.now();
         
         var time_formats = [
             [60, 'seconds', 1], // 60
