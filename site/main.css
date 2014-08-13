@@ -14,10 +14,11 @@ body {
   
   padding: 10px;
   
-  background-color: #D3D3D3;
+  background-color: rgb(255,180,180);
   color: #111;
   
   font-family: Arial,sans-serif;
+  font-size: 20px;
 }
 
 
