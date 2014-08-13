@@ -43,8 +43,6 @@ var Main = (function() {
         // If we don't have the token yet, then get it.
         var urlFragment = document.location.hash;
         
-        //console.log(urlFragment);
-        
         if (urlFragment === "") {
             // Go to Twitch Settings -> Connections and create a new
             // dev app there. Enter this page's URI where it asks you to.
@@ -83,9 +81,14 @@ var Main = (function() {
         var regexResult = fragmentRegex.exec(urlFragment);
         
         if (regexResult === null) {
-            // TODO: Let the user know what's going on.
-            // (URL fragment found, but couldn't parse an access token from it.)
-            console.log("URL fragment found, but couldn't parse an access token from it.");
+            // URL fragment found, but couldn't parse an access token from it.
+            //
+            // How to test: Type garbage after the #.
+            showNotification(
+                "Couldn't find the Twitch authentication token. "
+                + "Try removing everything after the # in the URL, "
+                + "and load the page again."
+            );
             return false;
         }
         
@@ -356,6 +359,15 @@ var Main = (function() {
     
     
     
+    function showNotification(notificationText) {
+        var $notificationArea = $('div#notifications');
+        
+        $notificationArea.text(notificationText);
+        $notificationArea.show();
+    }
+    
+    
+    
     function getTwitchStreamsAndVideos() {
         
         // Apparently Twitch does not support CORS:
@@ -370,7 +382,6 @@ var Main = (function() {
         //    type: 'GET',
         //    dataType: 'json',
         //    success: collectTwitchStreams,
-        //    error: function() {console.log("Twitch streams - API call error.");},
         //    beforeSend: setTwitchAjaxHeader
         //});
         
@@ -404,6 +415,19 @@ var Main = (function() {
         // https://github.com/justintv/Twitch-API/blob/master/v3_resources/streams.md
         
         var followedStreams = streamsResponse.streams;
+        
+        if (!followedStreams) {
+            // How to test: Type garbage after "access_token=".
+            showNotification(
+                "Couldn't find your Twitch stream listing. "
+                + "Try removing everything after the # in the URL, "
+                + "and load the page again."
+            );
+            twitchStreamDicts = [];
+            callback();
+            return;
+        }
+        
         twitchStreamDicts = [];
         
         var i;
@@ -432,6 +456,19 @@ var Main = (function() {
         // https://github.com/justintv/Twitch-API/blob/master/v3_resources/videos.md
         
         var followedVideos = videosResponse.videos;
+        
+        if (!followedVideos) {
+            // How to test: Type garbage after "access_token=".
+            showNotification(
+                "Couldn't find your Twitch video listing. "
+                + "Try removing everything after the # in the URL, "
+                + "and load the page again."
+            );
+            twitchVideoDicts = [];
+            callback();
+            return;
+        }
+        
         twitchVideoDicts = [];
         
         var i;
@@ -470,22 +507,40 @@ var Main = (function() {
         var username = getSettingFromForm('hitboxUsername');
         
         if (username === '') {
-            // TODO: Notify the user other than with the console. Maybe a
-            // notification div at the top of the page.
-            console.log("No Hitbox username specified.");
+            showNotification("No Hitbox username specified in the settings.");
             hitboxStreamDicts = [];
             hitboxVideoDicts = [];
+            callback();
             return;
         }
         
         // Make an API call to get this Hitbox user's info.
         var url = 'https://www.hitbox.tv/api/media/live/' + username;
-        $.getJSON(url, getHitboxStreamsAndVideos);
+        
+        // Use $.ajax() instead of $.getJSON() so that we can define a
+        // callback to handle errors, including:
+        // - The username doesn't exist
+        // - The user hasn't set their stream title and game
+        $.ajax({
+            url: url,
+            type: 'GET',
+            dataType: 'json',
+            success: getHitboxStreamsAndVideos,
+            error: function() {
+                showNotification(
+                    "Could not get your Hitbox following listing. Two possible causes: "
+                    + "(A) You need to set your Hitbox stream title and game, even if "
+                    + "you don't plan to stream. Otherwise I can't find your user info. "
+                    + "It's just a quirk in the Hitbox API. "
+                    + "(B) The username you specified doesn't exist on Hitbox."
+                );
+                hitboxStreamDicts = [];
+                hitboxVideoDicts = [];
+                callback();
+            }
+        });
     }
     function getHitboxStreamsAndVideos(liveInfo) {
-        
-        // TODO: Tolerate an error here? (Notify the user, suggesting that
-        // perhaps the specified username wasn't found.)
         
         var userId = liveInfo.livestream[0].media_user_id;
         
@@ -497,14 +552,14 @@ var Main = (function() {
             + '&limit=' + getSettingFromForm('streamLimit');
         
         // Use $.ajax() instead of $.getJSON() so that we can define a
-        // callback to handle "errors" (mainly no streams being live;
-        // that results in an error for some reason).
+        // callback to handle errors, including:
+        // - no streams being live (that returns an error for some reason)
         $.ajax({
             url: url,
             type: 'GET',
             dataType: 'json',
             success: collectHitboxStreams,
-            error: function() {hitboxStreamDicts = [];}
+            error: function() {hitboxStreamDicts = []; callback();}
         });
         
         
@@ -516,7 +571,16 @@ var Main = (function() {
             + 'filter=recent&follower_id=' + userId
             + '&limit=' + getSettingFromForm('videoLimit');
         
-        $.getJSON(url, collectHitboxVideos);
+        // Use $.ajax() instead of $.getJSON() so that we can define a
+        // callback to handle errors, including:
+        // - no videos from channels you follow
+        $.ajax({
+            url: url,
+            type: 'GET',
+            dataType: 'json',
+            success: collectHitboxVideos,
+            error: function() {hitboxVideoDicts = []; callback();}
+        });
     }
     function collectHitboxStreams(liveList) {
         
@@ -719,6 +783,9 @@ var Main = (function() {
         callback = function() {
             // This callback will list all streams/videos upon completion of
             // the final stream/video API call.
+            //
+            // Since we don't know which call chain will finish last, call this
+            // once for each finished call chain. Even in error cases.
             
             var haveTwitchMedia =
                 twitchStreamDicts !== null && twitchVideoDicts !== null;

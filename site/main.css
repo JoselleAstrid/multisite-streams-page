@@ -1,9 +1,49 @@
 body {
-  margin: 20px;
+  margin: 0;
   
   background-color: #111;
   color: #D3D3D3;
 }
+
+
+
+#notifications {
+  /* This should be hidden initially, and only
+     shown if there is a notification. */
+  display: none;
+  
+  padding: 10px;
+  
+  background-color: #D3D3D3;
+  color: #111;
+  
+  font-family: Arial,sans-serif;
+}
+
+
+
+#overall-container {
+  margin: 20px;
+}
+
+
+
+#settings-button {
+  float: right;
+}
+
+
+
+#settings-form div {
+  margin-bottom: 0.5em;
+}
+
+div.form-footnote {
+  font-size: 12px;
+}
+
+
+
 
 /* Section headers */
 h2.section {
@@ -137,20 +177,4 @@ h2.section {
 .media-container div.video-duration {
   right: 14px;
   top: 14px;
-}
-
-
-
-#settings-button {
-  float: right;
-}
-
-div.form-footnote {
-  font-size: 12px;
-}
-
-
-
-#settings-form div {
-  margin-bottom: 0.5em;
 }
