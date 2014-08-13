@@ -642,6 +642,12 @@ var Main = (function() {
             
             var dateObj = hitboxDateStrToObj(video.media_date_added);
             videoDict.unixTimestamp = dateObj.getTime();
+            
+            // Can also use video.media_time_ago to get this directly as a
+            // string, but Twitch doesn't have an equivalent field...
+            //
+            // So, we might as well use this same non-API function to calculate
+            // time ago for both Twitch and Hitbox. It keeps things consistent.
             videoDict.dateDisplay = dateObjToTimeAgo(dateObj);
             
             hitboxVideoDicts.push(videoDict);
