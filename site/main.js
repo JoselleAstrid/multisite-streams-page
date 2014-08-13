@@ -528,10 +528,10 @@ var Main = (function() {
             success: getHitboxStreamsAndVideos,
             error: function() {
                 showNotification(
-                    "Could not get your Hitbox following listing. Two possible causes: "
+                    "Couldn't get your Hitbox following listing. Two possible causes: "
                     + "(A) You need to set your Hitbox stream title and game, even if "
-                    + "you don't plan to stream. Otherwise I can't find your user info. "
-                    + "It's just a quirk in the Hitbox API. "
+                    + "you don't plan to stream. Otherwise I can't find your user info, "
+                    + "due to a quirk in how Hitbox accounts work. "
                     + "(B) The username you specified doesn't exist on Hitbox."
                 );
                 hitboxStreamDicts = [];
