@@ -14,6 +14,7 @@ var Main = (function() {
         'twitchEnabled': true,
         'hitboxEnabled': true,
         'hitboxUsername': '',
+        'gameDisplay': 'boximage',
         'streamLimit': 25,
         'videoLimit': 10
     };
@@ -137,27 +138,33 @@ var Main = (function() {
     We'll format the settings cookie like:
     settingname1>value1|settingname2>value2|... */
     function getSettingFromForm(name) {
-        var $inputElmt = $settingsForm.find('input[name="'+name+'"]');
-        if ($inputElmt) {
-            if ($inputElmt.attr('type') === 'checkbox') {
-                return $inputElmt.prop('checked');
+        var $fieldElmt = $settingsForm.find(
+            'input[name="'+name+'"], select[name="'+name+'"]'
+        );
+        if ($fieldElmt) {
+            if ($fieldElmt.attr('type') === 'checkbox') {
+                return $fieldElmt.prop('checked');
             }
             else {
-                return $inputElmt.val();
+                // This works for select and input/type=text.
+                return $fieldElmt.val();
             }
         }
         return null;
     }
     function setSettingInForm(name, value) {
-        var $inputElmt = $settingsForm.find('input[name="'+name+'"]');
-        if ($inputElmt) {
-            if ($inputElmt.attr('type') === 'checkbox') {
+        var $fieldElmt = $settingsForm.find(
+            'input[name="'+name+'"], select[name="'+name+'"]'
+        );
+        if ($fieldElmt) {
+            if ($fieldElmt.attr('type') === 'checkbox') {
                 // This will handle strings of 'true' or 'false',
                 // or boolean values.
-                $inputElmt.prop('checked', (value === true || value === 'true'));
+                $fieldElmt.prop('checked', (value === true || value === 'true'));
             }
             else {
-                $inputElmt.val(value);
+                // This works for select and input/type=text.
+                $fieldElmt.val(value);
             }
             return true;
         }
@@ -185,11 +192,11 @@ var Main = (function() {
         // (probably a newly added setting since the user's last visit),
         // set the default value, AND update the cookie with that setting
         // as well.
-        var $inputElmts = $settingsForm.find('input');
+        var $fieldElmts = $settingsForm.find('input, select');
         var cookieNeedsUpdate = false;
-        for (i = 0; i < $inputElmts.length; i++) {
-            var $input = $($inputElmts[i]);
-            var settingName = $input.attr('name');
+        for (i = 0; i < $fieldElmts.length; i++) {
+            var $field = $($fieldElmts[i]);
+            var settingName = $field.attr('name');
             if (settingsFromCookie.hasOwnProperty(settingName)) {
                 setSettingInForm(settingName, settingsFromCookie[settingName]);
             }
@@ -205,13 +212,13 @@ var Main = (function() {
         return true;
     }
     function settingsFromFormToCookie() {
-        var $inputElmts = $settingsForm.find('input');
+        var $fieldElmts = $settingsForm.find('input, select');
         var i;
         var nameValuePairs = [];
         
-        for (i = 0; i < $inputElmts.length; i++) {
-            var $input = $($inputElmts[i]);
-            var settingName = $input.attr('name');
+        for (i = 0; i < $fieldElmts.length; i++) {
+            var $field = $($fieldElmts[i]);
+            var settingName = $field.attr('name');
             var settingValue = getSettingFromForm(settingName);
             nameValuePairs.push(settingName + '>' + settingValue);
         }
@@ -429,7 +436,9 @@ var Main = (function() {
         var followedStreams = streamsResponse.streams;
         
         if (!followedStreams) {
-            // How to test: Type garbage after "access_token=".
+            // How to test: Type garbage after "access_token=". Or load in
+            // Firefox, then load in Chrome, then load in Firefox again with
+            // the same access token.
             showNotification(
                 "Couldn't find your Twitch stream listing. "
                 + "Try removing everything after the # in the URL, "
@@ -452,7 +461,21 @@ var Main = (function() {
             streamDict.channelLink = stream.channel.url;
             streamDict.thumbnailUrl = stream.preview.medium;
             streamDict.title = stream.channel.status;
-            streamDict.game = stream.channel.game || "Game not specified";
+            
+            if (stream.channel.game) {
+                streamDict.gameName = stream.channel.game;
+                streamDict.gameLink = 'http://www.twitch.tv/directory/game/'
+                    + stream.channel.game;
+                // If the image doesn't exist then it'll give us
+                // ttv-static/404_boxart-138x190.jpg automatically
+                // (without us having to specify that).
+                streamDict.gameImage = "http://static-cdn.jtvnw.net/ttv-boxart/"
+                    + stream.channel.game + "-138x190.jpg";
+            }
+            else {
+                streamDict.gameName = null;
+            }
+            
             streamDict.viewCount = stream.viewers;
             streamDict.channelName = stream.channel.display_name;
             streamDict.site = 'Twitch';
@@ -494,7 +517,21 @@ var Main = (function() {
             videoDict.thumbnailUrl = video.preview;
             videoDict.videoTitle = video.title;
             videoDict.description = video.description || "No description";
-            videoDict.game = video.game || "Game not specified";
+            
+            if (video.game) {
+                videoDict.gameName = video.game;
+                videoDict.gameLink = 'http://www.twitch.tv/directory/game/'
+                    + video.game + '/videos/week';
+                // If the image doesn't exist then it'll give us
+                // ttv-static/404_boxart-138x190.jpg automatically
+                // (without us having to specify that).
+                videoDict.gameImage = "http://static-cdn.jtvnw.net/ttv-boxart/"
+                    + video.game + "-138x190.jpg";
+            }
+            else {
+                videoDict.gameName = null;
+            }
+                
             videoDict.viewCount = video.views;
             videoDict.channelName = video.channel.display_name;
             videoDict.duration = timeSecToHMS(video.length);
@@ -607,10 +644,16 @@ var Main = (function() {
             streamDict.channelLink = stream.channel.channel_link;
             streamDict.thumbnailUrl = 'http://edge.vie.hitbox.tv' + stream.media_thumbnail;
             streamDict.title = stream.media_status;
-            // TODO: Should this be stream.channel.category_name?
-            // I wonder if one updates and one does not, when the
-            // broadcaster changes it mid-stream.
-            streamDict.game = stream.category_name || "Game not specified";
+            
+            if (stream.category_name) {
+                streamDict.gameName = stream.category_name;
+                streamDict.gameLink = 'http://www.hitbox.tv/game/' + stream.category_seo_key;
+                streamDict.gameImage = 'http://edge.vie.hitbox.tv' + stream.category_logo_large;
+            }
+            else {
+                streamDict.gameName = null;
+            }
+            
             streamDict.viewCount = stream.media_views;
             streamDict.channelName = stream.media_user_name;
             streamDict.site = 'Hitbox';
@@ -634,7 +677,16 @@ var Main = (function() {
             videoDict.thumbnailUrl = 'http://edge.vie.hitbox.tv' + video.media_thumbnail;
             videoDict.videoTitle = video.media_status;
             videoDict.description = video.media_description || "No description";
-            videoDict.game = video.category_name || "Game not specified";
+            
+            if (video.category_name) {
+                videoDict.gameName = video.category_name;
+                videoDict.gameLink = 'http://www.hitbox.tv/game/' + video.category_seo_key;
+                videoDict.gameImage = 'http://edge.vie.hitbox.tv' + video.category_logo_large;
+            }
+            else {
+                videoDict.gameName = null;
+            }
+            
             videoDict.viewCount = video.media_views;
             videoDict.channelName = video.media_user_name;
             videoDict.duration = timeSecToHMS(video.media_duration);
@@ -672,6 +724,7 @@ var Main = (function() {
             $streamContainer.attr('href', streamDict.channelLink);
             $streamContainer.attr('title', streamDict.title);
             
+            
             var $thumbnailCtnr = $('<div>');
             $thumbnailCtnr.attr('class', 'thumbnail-ctnr');
             $streamContainer.append($thumbnailCtnr);
@@ -680,18 +733,45 @@ var Main = (function() {
             }
             
             var $streamThumbnail = $('<img>');
+            $streamThumbnail.attr('class', 'media-thumbnail');
             $streamThumbnail.attr('src', streamDict.thumbnailUrl);
             $thumbnailCtnr.append($streamThumbnail);
+            
             
             var $streamTitle = $('<div>');
             $streamTitle.text(streamDict.title);
             $streamTitle.attr('class', 'media-title');
             $streamContainer.append($streamTitle);
             
-            var $streamGame = $('<div>');
-            $streamGame.text(streamDict.game);
-            $streamGame.attr('class', 'media-game');
-            $streamContainer.append($streamGame);
+            
+            if (getSettingFromForm('gameDisplay') === 'boximage') {
+                // Game as box image
+                if (streamDict.gameName !== null) {
+                    var $gameImageCtnr = $('<a>');
+                    $gameImageCtnr.attr('href', streamDict.gameLink);
+                    $thumbnailCtnr.append($gameImageCtnr);
+                
+                    var $gameImage = $('<img>');
+                    $gameImage.attr('class', 'game-image');
+                    $gameImage.attr('src', streamDict.gameImage);
+                    $gameImage.attr('title', streamDict.gameName);
+                    $gameImageCtnr.append($gameImage);
+                }
+            }
+            else if (getSettingFromForm('gameDisplay') === 'name') {
+                // Game as name text
+                var $game = $('<div>');
+                $game.attr('class', 'media-game');
+                if (streamDict.gameName !== null) {
+                    $game.text(streamDict.gameName);
+                }
+                else {
+                    $game.text("No game selected");
+                }
+                $streamContainer.append($game);
+            }
+            // Else, game display is 'none'
+            
             
             var $channelNameAndViews = $('<div>');
             $channelNameAndViews.text(streamDict.viewCount
@@ -710,6 +790,7 @@ var Main = (function() {
             }
             $channelNameAndViews.append($siteIndicator);
             
+            
             $container.append($streamContainer);
         }
     }
@@ -718,9 +799,6 @@ var Main = (function() {
     function listVideos($container, videoDicts) {
         
         // Sort by date, latest to earliest.
-        //
-        // TODO: Check if Twitch and Hitbox "date added" timestamps
-        // agree in timezones...
         videoDicts.sort( function(a, b) {
             // Unix timestamp = milliseconds since the epoch.
             // Higher number = later date.
@@ -735,6 +813,7 @@ var Main = (function() {
             $videoContainer.attr('href', videoDict.videoLink);
             $videoContainer.attr('title', videoDict.videoTitle);
             
+            
             var $thumbnailCtnr = $('<div>');
             $thumbnailCtnr.attr('class', 'thumbnail-ctnr');
             $videoContainer.append($thumbnailCtnr);
@@ -743,8 +822,20 @@ var Main = (function() {
             }
             
             var $thumbnail = $('<img>');
+            $thumbnail.attr('class', 'media-thumbnail');
             $thumbnail.attr('src', videoDict.thumbnailUrl);
             $thumbnailCtnr.append($thumbnail);
+            
+            var $viewCount = $('<div>');
+            $viewCount.text(videoDict.viewCount);
+            $viewCount.attr('class', 'video-view-count');
+            $thumbnailCtnr.append($viewCount);
+            
+            var $duration = $('<div>');
+            $duration.text(videoDict.duration);
+            $duration.attr('class', 'video-duration');
+            $thumbnailCtnr.append($duration);
+            
             
             var $title = $('<div>');
             $title.text(videoDict.videoTitle);
@@ -756,10 +847,35 @@ var Main = (function() {
             $description.attr('class', 'media-description');
             $videoContainer.append($description);
             
-            var $game = $('<div>');
-            $game.text(videoDict.game);
-            $game.attr('class', 'media-game');
-            $videoContainer.append($game);
+            
+            if (getSettingFromForm('gameDisplay') === 'boximage') {
+                // Game as box image
+                if (videoDict.gameName !== null) {
+                    var $gameImageCtnr = $('<a>');
+                    $gameImageCtnr.attr('href', videoDict.gameLink);
+                    $thumbnailCtnr.append($gameImageCtnr);
+                
+                    var $gameImage = $('<img>');
+                    $gameImage.attr('class', 'game-image');
+                    $gameImage.attr('src', videoDict.gameImage);
+                    $gameImage.attr('title', videoDict.gameName);
+                    $gameImageCtnr.append($gameImage);
+                }
+            }
+            else if (getSettingFromForm('gameDisplay') === 'name') {
+                // Game as text
+                var $game = $('<div>');
+                $game.attr('class', 'media-game');
+                if (videoDict.gameName !== null) {
+                    $game.text(videoDict.gameName);
+                }
+                else {
+                    $game.text("No game selected");
+                }
+                $videoContainer.append($game);
+            }
+            // Else, game display is 'none'
+            
             
             var $channelNameAndDate = $('<div>');
             $channelNameAndDate.text(videoDict.channelName
@@ -777,16 +893,6 @@ var Main = (function() {
                 $siteIndicator.addClass('hitbox');
             }
             $channelNameAndDate.append($siteIndicator);
-            
-            var $viewCount = $('<div>');
-            $viewCount.text(videoDict.viewCount);
-            $viewCount.attr('class', 'video-view-count');
-            $videoContainer.append($viewCount);
-            
-            var $duration = $('<div>');
-            $duration.text(videoDict.duration);
-            $duration.attr('class', 'video-duration');
-            $videoContainer.append($duration);
             
             $container.append($videoContainer);
         }

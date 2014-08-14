@@ -67,9 +67,6 @@ h2.section {
   /* Allow media to be placed side by side */
   float: left;
   
-  /* Allow descendants to be absolute-positioned within this container. */
-  position: relative;
-  
   /* Ensure that the clickable link area is restricted to the area we define */
   display: block;
   /* Ensure that this matches the media thumbnail width */
@@ -95,7 +92,10 @@ h2.section {
   line-height: 1.5em;
 }
 
-.media-container a div.thumbnail-ctnr {
+.thumbnail-ctnr {
+  /* Allow descendants to be absolute-positioned within this container. */
+  position: relative;
+  
   /* Try to make the grid layout work by making all thumbnail containers
   the same size.
   Pick a height that goes well with the thumbnail width.
@@ -103,23 +103,37 @@ h2.section {
   height: 135px;
   overflow: hidden;
 }
-.media-container a div.thumbnail-ctnr img {
+.thumbnail-ctnr img.media-thumbnail {
   /* Ensure that this matches the stream container width */
   width: 240px;
 }
-.media-container a div.thumbnail-ctnr.twitch-stream img {
+.thumbnail-ctnr.twitch-stream img.media-thumbnail {
   /* Twitch streams only:
   Apparently we should squash the thumbnail to make it 16:9?
   At least Twitch following does the same thing. I'm not sure why the
   thumbnails are actually 14.4:9 though (e.g. 320x200).*/
   height: 135px;
 }
-.media-container a div.thumbnail-ctnr.twitch-video img {
+.thumbnail-ctnr.twitch-video img.media-thumbnail {
   /* Twitch videos only:
   Cut off the black bar on the top.
   The parent's overflow:hidden hides the black bar on the bottom.
   After cutting off the black bars, the result ends up being about 16:9. */
   margin-top: -23px;
+}
+
+.thumbnail-ctnr img.game-image {
+  position: absolute;
+  /* We define the position from the thumbnail, not the entire grid element. */
+  right: 0;
+  bottom: 0;
+  
+  width: 40px;
+  
+  border: 3px solid rgb(144,144,144);
+}
+.thumbnail-ctnr img.game-image:hover {
+  border: 3px solid rgb(255,255,255);
 }
 
 .media-container div.view-count {
@@ -172,10 +186,10 @@ h2.section {
   font-size: 12px;
 }
 .media-container div.video-view-count {
-  left: 14px;
-  top: 14px;
+  left: 4px;
+  top: 4px;
 }
 .media-container div.video-duration {
-  right: 14px;
-  top: 14px;
+  right: 4px;
+  top: 4px;
 }
