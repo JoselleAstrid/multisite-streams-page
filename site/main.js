@@ -16,7 +16,8 @@ var Main = (function() {
         'hitboxUsername': '',
         'gameDisplay': 'boximage',
         'streamLimit': 25,
-        'videoLimit': 10
+        'videoLimit': 10,
+        'hitboxThumbnailServer': 'vie'
     };
     
     var $hitboxStreams = null;
@@ -642,13 +643,17 @@ var Main = (function() {
             var streamDict = {};
             
             streamDict.channelLink = stream.channel.channel_link;
-            streamDict.thumbnailUrl = 'http://edge.vie.hitbox.tv' + stream.media_thumbnail;
+            streamDict.thumbnailUrl = 'http://edge.'
+                + getSettingFromForm('hitboxThumbnailServer')
+                + '.hitbox.tv' + stream.media_thumbnail;
             streamDict.title = stream.media_status;
             
             if (stream.category_name) {
                 streamDict.gameName = stream.category_name;
                 streamDict.gameLink = 'http://www.hitbox.tv/game/' + stream.category_seo_key;
-                streamDict.gameImage = 'http://edge.vie.hitbox.tv' + stream.category_logo_large;
+                streamDict.gameImage = 'http://edge.'
+                    + getSettingFromForm('hitboxThumbnailServer')
+                    + '.hitbox.tv' + stream.category_logo_large;
             }
             else {
                 streamDict.gameName = null;
@@ -674,14 +679,18 @@ var Main = (function() {
             var videoDict = {};
             
             videoDict.videoLink = 'http://www.hitbox.tv/video/' + video.media_id;
-            videoDict.thumbnailUrl = 'http://edge.vie.hitbox.tv' + video.media_thumbnail;
+            videoDict.thumbnailUrl = 'http://edge.'
+                + getSettingFromForm('hitboxThumbnailServer')
+                + '.hitbox.tv' + video.media_thumbnail;
             videoDict.videoTitle = video.media_status;
             videoDict.description = video.media_description || "No description";
             
             if (video.category_name) {
                 videoDict.gameName = video.category_name;
                 videoDict.gameLink = 'http://www.hitbox.tv/game/' + video.category_seo_key;
-                videoDict.gameImage = 'http://edge.vie.hitbox.tv' + video.category_logo_large;
+                videoDict.gameImage = 'http://edge.'
+                    + getSettingFromForm('hitboxThumbnailServer')
+                    + '.hitbox.tv' + video.category_logo_large;
             }
             else {
                 videoDict.gameName = null;
