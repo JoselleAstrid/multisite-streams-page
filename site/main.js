@@ -57,17 +57,16 @@ var Main = (function() {
             
             var redirectUri = window.location;
             
-            // Don't need to request any special permission scopes,
-            // just reading non-sensitive data.
-            var scopes = "user_read";
-            
             var authUrl =
                 'https://api.twitch.tv/kraken/oauth2/authorize?response_type=token&client_id='
                 + clientId
                 + '&redirect_uri='
                 + redirectUri;
-                + '&scope='
-                + scopes;
+            
+            // If we needed special permission scopes, we'd add that as
+            // '&scope=<scopes go here> at the end of the URL. But we
+            // don't need to request any special permission scopes,
+            // we're just reading non-sensitive data.
         
             // Redirect to the authentication URL.
             window.location = authUrl;
@@ -77,9 +76,10 @@ var Main = (function() {
         
         // If we're here, we have a urlFragment, presumably the OAuth2 token.
         //
-        // The fragment looks like "access_token=ab1cdef2ghi3jk4l".
+        // The fragment looks like "access_token=ab1cdef2ghi3jk4l"
+        // or "access_token=ab1cdef2ghi3jk4l&scope=".
         // Parse out the actual token from the fragment.
-        var fragmentRegex = /^#access_token=([a-z0-9]+)$/;
+        var fragmentRegex = /^#access_token=([a-z0-9]+)/;
         var regexResult = fragmentRegex.exec(urlFragment);
         
         if (regexResult === null) {
