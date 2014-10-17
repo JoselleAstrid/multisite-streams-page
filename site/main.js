@@ -7,9 +7,6 @@
 
 var Main = (function() {
     
-    // 2014-01-17 00:45:02
-    var hitboxDateRegex = /^(\d\d\d\d)-(\d\d)-(\d\d) (\d\d):(\d\d):(\d\d)$/;
-    
     var defaultSettings = {
         'twitchEnabled': true,
         'hitboxEnabled': true,
@@ -20,96 +17,12 @@ var Main = (function() {
         'hitboxThumbnailServer': 'vie'
     };
     
-    var $hitboxStreams = null;
     var $streams = null;
-    
-    var twitchStreamDicts = null;
-    var hitboxStreamDicts = null;
-    var twitchVideoDicts = null;
-    var hitboxVideoDicts = null;
     
     var settingsDict = null;
     var $settingsForm = null;
     
     var callback = null;
-    
-    var twitchOAuth2Token = null;
-    
-    
-    /*
-    If the twitch OAuth2 token is available: set it, and return true.
-    If it's not available: redirect to get it, and return false.
-    */
-    function setTwitchOAuth2Token() {
-        // The urlFragment, if any, should be the OAuth2 token.
-        // If we don't have the token yet, then get it.
-        var urlFragment = document.location.hash;
-        
-        if (urlFragment === "") {
-            // Go to Twitch Settings -> Connections and create a new
-            // dev app there. Enter this page's URI where it asks you to.
-            // Then put the Client ID in config.js, whose contents may look
-            // like this for example:
-            // Config = {
-            //     clientId: "abc1def2ghi3jkl4mno5pqr6stu7vw"
-            // };
-            var clientId = Config.clientId;
-            
-            var redirectUri = window.location;
-            
-            var authUrl =
-                'https://api.twitch.tv/kraken/oauth2/authorize?response_type=token&client_id='
-                + clientId
-                + '&redirect_uri='
-                + redirectUri;
-            
-            // If we needed special permission scopes, we'd add that as
-            // '&scope=<scopes go here> at the end of the URL. But we
-            // don't need to request any special permission scopes,
-            // we're just reading non-sensitive data.
-        
-            // Redirect to the authentication URL.
-            window.location = authUrl;
-        
-            return false;
-        }
-        
-        // If we're here, we have a urlFragment, presumably the OAuth2 token.
-        //
-        // The fragment looks like "access_token=ab1cdef2ghi3jk4l"
-        // or "access_token=ab1cdef2ghi3jk4l&scope=".
-        // Parse out the actual token from the fragment.
-        var fragmentRegex = /^#access_token=([a-z0-9]+)/;
-        var regexResult = fragmentRegex.exec(urlFragment);
-        
-        if (regexResult === null) {
-            // URL fragment found, but couldn't parse an access token from it.
-            //
-            // How to test: Type garbage after the #.
-            showNotification(
-                "Couldn't find the Twitch authentication token. "
-                + "Try removing everything after the # in the URL, "
-                + "and load the page again."
-            );
-            return false;
-        }
-        
-        // Access token successfully grabbed.
-        twitchOAuth2Token = regexResult[1];
-        return true;
-    }
-    
-    /*
-    Set Ajax headers for Twitch.
-    At least that was the plan, but it seems that since JSONP is used for
-    Twitch, this may not really be needed.
-    */
-    function setTwitchAjaxHeader(xhr) {
-        // API version; must be v3 to get followed videos
-        xhr.setRequestHeader('Accept', 'application/vnd.twitchtv.v3+json');
-        // OAuth2
-        xhr.setRequestHeader('Authorization', twitchOAuth2Token);
-    }
     
     
     
@@ -271,32 +184,6 @@ var Main = (function() {
     
     /* Date/time utility functions */
     
-    function hitboxDateStrToObj(dateStr) {
-        // From: API's date/time format, which is in UTC
-        // To: Javascript Date obj, in local timezone
-        
-        var results = hitboxDateRegex.exec(dateStr);
-        var year = results[1];
-        var month = results[2] - 1;  // JS Dates start months from 0...
-        var day = results[3];
-        var hour = results[4];
-        var minute = results[5];
-        var second = results[6];
-        
-        var utcDate = new Date(year, month, day, hour, minute, second, 0);
-        
-        // getTimezoneOffset() returns the number of minutes that UTC
-        // is ahead of your local time. So subtract that amount to go
-        // from UTC to local.
-        //
-        // It doesn't matter what Date object you call getTimezoneOffset() from.
-        var utcTimestamp = utcDate.getTime();
-        var localTimestamp = utcTimestamp - (utcDate.getTimezoneOffset() * 60 * 1000);
-        var localDate = new Date(localTimestamp);
-        
-        return localDate;
-    }
-    
     function dateObjToTimeAgo(dateObj) {
         // Code adapted from:
         // http://stackoverflow.com/a/12475270
@@ -384,337 +271,6 @@ var Main = (function() {
         
         $notificationArea.text(notificationText);
         $notificationArea.show();
-    }
-    
-    
-    
-    function getTwitchStreamsAndVideos() {
-        
-        // Apparently Twitch does not support CORS:
-        // https://github.com/justintv/Twitch-API/issues/133
-        
-        // If CORS worked, we'd do something like this... (using $.ajax()
-        // instead of $.getJSON to pass a header, which is needed to specify
-        // the API version and for OAuth2)
-        // http://stackoverflow.com/questions/3229823/
-        //$.ajax({
-        //    url: 'https://api.twitch.tv/kraken/streams/followed',
-        //    type: 'GET',
-        //    dataType: 'json',
-        //    success: collectTwitchStreams,
-        //    beforeSend: setTwitchAjaxHeader
-        //});
-        
-        // But since we must use JSONP, we do this instead.
-        var scriptElmt;
-        
-        scriptElmt = document.createElement("script");
-        scriptElmt.src = 'https://api.twitch.tv/kraken/streams/followed'
-            + '?callback=Main.collectTwitchStreams'
-            + '&oauth_token=' + twitchOAuth2Token
-            + '&nocache=' + (new Date()).getTime()
-            + '&limit=' + getSettingFromForm('streamLimit');
-        document.getElementsByTagName("head")[0].appendChild(scriptElmt);
-        
-        scriptElmt = document.createElement("script");
-        scriptElmt.src = 'https://api.twitch.tv/kraken/videos/followed'
-            + '?callback=Main.collectTwitchVideos'
-            + '&oauth_token=' + twitchOAuth2Token
-            + '&nocache=' + (new Date()).getTime()
-            + '&limit=' + getSettingFromForm('videoLimit');
-        document.getElementsByTagName("head")[0].appendChild(scriptElmt);
-        
-        // The JSONP callback functions must exist in the global scope at the
-        // time the <script> tag is evaluated by the browser (i.e. once
-        // the request has completed).
-        // http://stackoverflow.com/a/3840118
-    }
-    function collectTwitchStreams(streamsResponse) {
-        
-        // Stream response examples:
-        // https://github.com/justintv/Twitch-API/blob/master/v3_resources/streams.md
-        
-        var followedStreams = streamsResponse.streams;
-        
-        if (!followedStreams) {
-            // How to test: Type garbage after "access_token=". Or load in
-            // Firefox, then load in Chrome, then load in Firefox again with
-            // the same access token.
-            showNotification(
-                "Couldn't find your Twitch stream listing. "
-                + "Try removing everything after the # in the URL, "
-                + "and load the page again."
-            );
-            twitchStreamDicts = [];
-            callback();
-            return;
-        }
-        
-        twitchStreamDicts = [];
-        
-        var i;
-        for (i = 0; i < followedStreams.length; i++) {
-            
-            var stream = followedStreams[i];
-            
-            var streamDict = {};
-            
-            streamDict.channelLink = stream.channel.url;
-            streamDict.thumbnailUrl = stream.preview.medium;
-            streamDict.title = stream.channel.status;
-            
-            if (stream.channel.game) {
-                streamDict.gameName = stream.channel.game;
-                streamDict.gameLink = 'http://www.twitch.tv/directory/game/'
-                    + stream.channel.game;
-                // If the image doesn't exist then it'll give us
-                // ttv-static/404_boxart-138x190.jpg automatically
-                // (without us having to specify that).
-                streamDict.gameImage = "http://static-cdn.jtvnw.net/ttv-boxart/"
-                    + stream.channel.game + "-138x190.jpg";
-            }
-            else {
-                streamDict.gameName = null;
-            }
-            
-            streamDict.viewCount = stream.viewers;
-            streamDict.channelName = stream.channel.display_name;
-            streamDict.site = 'Twitch';
-            
-            twitchStreamDicts.push(streamDict);
-        }
-        
-        callback();
-    }
-    function collectTwitchVideos(videosResponse) {
-        
-        // Video response examples:
-        // https://github.com/justintv/Twitch-API/blob/master/v3_resources/videos.md
-        
-        var followedVideos = videosResponse.videos;
-        
-        if (!followedVideos) {
-            // How to test: Type garbage after "access_token=".
-            showNotification(
-                "Couldn't find your Twitch video listing. "
-                + "Try removing everything after the # in the URL, "
-                + "and load the page again."
-            );
-            twitchVideoDicts = [];
-            callback();
-            return;
-        }
-        
-        twitchVideoDicts = [];
-        
-        var i;
-        for (i = 0; i < followedVideos.length; i++) {
-            
-            var video = followedVideos[i];
-            
-            var videoDict = {};
-            
-            videoDict.videoLink = video.url;
-            videoDict.thumbnailUrl = video.preview;
-            videoDict.videoTitle = video.title;
-            videoDict.description = video.description || "No description";
-            
-            if (video.game) {
-                videoDict.gameName = video.game;
-                videoDict.gameLink = 'http://www.twitch.tv/directory/game/'
-                    + video.game + '/videos/week';
-                // If the image doesn't exist then it'll give us
-                // ttv-static/404_boxart-138x190.jpg automatically
-                // (without us having to specify that).
-                videoDict.gameImage = "http://static-cdn.jtvnw.net/ttv-boxart/"
-                    + video.game + "-138x190.jpg";
-            }
-            else {
-                videoDict.gameName = null;
-            }
-                
-            videoDict.viewCount = video.views;
-            videoDict.channelName = video.channel.display_name;
-            videoDict.duration = timeSecToHMS(video.length);
-            videoDict.site = 'Twitch';
-            
-            var dateObj = new Date(video.recorded_at);
-            videoDict.unixTimestamp = dateObj.getTime();
-            videoDict.dateDisplay = dateObjToTimeAgo(dateObj);
-            
-            twitchVideoDicts.push(videoDict);
-        }
-        
-        callback();
-    }
-    
-    
-    
-    function getHitboxUserId() {
-            
-        // Since the Hitbox API doesn't use OAuth, we just specify
-        // the Hitbox username manually in the settings.
-        var username = getSettingFromForm('hitboxUsername');
-        
-        if (username === '') {
-            showNotification("No Hitbox username specified in the settings.");
-            hitboxStreamDicts = [];
-            hitboxVideoDicts = [];
-            callback();
-            return;
-        }
-        
-        // Make an API call to get this Hitbox user's info.
-        var url = 'https://www.hitbox.tv/api/media/live/' + username;
-        
-        // Use $.ajax() instead of $.getJSON() so that we can define a
-        // callback to handle errors, including:
-        // - The username doesn't exist
-        // - The user hasn't set their stream title and game
-        $.ajax({
-            url: url,
-            type: 'GET',
-            dataType: 'json',
-            success: getHitboxStreamsAndVideos,
-            error: function() {
-                showNotification(
-                    "Couldn't get your Hitbox following listing. Two possible causes: "
-                    + "(A) You need to set your Hitbox stream title and game, even if "
-                    + "you don't plan to stream. Otherwise I can't find your user info, "
-                    + "due to a quirk in how Hitbox accounts work. "
-                    + "(B) The username you specified doesn't exist on Hitbox."
-                );
-                hitboxStreamDicts = [];
-                hitboxVideoDicts = [];
-                callback();
-            }
-        });
-    }
-    function getHitboxStreamsAndVideos(liveInfo) {
-        
-        var userId = liveInfo.livestream[0].media_user_id;
-        
-        
-        // Make an API call to get the live streams that this user
-        // is following.
-        var url = 'https://www.hitbox.tv/api/media/live/list?'
-            + 'follower_id=' + userId
-            + '&limit=' + getSettingFromForm('streamLimit');
-        
-        // Use $.ajax() instead of $.getJSON() so that we can define a
-        // callback to handle errors, including:
-        // - no streams being live (that returns an error for some reason)
-        $.ajax({
-            url: url,
-            type: 'GET',
-            dataType: 'json',
-            success: collectHitboxStreams,
-            error: function() {hitboxStreamDicts = []; callback();}
-        });
-        
-        
-        // Make an API call to get the latest videos of the channels that
-        // this user is following.
-        // (Note: These are the parts of recordings that the user has chosen
-        // to save. Basically like Twitch highlights.)
-        var url = 'https://www.hitbox.tv/api/media/video/list?'
-            + 'filter=recent&follower_id=' + userId
-            + '&limit=' + getSettingFromForm('videoLimit');
-        
-        // Use $.ajax() instead of $.getJSON() so that we can define a
-        // callback to handle errors, including:
-        // - no videos from channels you follow
-        $.ajax({
-            url: url,
-            type: 'GET',
-            dataType: 'json',
-            success: collectHitboxVideos,
-            error: function() {hitboxVideoDicts = []; callback();}
-        });
-    }
-    function collectHitboxStreams(liveList) {
-        
-        var livestreams = liveList.livestream;
-        hitboxStreamDicts = [];
-        
-        var i;
-        for (i = 0; i < livestreams.length; i++) {
-            var stream = livestreams[i];
-            var streamDict = {};
-            
-            streamDict.channelLink = stream.channel.channel_link;
-            streamDict.thumbnailUrl = 'http://edge.'
-                + getSettingFromForm('hitboxThumbnailServer')
-                + '.hitbox.tv' + stream.media_thumbnail;
-            streamDict.title = stream.media_status;
-            
-            if (stream.category_name) {
-                streamDict.gameName = stream.category_name;
-                streamDict.gameLink = 'http://www.hitbox.tv/game/' + stream.category_seo_key;
-                streamDict.gameImage = 'http://edge.'
-                    + getSettingFromForm('hitboxThumbnailServer')
-                    + '.hitbox.tv' + stream.category_logo_large;
-            }
-            else {
-                streamDict.gameName = null;
-            }
-            
-            streamDict.viewCount = stream.media_views;
-            streamDict.channelName = stream.media_user_name;
-            streamDict.site = 'Hitbox';
-            
-            hitboxStreamDicts.push(streamDict);
-        }
-        
-        callback();
-    }
-    function collectHitboxVideos(videoList) {
-        
-        var videos = videoList.video;
-        hitboxVideoDicts = [];
-        
-        var i;
-        for (i = 0; i < videos.length; i++) {
-            var video = videos[i];
-            var videoDict = {};
-            
-            videoDict.videoLink = 'http://www.hitbox.tv/video/' + video.media_id;
-            videoDict.thumbnailUrl = 'http://edge.'
-                + getSettingFromForm('hitboxThumbnailServer')
-                + '.hitbox.tv' + video.media_thumbnail;
-            videoDict.videoTitle = video.media_status;
-            videoDict.description = video.media_description || "No description";
-            
-            if (video.category_name) {
-                videoDict.gameName = video.category_name;
-                videoDict.gameLink = 'http://www.hitbox.tv/game/' + video.category_seo_key;
-                videoDict.gameImage = 'http://edge.'
-                    + getSettingFromForm('hitboxThumbnailServer')
-                    + '.hitbox.tv' + video.category_logo_large;
-            }
-            else {
-                videoDict.gameName = null;
-            }
-            
-            videoDict.viewCount = video.media_views;
-            videoDict.channelName = video.media_user_name;
-            videoDict.duration = timeSecToHMS(video.media_duration);
-            videoDict.site = 'Hitbox';
-            
-            var dateObj = hitboxDateStrToObj(video.media_date_added);
-            videoDict.unixTimestamp = dateObj.getTime();
-            
-            // Can also use video.media_time_ago to get this directly as a
-            // string, but Twitch doesn't have an equivalent field...
-            //
-            // So, we might as well use this same non-API function to calculate
-            // time ago for both Twitch and Hitbox. It keeps things consistent.
-            videoDict.dateDisplay = dateObjToTimeAgo(dateObj);
-            
-            hitboxVideoDicts.push(videoDict);
-        }
-        
-        callback();
     }
     
     
@@ -920,6 +476,11 @@ var Main = (function() {
             // Since we don't know which call chain will finish last, call this
             // once for each finished call chain. Even in error cases.
             
+            var twitchStreamDicts = Twitch.getStreamDicts();
+            var twitchVideoDicts = Twitch.getVideoDicts();
+            var hitboxStreamDicts = Hitbox.getStreamDicts();
+            var hitboxVideoDicts = Hitbox.getVideoDicts();
+            
             var haveTwitchMedia =
                 twitchStreamDicts !== null && twitchVideoDicts !== null;
             var haveHitboxMedia =
@@ -952,10 +513,10 @@ var Main = (function() {
         // that site. Once the calls are done, that site's streams/videos
         // variable should be filled, and then the callback will be called.
         if (getSettingFromForm('twitchEnabled')) {
-            getTwitchStreamsAndVideos();
+            Twitch.firstAPICall();
         }
         if (getSettingFromForm('hitboxEnabled')) {
-            getHitboxUserId();
+            Hitbox.firstAPICall();
         }
     }
     
@@ -973,7 +534,7 @@ var Main = (function() {
             
             if (hasCookie) {
                 if (getSettingFromForm('twitchEnabled')) {
-                    var twitchAuthTokenIsSet = setTwitchOAuth2Token();
+                    var twitchAuthTokenIsSet = Twitch.setTwitchOAuth2Token();
                     if (twitchAuthTokenIsSet === false) {
                         // Don't do anything, we're redirecting so we can get
                         // the token.
@@ -998,12 +559,17 @@ var Main = (function() {
             );
         },
         
-        // JSONP callbacks must be public.
-        collectTwitchStreams: function(response) {
-            collectTwitchStreams(response);
+        callback: function() {
+            callback();
         },
-        collectTwitchVideos: function(response) {
-            collectTwitchVideos(response);
+        dateObjToTimeAgo: function(dateObj) {
+            return dateObjToTimeAgo(dateObj);
+        },
+        getSettingFromForm: function(name) {
+            return getSettingFromForm(name);
+        },
+        timeSecToHMS: function(totalSeconds) {
+            return timeSecToHMS(totalSeconds);
         }
     }
 })();
