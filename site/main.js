@@ -338,11 +338,29 @@ var Main = (function() {
             // Else, game display is 'none'
             
             
+            // var $channelNameAndViews = $('<div>');
+            // $channelNameAndViews.text(streamDict.viewCount
+            //                  + ' - ' + streamDict.channelName);
+            // $channelNameAndViews.attr('class', 'channel-name');
+            // $streamContainer.append($channelNameAndViews);
+            
+            // var $siteIndicator = $('<span>');
+            // $siteIndicator.text("■");
+            // $siteIndicator.addClass('site-indicator');
+            // if (streamDict.site === 'Twitch') {
+            //     $siteIndicator.addClass('twitch');
+            // }
+            // else {  // Hitbox
+            //     $siteIndicator.addClass('hitbox');
+            // }
+            // $channelNameAndViews.append($siteIndicator);
+            
+            
             var $channelNameAndViews = $('<div>');
-            $channelNameAndViews.text(streamDict.viewCount
-                             + ' - ' + streamDict.channelName);
-            $channelNameAndViews.attr('class', 'channel-name');
-            $streamContainer.append($channelNameAndViews);
+            
+            var $textSpan1 = $('<span>');
+            $textSpan1.text(streamDict.viewCount);
+            $channelNameAndViews.append($textSpan1);
             
             var $siteIndicator = $('<span>');
             $siteIndicator.text("■");
@@ -354,6 +372,12 @@ var Main = (function() {
                 $siteIndicator.addClass('hitbox');
             }
             $channelNameAndViews.append($siteIndicator);
+            
+            var $textSpan2 = $('<span>');
+            $textSpan2.text(streamDict.channelName);
+            $channelNameAndViews.append($textSpan2);
+            
+            $streamContainer.append($channelNameAndViews);
             
             
             $container.append($streamContainer);
@@ -442,11 +466,28 @@ var Main = (function() {
             // Else, game display is 'none'
             
             
+            // var $channelNameAndDate = $('<div>');
+            // $channelNameAndDate.text(videoDict.channelName
+            //                   + ' - ' + videoDict.dateDisplay);
+            // $channelNameAndDate.attr('class', 'channel-name');
+            // $videoContainer.append($channelNameAndDate);
+            
+            // var $siteIndicator = $('<span>');
+            // $siteIndicator.text("■");
+            // $siteIndicator.addClass('site-indicator');
+            // if (videoDict.site === 'Twitch') {
+            //     $siteIndicator.addClass('twitch');
+            // }
+            // else {  // Hitbox
+            //     $siteIndicator.addClass('hitbox');
+            // }
+            // $channelNameAndDate.append($siteIndicator);
+            
             var $channelNameAndDate = $('<div>');
-            $channelNameAndDate.text(videoDict.channelName
-                              + ' - ' + videoDict.dateDisplay);
-            $channelNameAndDate.attr('class', 'channel-name');
-            $videoContainer.append($channelNameAndDate);
+            
+            var $textSpan1 = $('<span>');
+            $textSpan1.text(videoDict.channelName);
+            $channelNameAndDate.append($textSpan1);
             
             var $siteIndicator = $('<span>');
             $siteIndicator.text("■");
@@ -458,6 +499,13 @@ var Main = (function() {
                 $siteIndicator.addClass('hitbox');
             }
             $channelNameAndDate.append($siteIndicator);
+            
+            var $textSpan2 = $('<span>');
+            $textSpan2.text(videoDict.dateDisplay);
+            $channelNameAndDate.append($textSpan2);
+            
+            $videoContainer.append($channelNameAndDate);
+            
             
             $container.append($videoContainer);
         }
@@ -493,10 +541,22 @@ var Main = (function() {
             
             
             var $viewAndChannelCount = $('<div>');
-            // TODO: Singular if only 1 viewer or 1 channel
+            
+            // var channelWord;
+            // if (gameDict.channelCount === 1) {
+            //     channelWord = "channel";
+            // }
+            // else {
+            //     channelWord = "channels";
+            // }
             // $viewAndChannelCount.text(
-            //     gameDict.viewCount
-            //     + " (" + gameDict.channelCount + " channels)");
+            //     gameDict.viewCount + " - "
+            //     + gameDict.channelCount + " " + channelWord);
+            
+            // var $siteIndicator = $('<span>');
+            // $siteIndicator.text("■");
+            // $siteIndicator.addClass('site-indicator twitch');
+            // $viewAndChannelCount.append($siteIndicator);
             
             var $textSpan1 = $('<span>');
             $textSpan1.text(gameDict.viewCount);
@@ -508,7 +568,14 @@ var Main = (function() {
             $viewAndChannelCount.append($siteIndicator);
             
             var $textSpan2 = $('<span>');
-            $textSpan2.text(gameDict.channelCount + " channels");
+            var channelWord;
+            if (gameDict.channelCount === 1) {
+                channelWord = "channel";
+            }
+            else {
+                channelWord = "channels";
+            }
+            $textSpan2.text(gameDict.channelCount + " " + channelWord);
             $viewAndChannelCount.append($textSpan2);
             
             $viewAndChannelCount.attr('class', 'channel-name');

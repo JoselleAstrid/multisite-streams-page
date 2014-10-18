@@ -72,14 +72,17 @@ h2.section {
   /* Ensure that this matches the media thumbnail width */
   width: 240px;
   
-  padding: 10px;
+  /* This is padding, not margin, to include it in the mouseover
+     highlight area. */
+  /* top left bottom right */
+  padding: 10px 10px 20px 10px;
   
   /* No underlines below the link text */
   text-decoration: none;
 }
 
 .media-container a:hover {
-  /* Makes the stream block's background color change. */
+  /* Makes the stream block's background color change on mouseover. */
   background-color: #222;
 }
 
@@ -87,15 +90,6 @@ h2.section {
    from streams/videos here) */
 .media-container.games a {
   width: 140px;
-}
-
-.media-container div {
-  color: #D3D3D3;
-  
-  font-family: Arial, sans-serif;
-  
-  font-size: 0.9em;
-  line-height: 1.5em;
 }
 
 .thumbnail-ctnr {
@@ -108,6 +102,11 @@ h2.section {
   Hide any thumbnail overflow. */
   height: 135px;
   overflow: hidden;
+  
+  /* Mimic the spacing around the text to make things look more balanced.
+     This should be a margin, not padding, so the game thumbnail on
+     streams can still be positioned properly without knowing this number. */
+  margin-bottom: 5px;
 }
 .thumbnail-ctnr img.media-thumbnail {
   /* Ensure that this matches the stream container width */
@@ -152,6 +151,18 @@ img.followed-game {
 }
 
 
+
+/* Text elements below/around a media thumbnail */ 
+
+.media-container div {
+  color: rgb(211,211,211);
+  
+  font-family: Arial, sans-serif;
+  
+  font-size: 0.9em;
+  line-height: 1.5em;
+}
+
 .media-container div.view-count {
 }
 
@@ -161,6 +172,9 @@ img.followed-game {
 .media-container span.site-indicator {
   /* top/bottom left/right */
   margin: 0 4px;
+  /* In addition to making the indicator bigger,
+     this vertically centers it better */
+  font-size: 1.2em;
 }
 .media-container span.site-indicator.twitch {
   color: rgb(100,65,165);
@@ -186,6 +200,7 @@ img.followed-game {
 
 .media-container div.media-description {
   font-size: 0.8em;
+  color: rgb(140,140,140);
   
   /* Just cut off any text that goes beyond the allotted space */
   white-space: nowrap;
