@@ -2,8 +2,11 @@ var Twitch = (function() {
     
     var twitchStreamDicts = null;
     var twitchVideoDicts = null;
+    var gameDicts = null;
     
     var twitchOAuth2Token = null;
+    
+    var username = null;
     
     
     /*
@@ -36,7 +39,10 @@ var Twitch = (function() {
             // If we needed special permission scopes, we'd add that as
             // '&scope=<scopes go here> at the end of the URL. But we
             // don't need to request any special permission scopes,
-            // we're just reading non-sensitive data.
+            // since we're only reading non-sensitive data.
+            //
+            // Dev note: When testing different scopes, be sure to remove the
+            // auth token from the URL, so it actually re-authenticates.
         
             // Redirect to the authentication URL.
             window.location = authUrl;
@@ -104,6 +110,13 @@ var Twitch = (function() {
         var scriptElmt;
         
         scriptElmt = document.createElement("script");
+        scriptElmt.src = 'https://api.twitch.tv/kraken'
+            + '?callback=Twitch.setTwitchUsername'
+            + '&oauth_token=' + twitchOAuth2Token
+            + '&nocache=' + (new Date()).getTime();
+        document.getElementsByTagName("head")[0].appendChild(scriptElmt);
+        
+        scriptElmt = document.createElement("script");
         scriptElmt.src = 'https://api.twitch.tv/kraken/streams/followed'
             + '?callback=Twitch.collectTwitchStreams'
             + '&oauth_token=' + twitchOAuth2Token
@@ -124,6 +137,37 @@ var Twitch = (function() {
         // the request has completed).
         // http://stackoverflow.com/a/3840118
     }
+    
+    
+    
+    function setTwitchUsername(userResponse) {
+        username = userResponse.token.user_name;
+        
+        getTwitchGames();
+    }
+    
+    function getTwitchGames() {
+        
+        // Apparently, even if it's not an authenticated call,
+        // it still needs to be done using JSONP.
+        var gamesUrl =
+            'http://api.twitch.tv/api/users/'
+            + username
+            + '/follows/games';
+        
+        var scriptElmt = document.createElement("script");
+        scriptElmt.src = gamesUrl
+            + '?callback=Twitch.setTwitchGames'
+            //+ '&oauth_token=' + twitchOAuth2Token
+            + '&nocache=' + (new Date()).getTime()
+            // TODO: Make a setting for a game limit?
+            // (Note: Twitch doesn't specify a game limit by default)
+            //+ '&limit=' + Main.getSettingFromForm('gameLimit');
+        document.getElementsByTagName("head")[0].appendChild(scriptElmt);
+    }
+    
+    
+    
     function collectTwitchStreams(streamsResponse) {
         
         // Stream response examples:
@@ -243,6 +287,33 @@ var Twitch = (function() {
         Main.callback();
     }
     
+    function setTwitchGames(gamesResponse) {
+        var followedGames = gamesResponse.follows;
+        
+        gameDicts = [];
+        
+        var i;
+        for (i = 0; i < followedGames.length; i++) {
+            
+            var game = followedGames[i];
+            
+            var gameDict = {};
+            
+            gameDict.name = game.game.name;
+            gameDict.viewCount = game.viewers;
+            gameDict.channelCount = game.channels;
+            gameDict.gameLink = 'http://www.twitch.tv/directory/game/'
+                    + game.game.name;
+            // If the image doesn't exist then it'll give us
+            // a "?" 404 boxart automatically.
+            gameDict.gameImage = game.game.box.large;
+            
+            gameDicts.push(gameDict);
+        }
+        
+        Main.gamesCallback();
+    }
+    
     
     
     // Public methods
@@ -258,6 +329,9 @@ var Twitch = (function() {
         getVideoDicts: function() {
             return twitchVideoDicts;
         },
+        getGameDicts: function() {
+            return gameDicts;
+        },
         setTwitchOAuth2Token: function() {
             setTwitchOAuth2Token();
         },
@@ -268,6 +342,12 @@ var Twitch = (function() {
         },
         collectTwitchVideos: function(response) {
             collectTwitchVideos(response);
+        },
+        setTwitchUsername: function(response) {
+            setTwitchUsername(response);
+        },
+        setTwitchGames: function(response) {
+            setTwitchGames(response);
         }
     }
 })();

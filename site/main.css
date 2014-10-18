@@ -83,6 +83,12 @@ h2.section {
   background-color: #222;
 }
 
+/* Container for single game (only specifying differences
+   from streams/videos here) */
+.media-container.games a {
+  width: 140px;
+}
+
 .media-container div {
   color: #D3D3D3;
   
@@ -122,6 +128,8 @@ h2.section {
   margin-top: -23px;
 }
 
+
+/* Game box for streams/videos */
 .thumbnail-ctnr img.game-image {
   position: absolute;
   /* We define the position from the thumbnail, not the entire grid element. */
@@ -136,6 +144,14 @@ h2.section {
   border: 3px solid rgb(255,255,255);
 }
 
+
+/* Game box for followed games */
+img.followed-game {
+  /* Ensure that this matches the container width */
+  width: 100%;
+}
+
+
 .media-container div.view-count {
 }
 
@@ -143,7 +159,8 @@ h2.section {
 }
 
 .media-container span.site-indicator {
-  margin-left: 3px;
+  /* top/bottom left/right */
+  margin: 0 4px;
 }
 .media-container span.site-indicator.twitch {
   color: rgb(100,65,165);

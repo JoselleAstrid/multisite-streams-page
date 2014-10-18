@@ -464,6 +464,66 @@ var Main = (function() {
     }
     
     
+    function listGames() {
+        
+        var $container = $('#games');
+        var gameDicts = Twitch.getGameDicts();
+        
+        // No manual sorting needed since it's only from
+        // one site (Twitch).
+        
+        var i;
+        for (i = 0; i < gameDicts.length; i++) {
+            var gameDict = gameDicts[i];
+            
+            var $gameContainer = $('<a>');
+            $gameContainer.attr('href', gameDict.gameLink);
+            $gameContainer.attr('title', gameDict.name);
+            
+            
+            var $gameImage = $('<img>');
+            $gameImage.attr('class', 'followed-game');
+            $gameImage.attr('src', gameDict.gameImage);
+            $gameContainer.append($gameImage);
+            
+            
+            var $gameName = $('<div>');
+            $gameName.text(gameDict.name);
+            $gameContainer.append($gameName);
+            
+            
+            var $viewAndChannelCount = $('<div>');
+            // TODO: Singular if only 1 viewer or 1 channel
+            // $viewAndChannelCount.text(
+            //     gameDict.viewCount
+            //     + " (" + gameDict.channelCount + " channels)");
+            
+            var $textSpan1 = $('<span>');
+            $textSpan1.text(gameDict.viewCount);
+            $viewAndChannelCount.append($textSpan1);
+            
+            var $siteIndicator = $('<span>');
+            $siteIndicator.text("■");
+            $siteIndicator.addClass('site-indicator twitch');
+            $viewAndChannelCount.append($siteIndicator);
+            
+            var $textSpan2 = $('<span>');
+            $textSpan2.text(gameDict.channelCount + " channels");
+            $viewAndChannelCount.append($textSpan2);
+            
+            $viewAndChannelCount.attr('class', 'channel-name');
+            $gameContainer.append($viewAndChannelCount);
+            
+            
+            $container.append($gameContainer);
+        }
+        
+        if (gameDicts.length > 0) {
+            $('#games-container').show();
+        }
+    }
+    
+    
     function loadStreamsAndVideos() {
         
         $streams = $('#streams');
@@ -564,6 +624,9 @@ var Main = (function() {
         },
         dateObjToTimeAgo: function(dateObj) {
             return dateObjToTimeAgo(dateObj);
+        },
+        gamesCallback: function() {
+            listGames();
         },
         getSettingFromForm: function(name) {
             return getSettingFromForm(name);
