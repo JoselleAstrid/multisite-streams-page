@@ -161,6 +161,10 @@ img.followed-game {
   
   font-size: 0.9em;
   line-height: 1.5em;
+  
+  /* Just cut off any text that goes beyond the allotted space */
+  white-space: nowrap;
+  overflow: hidden;
 }
 
 .media-container div.view-count {
@@ -172,9 +176,6 @@ img.followed-game {
 .media-container span.site-indicator {
   /* top/bottom left/right */
   margin: 0 4px;
-  /* In addition to making the indicator bigger,
-     this vertically centers it better */
-  font-size: 1.2em;
 }
 .media-container span.site-indicator.twitch {
   color: rgb(100,65,165);
@@ -183,28 +184,15 @@ img.followed-game {
   color: rgb(149,198,0);
 }
 
-.media-container div.media-title {
-  /* Just cut off any text that goes beyond the allotted space */
-  white-space: nowrap;
-  overflow: hidden;
-}
-
 .media-container div.media-game {
   font-size: 0.8em;
+  color: rgb(160,160,160);
   font-style: italic;
-  
-  /* Just cut off any text that goes beyond the allotted space */
-  white-space: nowrap;
-  overflow: hidden;
 }
 
-.media-container div.media-description {
+.media-container div.minor-text {
   font-size: 0.8em;
-  color: rgb(140,140,140);
-  
-  /* Just cut off any text that goes beyond the allotted space */
-  white-space: nowrap;
-  overflow: hidden;
+  color: rgb(130,130,130);
 }
 
 .media-container div.video-view-count,

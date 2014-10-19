@@ -2,6 +2,7 @@ var Twitch = (function() {
     
     var twitchStreamDicts = null;
     var twitchVideoDicts = null;
+    var hostDicts = null;
     var gameDicts = null;
     
     var twitchOAuth2Token = null;
@@ -144,19 +145,42 @@ var Twitch = (function() {
         username = userResponse.token.user_name;
         
         getTwitchGames();
+        getTwitchHosts();
+    }
+    
+    function getTwitchHosts() {
+        
+        // Apparently, even if it's not an authenticated call,
+        // it still needs to be done using JSONP.
+        var url =
+            'http://api.twitch.tv/api/users/'
+            + username
+            + '/followed/hosting';
+        
+        var scriptElmt = document.createElement("script");
+        scriptElmt.src = url
+            + '?callback=Twitch.setTwitchHosts'
+            //+ '&oauth_token=' + twitchOAuth2Token
+            + '&nocache=' + (new Date()).getTime()
+            + '&limit=40'
+            // TODO: Make a setting for a host limit? If so, should it be
+            // tied into the stream limit somehow?
+            // (Twitch's default is 40)
+            //+ '&limit=' + Main.getSettingFromForm('hostLimit');
+        document.getElementsByTagName("head")[0].appendChild(scriptElmt);
     }
     
     function getTwitchGames() {
         
         // Apparently, even if it's not an authenticated call,
         // it still needs to be done using JSONP.
-        var gamesUrl =
+        var url =
             'http://api.twitch.tv/api/users/'
             + username
             + '/follows/games';
         
         var scriptElmt = document.createElement("script");
-        scriptElmt.src = gamesUrl
+        scriptElmt.src = url
             + '?callback=Twitch.setTwitchGames'
             //+ '&oauth_token=' + twitchOAuth2Token
             + '&nocache=' + (new Date()).getTime()
@@ -265,8 +289,8 @@ var Twitch = (function() {
                 // If the image doesn't exist then it'll give us
                 // ttv-static/404_boxart-138x190.jpg automatically
                 // (without us having to specify that).
-                videoDict.gameImage = "http://static-cdn.jtvnw.net/ttv-boxart/"
-                    + video.game + "-138x190.jpg";
+                videoDict.gameImage = 'http://static-cdn.jtvnw.net/ttv-boxart/'
+                    + video.game + '-138x190.jpg';
             }
             else {
                 videoDict.gameName = null;
@@ -285,6 +309,44 @@ var Twitch = (function() {
         }
         
         Main.callback();
+    }
+    
+    function setTwitchHosts(hostsResponse) {
+        var followedHosts = hostsResponse.hosts;
+        
+        hostDicts = [];
+        
+        var i;
+        for (i = 0; i < followedHosts.length; i++) {
+            
+            var host = followedHosts[i];
+            
+            var hostDict = {};
+            
+            hostDict.hosterName = host.display_name;
+            hostDict.streamerName = host.target.channel.display_name;
+            hostDict.streamLink = 'http://www.twitch.tv/' + host.name;
+            hostDict.streamThumbnailUrl = host.target.preview;
+            hostDict.viewCount = host.target.viewers;
+            hostDict.streamTitle = host.target.title;
+            
+            if (host.target.meta_game) {
+                hostDict.gameName = host.target.meta_game;
+                hostDict.gameLink = 'http://www.twitch.tv/directory/game/'
+                    + host.target.meta_game
+                // If the image doesn't exist then it'll give us
+                // a "?" 404 boxart automatically.
+                hostDict.gameImage = 'http://static-cdn.jtvnw.net/ttv-boxart/'
+                    + host.target.meta_game + '-138x190.jpg';
+            }
+            else {
+                hostDict.gameName = null;
+            }
+            
+            hostDicts.push(hostDict);
+        }
+        
+        Main.hostsCallback();
     }
     
     function setTwitchGames(gamesResponse) {
@@ -329,6 +391,9 @@ var Twitch = (function() {
         getVideoDicts: function() {
             return twitchVideoDicts;
         },
+        getHostDicts: function() {
+            return hostDicts;
+        },
         getGameDicts: function() {
             return gameDicts;
         },
@@ -345,6 +410,9 @@ var Twitch = (function() {
         },
         setTwitchUsername: function(response) {
             setTwitchUsername(response);
+        },
+        setTwitchHosts: function(response) {
+            setTwitchHosts(response);
         },
         setTwitchGames: function(response) {
             setTwitchGames(response);

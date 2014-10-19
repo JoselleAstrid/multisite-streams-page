@@ -17,6 +17,10 @@ var Main = (function() {
         'hitboxThumbnailServer': 'vie'
     };
     
+    // Black large square. This is used instead of Black square to
+    // achieve better vertical centering alongside other text.
+    var siteIndicatorChar = '⬛';
+    
     var $streams = null;
     
     var settingsDict = null;
@@ -305,7 +309,6 @@ var Main = (function() {
             
             var $streamTitle = $('<div>');
             $streamTitle.text(streamDict.title);
-            $streamTitle.attr('class', 'media-title');
             $streamContainer.append($streamTitle);
             
             
@@ -345,7 +348,7 @@ var Main = (function() {
             // $streamContainer.append($channelNameAndViews);
             
             // var $siteIndicator = $('<span>');
-            // $siteIndicator.text("■");
+            // $siteIndicator.text(siteIndicatorChar);
             // $siteIndicator.addClass('site-indicator');
             // if (streamDict.site === 'Twitch') {
             //     $siteIndicator.addClass('twitch');
@@ -363,7 +366,7 @@ var Main = (function() {
             $channelNameAndViews.append($textSpan1);
             
             var $siteIndicator = $('<span>');
-            $siteIndicator.text("■");
+            $siteIndicator.text(siteIndicatorChar);
             $siteIndicator.addClass('site-indicator');
             if (streamDict.site === 'Twitch') {
                 $siteIndicator.addClass('twitch');
@@ -428,12 +431,11 @@ var Main = (function() {
             
             var $title = $('<div>');
             $title.text(videoDict.videoTitle);
-            $title.attr('class', 'media-title');
             $videoContainer.append($title);
             
             var $description = $('<div>');
             $description.text(videoDict.description);
-            $description.attr('class', 'media-description');
+            $description.attr('class', 'minor-text');
             $videoContainer.append($description);
             
             
@@ -473,7 +475,7 @@ var Main = (function() {
             // $videoContainer.append($channelNameAndDate);
             
             // var $siteIndicator = $('<span>');
-            // $siteIndicator.text("■");
+            // $siteIndicator.text(siteIndicatorChar);
             // $siteIndicator.addClass('site-indicator');
             // if (videoDict.site === 'Twitch') {
             //     $siteIndicator.addClass('twitch');
@@ -490,7 +492,7 @@ var Main = (function() {
             $channelNameAndDate.append($textSpan1);
             
             var $siteIndicator = $('<span>');
-            $siteIndicator.text("■");
+            $siteIndicator.text(siteIndicatorChar);
             $siteIndicator.addClass('site-indicator');
             if (videoDict.site === 'Twitch') {
                 $siteIndicator.addClass('twitch');
@@ -508,6 +510,121 @@ var Main = (function() {
             
             
             $container.append($videoContainer);
+        }
+    }
+    
+    
+    function listHosts() {
+        
+        var $outerContainer = $('#hosts');
+        var hostDicts = Twitch.getHostDicts();
+        
+        // No manual sorting needed since it's only from
+        // one site (Twitch).
+        
+        var i;
+        for (i = 0; i < hostDicts.length; i++) {
+            var dict = hostDicts[i];
+            
+            var $container = $('<a>');
+            $container.attr('href', dict.streamLink);
+            $container.attr('title', dict.streamTitle);
+            
+            
+            var $thumbnailCtnr = $('<div>');
+            $thumbnailCtnr.attr('class', 'thumbnail-ctnr');
+            $container.append($thumbnailCtnr);
+            
+            $thumbnailCtnr.addClass('twitch-stream');
+            
+            var $streamThumbnail = $('<img>');
+            $streamThumbnail.attr('class', 'media-thumbnail');
+            $streamThumbnail.attr('src', dict.streamThumbnailUrl);
+            $thumbnailCtnr.append($streamThumbnail);
+            
+            
+            var $hostingText = $('<div>');
+            $hostingText.text(dict.hosterName + " hosting " + dict.streamerName);
+            $container.append($hostingText);
+            
+            
+            var $streamTitle = $('<div>');
+            $streamTitle.text(dict.streamTitle);
+            $streamTitle.attr('class', 'minor-text');
+            $container.append($streamTitle);
+            
+            
+            if (getSettingFromForm('gameDisplay') === 'boximage') {
+                // Game as box image
+                if (dict.gameName !== null) {
+                    var $gameImageCtnr = $('<a>');
+                    $gameImageCtnr.attr('href', dict.gameLink);
+                    $thumbnailCtnr.append($gameImageCtnr);
+                
+                    var $gameImage = $('<img>');
+                    $gameImage.attr('class', 'game-image');
+                    $gameImage.attr('src', dict.gameImage);
+                    $gameImage.attr('title', dict.gameName);
+                    $gameImageCtnr.append($gameImage);
+                }
+            }
+            else if (getSettingFromForm('gameDisplay') === 'name') {
+                // Game as name text
+                var $game = $('<div>');
+                $game.attr('class', 'media-game');
+                if (dict.gameName !== null) {
+                    $game.text(dict.gameName);
+                }
+                else {
+                    $game.text("No game selected");
+                }
+                $container.append($game);
+            }
+            // Else, game display is 'none'
+            
+            
+            // var $channelNameAndViews = $('<div>');
+            // $channelNameAndViews.text(streamDict.viewCount
+            //                  + ' - ' + streamDict.channelName);
+            // $channelNameAndViews.attr('class', 'channel-name');
+            // $streamContainer.append($channelNameAndViews);
+            
+            // var $siteIndicator = $('<span>');
+            // $siteIndicator.text(siteIndicatorChar);
+            // $siteIndicator.addClass('site-indicator');
+            // if (streamDict.site === 'Twitch') {
+            //     $siteIndicator.addClass('twitch');
+            // }
+            // else {  // Hitbox
+            //     $siteIndicator.addClass('hitbox');
+            // }
+            // $channelNameAndViews.append($siteIndicator);
+            
+            
+            var $channelNameAndViews = $('<div>');
+            
+            var $textSpan1 = $('<span>');
+            $textSpan1.text(dict.viewCount);
+            $channelNameAndViews.append($textSpan1);
+            
+            var $siteIndicator = $('<span>');
+            $siteIndicator.text(siteIndicatorChar);
+            $siteIndicator.addClass('site-indicator');
+            $siteIndicator.addClass('twitch');
+            $channelNameAndViews.append($siteIndicator);
+            
+            var $textSpan2 = $('<span>');
+            $textSpan2.text(dict.streamerName);
+            $channelNameAndViews.append($textSpan2);
+            
+            $container.append($channelNameAndViews);
+            
+            
+            $outerContainer.append($container);
+        }
+        
+        if (hostDicts.length > 0) {
+            $('#hosts-container').show();
         }
     }
     
@@ -554,7 +671,7 @@ var Main = (function() {
             //     + gameDict.channelCount + " " + channelWord);
             
             // var $siteIndicator = $('<span>');
-            // $siteIndicator.text("■");
+            // $siteIndicator.text(siteIndicatorChar);
             // $siteIndicator.addClass('site-indicator twitch');
             // $viewAndChannelCount.append($siteIndicator);
             
@@ -563,7 +680,7 @@ var Main = (function() {
             $viewAndChannelCount.append($textSpan1);
             
             var $siteIndicator = $('<span>');
-            $siteIndicator.text("■");
+            $siteIndicator.text(siteIndicatorChar);
             $siteIndicator.addClass('site-indicator twitch');
             $viewAndChannelCount.append($siteIndicator);
             
@@ -697,6 +814,9 @@ var Main = (function() {
         },
         getSettingFromForm: function(name) {
             return getSettingFromForm(name);
+        },
+        hostsCallback: function() {
+            listHosts();
         },
         timeSecToHMS: function(totalSeconds) {
             return timeSecToHMS(totalSeconds);
