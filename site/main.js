@@ -28,6 +28,9 @@ var Main = (function() {
     
     var callback = null;
     
+    var funcs = {};
+    var funcRequirements = {};
+    
     
     
     /* Cookie functions from:
@@ -278,7 +281,9 @@ var Main = (function() {
     }
     
     
-    function listStreams($container, streamDicts) {
+    function showStreams(streamDicts) {
+        
+        var $container = $('#streams');
         
         // Sort by view count, decreasing order.
         streamDicts.sort( function(a, b) {
@@ -388,7 +393,9 @@ var Main = (function() {
     }
     
     
-    function listVideos($container, videoDicts) {
+    function showVideos(videoDicts) {
+        
+        var $container = $('#videos');
         
         // Sort by date, latest to earliest.
         videoDicts.sort( function(a, b) {
@@ -514,7 +521,7 @@ var Main = (function() {
     }
     
     
-    function listHosts() {
+    function showHosts() {
         
         var $outerContainer = $('#hosts');
         var hostDicts = Twitch.getHostDicts();
@@ -629,7 +636,7 @@ var Main = (function() {
     }
     
     
-    function listGames() {
+    function showGames() {
         
         var $container = $('#games');
         var gameDicts = Twitch.getGameDicts();
@@ -708,10 +715,24 @@ var Main = (function() {
     }
     
     
-    function loadStreamsAndVideos() {
+    
+    function setRequirements() {
+        // TODO: Add funcs as well
         
-        $streams = $('#streams');
-        $videos = $('#videos');
+        // TODO: Add conditionals based on user settings, to see which
+        // requirements do or don't apply.
+        
+        addRequirement('Main.showStreams', 'Main.showHosts');
+        
+        addRequirement('Main.showStreams', 'Main.showGames');
+        addRequirement('Main.showHosts', 'Main.showGames');
+        
+        addRequirement('Main.showStreams', 'Main.showVideos');
+        addRequirement('Main.showHosts', 'Main.showVideos');
+        addRequirement('Main.showGames', 'Main.showVideos');
+    }
+    
+    function startGettingMedia() {
         
         callback = function() {
             // This callback will list all streams/videos upon completion of
@@ -747,8 +768,8 @@ var Main = (function() {
                     videoDicts = videoDicts.concat(hitboxVideoDicts);
                 }
                 
-                listStreams($streams, streamDicts);
-                listVideos($videos, videoDicts);
+                showStreams(streamDicts);
+                showVideos(videoDicts);
             }
         };
         
@@ -757,11 +778,45 @@ var Main = (function() {
         // that site. Once the calls are done, that site's streams/videos
         // variable should be filled, and then the callback will be called.
         if (getSettingFromForm('twitchEnabled')) {
-            Twitch.firstAPICall();
+            Twitch.startGettingMedia();
         }
         if (getSettingFromForm('hitboxEnabled')) {
-            Hitbox.firstAPICall();
+            Hitbox.startGettingMedia();
         }
+    }
+    
+    
+    
+    function removeFromArray(arr, value) {
+        /* Remove all instances of value from the array arr. */
+        for(var i = arr.length - 1; i >= 0; i--) {
+            if(arr[i] === value) {
+               arr.splice(i, 1);
+            }
+        }
+    }
+    
+    function addRequirement(requirementName, targetName) {
+        // Add to the function requirement dict.
+        if (funcRequirements.hasOwnProperty(targetName) ) {
+            funcRequirements[targetName].push(requirementName);
+        }
+        else {
+            funcRequirements[targetName] = [requirementName];
+        }
+        
+        // Have the requirement function trigger the target function.
+        var oldFunc = funcs[requirementName];
+        // In JS function definition, variable binding from the current scope
+        // should happen, while stuff like object property accessing should
+        // be deferred to when the function actually runs.
+        funcs[requirementName] = function() {
+            oldFunc();
+            removeFromArray(funcRequirements[targetName], requirementName);
+            if (funcRequirements[targetName] === []) {
+                funcs[targetName]();
+            }
+        };
     }
     
     
@@ -778,14 +833,15 @@ var Main = (function() {
             
             if (hasCookie) {
                 if (getSettingFromForm('twitchEnabled')) {
-                    var twitchAuthTokenIsSet = Twitch.setTwitchOAuth2Token();
+                    var twitchAuthTokenIsSet = Twitch.setOAuth2Token();
                     if (twitchAuthTokenIsSet === false) {
                         // Don't do anything, we're redirecting so we can get
                         // the token.
                         return;
                     }
                 }
-                loadStreamsAndVideos();
+                setRequirements();
+                startGettingMedia();
             }
             else {
                 // No settings cookie yet, need to initialize it
@@ -810,13 +866,13 @@ var Main = (function() {
             return dateObjToTimeAgo(dateObj);
         },
         gamesCallback: function() {
-            listGames();
+            showGames();
         },
         getSettingFromForm: function(name) {
             return getSettingFromForm(name);
         },
         hostsCallback: function() {
-            listHosts();
+            showHosts();
         },
         timeSecToHMS: function(totalSeconds) {
             return timeSecToHMS(totalSeconds);

@@ -14,7 +14,7 @@ var Twitch = (function() {
     If the twitch OAuth2 token is available: set it, and return true.
     If it's not available: redirect to get it, and return false.
     */
-    function setTwitchOAuth2Token() {
+    function setOAuth2Token() {
         // The urlFragment, if any, should be the OAuth2 token.
         // If we don't have the token yet, then get it.
         var urlFragment = document.location.hash;
@@ -81,7 +81,7 @@ var Twitch = (function() {
     At least that was the plan, but it seems that since JSONP is used for
     Twitch, this may not really be needed.
     */
-    function setTwitchAjaxHeader(xhr) {
+    function setAjaxHeader(xhr) {
         // API version; must be v3 to get followed videos
         xhr.setRequestHeader('Accept', 'application/vnd.twitchtv.v3+json');
         // OAuth2
@@ -90,7 +90,7 @@ var Twitch = (function() {
     
     
     
-    function getTwitchStreamsAndVideos() {
+    function getUsername() {
         
         // Apparently Twitch does not support CORS:
         // https://github.com/justintv/Twitch-API/issues/133
@@ -100,37 +100,20 @@ var Twitch = (function() {
         // the API version and for OAuth2)
         // http://stackoverflow.com/questions/3229823/
         //$.ajax({
-        //    url: 'https://api.twitch.tv/kraken/streams/followed',
+        //    url: 'https://api.twitch.tv/kraken',
         //    type: 'GET',
         //    dataType: 'json',
-        //    success: collectTwitchStreams,
-        //    beforeSend: setTwitchAjaxHeader
+        //    success: setUsername,
+        //    beforeSend: setAjaxHeader
         //});
         
         // But since we must use JSONP, we do this instead.
-        var scriptElmt;
         
-        scriptElmt = document.createElement("script");
+        var scriptElmt = document.createElement("script");
         scriptElmt.src = 'https://api.twitch.tv/kraken'
-            + '?callback=Twitch.setTwitchUsername'
+            + '?callback=Twitch.setUsername'
             + '&oauth_token=' + twitchOAuth2Token
             + '&nocache=' + (new Date()).getTime();
-        document.getElementsByTagName("head")[0].appendChild(scriptElmt);
-        
-        scriptElmt = document.createElement("script");
-        scriptElmt.src = 'https://api.twitch.tv/kraken/streams/followed'
-            + '?callback=Twitch.collectTwitchStreams'
-            + '&oauth_token=' + twitchOAuth2Token
-            + '&nocache=' + (new Date()).getTime()
-            + '&limit=' + Main.getSettingFromForm('streamLimit');
-        document.getElementsByTagName("head")[0].appendChild(scriptElmt);
-        
-        scriptElmt = document.createElement("script");
-        scriptElmt.src = 'https://api.twitch.tv/kraken/videos/followed'
-            + '?callback=Twitch.collectTwitchVideos'
-            + '&oauth_token=' + twitchOAuth2Token
-            + '&nocache=' + (new Date()).getTime()
-            + '&limit=' + Main.getSettingFromForm('videoLimit');
         document.getElementsByTagName("head")[0].appendChild(scriptElmt);
         
         // The JSONP callback functions must exist in the global scope at the
@@ -139,16 +122,38 @@ var Twitch = (function() {
         // http://stackoverflow.com/a/3840118
     }
     
-    
-    
-    function setTwitchUsername(userResponse) {
-        username = userResponse.token.user_name;
+    function getStreams() {
         
-        getTwitchGames();
-        getTwitchHosts();
+        var scriptElmt = document.createElement("script");
+        scriptElmt.src = 'https://api.twitch.tv/kraken/streams/followed'
+            + '?callback=Twitch.setStreams'
+            + '&oauth_token=' + twitchOAuth2Token
+            + '&nocache=' + (new Date()).getTime()
+            + '&limit=' + Main.getSettingFromForm('streamLimit');
+        document.getElementsByTagName("head")[0].appendChild(scriptElmt);
     }
     
-    function getTwitchHosts() {
+    function getVideos() {
+        
+        var scriptElmt = document.createElement("script");
+        scriptElmt.src = 'https://api.twitch.tv/kraken/videos/followed'
+            + '?callback=Twitch.setVideos'
+            + '&oauth_token=' + twitchOAuth2Token
+            + '&nocache=' + (new Date()).getTime()
+            + '&limit=' + Main.getSettingFromForm('videoLimit');
+        document.getElementsByTagName("head")[0].appendChild(scriptElmt);
+    }
+    
+    
+    
+    function setUsername(userResponse) {
+        username = userResponse.token.user_name;
+        
+        getGames();
+        getHosts();
+    }
+    
+    function getHosts() {
         
         // Apparently, even if it's not an authenticated call,
         // it still needs to be done using JSONP.
@@ -159,7 +164,7 @@ var Twitch = (function() {
         
         var scriptElmt = document.createElement("script");
         scriptElmt.src = url
-            + '?callback=Twitch.setTwitchHosts'
+            + '?callback=Twitch.setHosts'
             //+ '&oauth_token=' + twitchOAuth2Token
             + '&nocache=' + (new Date()).getTime()
             + '&limit=40'
@@ -170,7 +175,7 @@ var Twitch = (function() {
         document.getElementsByTagName("head")[0].appendChild(scriptElmt);
     }
     
-    function getTwitchGames() {
+    function getGames() {
         
         // Apparently, even if it's not an authenticated call,
         // it still needs to be done using JSONP.
@@ -181,7 +186,7 @@ var Twitch = (function() {
         
         var scriptElmt = document.createElement("script");
         scriptElmt.src = url
-            + '?callback=Twitch.setTwitchGames'
+            + '?callback=Twitch.setGames'
             //+ '&oauth_token=' + twitchOAuth2Token
             + '&nocache=' + (new Date()).getTime()
             // TODO: Make a setting for a game limit?
@@ -192,7 +197,7 @@ var Twitch = (function() {
     
     
     
-    function collectTwitchStreams(streamsResponse) {
+    function setStreams(streamsResponse) {
         
         // Stream response examples:
         // https://github.com/justintv/Twitch-API/blob/master/v3_resources/streams.md
@@ -249,7 +254,7 @@ var Twitch = (function() {
         
         Main.callback();
     }
-    function collectTwitchVideos(videosResponse) {
+    function setVideos(videosResponse) {
         
         // Video response examples:
         // https://github.com/justintv/Twitch-API/blob/master/v3_resources/videos.md
@@ -311,7 +316,7 @@ var Twitch = (function() {
         Main.callback();
     }
     
-    function setTwitchHosts(hostsResponse) {
+    function setHosts(hostsResponse) {
         var followedHosts = hostsResponse.hosts;
         
         hostDicts = [];
@@ -349,7 +354,7 @@ var Twitch = (function() {
         Main.hostsCallback();
     }
     
-    function setTwitchGames(gamesResponse) {
+    function setGames(gamesResponse) {
         var followedGames = gamesResponse.follows;
         
         gameDicts = [];
@@ -378,12 +383,33 @@ var Twitch = (function() {
     
     
     
+    function setRequirements() {
+        // TODO: Add funcs as well
+        
+        // TODO: Add conditionals based on user settings, to see which
+        // requirements do or don't apply.
+        
+        addRequirement('Twitch.setStreams', 'Main.showStreams');
+        
+        addRequirement('Twitch.getUsername', 'Twitch.getHosts');
+        addRequirement('Twitch.setHosts', 'Main.showHosts');
+        
+        addRequirement('Twitch.getUsername', 'Twitch.getGames');
+        addRequirement('Twitch.setGames', 'Main.showGames');
+        
+        addRequirement('Twitch.setVideos', 'Main.showVideos');
+    }
+    
+    
+    
     // Public methods
     
     return {
     
-        firstAPICall: function() {
-            getTwitchStreamsAndVideos();
+        startGettingMedia: function() {
+            getUsername();
+            getStreams();
+            getVideos();
         },
         getStreamDicts: function() {
             return twitchStreamDicts;
@@ -397,25 +423,25 @@ var Twitch = (function() {
         getGameDicts: function() {
             return gameDicts;
         },
-        setTwitchOAuth2Token: function() {
-            setTwitchOAuth2Token();
+        setOAuth2Token: function() {
+            setOAuth2Token();
         },
         
         // JSONP callbacks must be public in order to work.
-        collectTwitchStreams: function(response) {
-            collectTwitchStreams(response);
+        setStreams: function(response) {
+            setStreams(response);
         },
-        collectTwitchVideos: function(response) {
-            collectTwitchVideos(response);
+        setVideos: function(response) {
+            setVideos(response);
         },
-        setTwitchUsername: function(response) {
-            setTwitchUsername(response);
+        setUsername: function(response) {
+            setUsername(response);
         },
-        setTwitchHosts: function(response) {
-            setTwitchHosts(response);
+        setHosts: function(response) {
+            setHosts(response);
         },
-        setTwitchGames: function(response) {
-            setTwitchGames(response);
+        setGames: function(response) {
+            setGames(response);
         }
     }
 })();

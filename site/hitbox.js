@@ -6,6 +6,8 @@ var Hitbox = (function() {
     var hitboxStreamDicts = null;
     var hitboxVideoDicts = null;
     
+    var userId = null;
+    
     
     function hitboxDateStrToObj(dateStr) {
         // From: API's date/time format, which is in UTC
@@ -35,7 +37,7 @@ var Hitbox = (function() {
     
     
     
-    function getHitboxUserId() {
+    function getUserId() {
             
         // Since the Hitbox API doesn't use OAuth, we just specify
         // the Hitbox username manually in the settings.
@@ -60,7 +62,7 @@ var Hitbox = (function() {
             url: url,
             type: 'GET',
             dataType: 'json',
-            success: getHitboxStreamsAndVideos,
+            success: setUserId,
             error: function() {
                 showNotification(
                     "Couldn't get your Hitbox following listing. Two possible causes: "
@@ -75,10 +77,16 @@ var Hitbox = (function() {
             }
         });
     }
-    function getHitboxStreamsAndVideos(liveInfo) {
+    
+    function setUserId(liveInfo) {
+        userId = liveInfo.livestream[0].media_user_id;
         
-        var userId = liveInfo.livestream[0].media_user_id;
-        
+        getStreams();
+        getVideos();
+    }
+    
+    
+    function getStreams() {
         
         // Make an API call to get the live streams that this user
         // is following.
@@ -93,10 +101,12 @@ var Hitbox = (function() {
             url: url,
             type: 'GET',
             dataType: 'json',
-            success: collectHitboxStreams,
+            success: setStreams,
             error: function() {hitboxStreamDicts = []; Main.callback();}
         });
-        
+    }
+    
+    function getVideos() {
         
         // Make an API call to get the latest videos of the channels that
         // this user is following.
@@ -113,11 +123,11 @@ var Hitbox = (function() {
             url: url,
             type: 'GET',
             dataType: 'json',
-            success: collectHitboxVideos,
+            success: setVideos,
             error: function() {hitboxVideoDicts = []; Main.callback();}
         });
     }
-    function collectHitboxStreams(liveList) {
+    function setStreams(liveList) {
         
         var livestreams = liveList.livestream;
         hitboxStreamDicts = [];
@@ -153,7 +163,7 @@ var Hitbox = (function() {
         
         Main.callback();
     }
-    function collectHitboxVideos(videoList) {
+    function setVideos(videoList) {
         
         var videos = videoList.video;
         hitboxVideoDicts = [];
@@ -204,12 +214,27 @@ var Hitbox = (function() {
     
     
     
+    function setRequirements() {
+        // TODO: Add funcs as well
+        
+        // TODO: Add conditionals based on user settings, to see which
+        // requirements do or don't apply.
+        
+        addRequirement('Hitbox.setUserId', 'Hitbox.getStreams');
+        addRequirement('Hitbox.setStreams', 'Main.showStreams');
+        
+        addRequirement('Hitbox.setUserId', 'Hitbox.getVideos');
+        addRequirement('Hitbox.setVideos', 'Main.showVideos');
+    }
+    
+    
+    
     // Public methods
     
     return {
         
-        firstAPICall: function() {
-            getHitboxUserId();
+        startGettingMedia: function() {
+            getUserId();
         },
         getStreamDicts: function() {
             return hitboxStreamDicts;
