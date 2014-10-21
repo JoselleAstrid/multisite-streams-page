@@ -26,8 +26,6 @@ var Main = (function() {
     var settingsDict = null;
     var $settingsForm = null;
     
-    var callback = null;
-    
     var funcs = {};
     var funcRequirements = {};
     
@@ -281,14 +279,24 @@ var Main = (function() {
     }
     
     
-    function showStreams(streamDicts) {
+    function showStreams() {
+                
+        var streamDicts = [];
         
-        var $container = $('#streams');
+        if (getSettingFromForm('twitchEnabled')) {
+            streamDicts = streamDicts.concat(Twitch.getStreamDicts());
+        }
+        if (getSettingFromForm('hitboxEnabled')) {
+            streamDicts = streamDicts.concat(Hitbox.getStreamDicts());
+        }
         
         // Sort by view count, decreasing order.
         streamDicts.sort( function(a, b) {
             return parseInt(b.viewCount) - parseInt(a.viewCount);
         });
+        
+        
+        var $container = $('#streams');
         
         var i;
         for (i = 0; i < streamDicts.length; i++) {
@@ -393,9 +401,16 @@ var Main = (function() {
     }
     
     
-    function showVideos(videoDicts) {
+    function showVideos() {
+                
+        var videoDicts = [];
         
-        var $container = $('#videos');
+        if (getSettingFromForm('twitchEnabled')) {
+            videoDicts = videoDicts.concat(Twitch.getVideoDicts());
+        }
+        if (getSettingFromForm('hitboxEnabled')) {
+            videoDicts = videoDicts.concat(Hitbox.getVideoDicts());
+        }
         
         // Sort by date, latest to earliest.
         videoDicts.sort( function(a, b) {
@@ -403,6 +418,9 @@ var Main = (function() {
             // Higher number = later date.
             return parseInt(b.unixTimestamp) - parseInt(a.unixTimestamp);
         });
+        
+        
+        var $container = $('#videos');
         
         var i;
         for (i = 0; i < videoDicts.length; i++) {
@@ -522,12 +540,17 @@ var Main = (function() {
     
     
     function showHosts() {
+                
+        var hostDicts = [];
         
-        var $outerContainer = $('#hosts');
-        var hostDicts = Twitch.getHostDicts();
+        if (getSettingFromForm('twitchEnabled')) {
+            hostDicts = hostDicts.concat(Twitch.getHostDicts());
+        }
         
         // No manual sorting needed since it's only from
         // one site (Twitch).
+        
+        var $outerContainer = $('#hosts');
         
         var i;
         for (i = 0; i < hostDicts.length; i++) {
@@ -638,11 +661,16 @@ var Main = (function() {
     
     function showGames() {
         
-        var $container = $('#games');
-        var gameDicts = Twitch.getGameDicts();
+        var gameDicts = [];
+        
+        if (getSettingFromForm('twitchEnabled')) {
+            gameDicts = gameDicts.concat(Twitch.getGameDicts());
+        }
         
         // No manual sorting needed since it's only from
         // one site (Twitch).
+        
+        var $container = $('#games');
         
         var i;
         for (i = 0; i < gameDicts.length; i++) {
@@ -717,10 +745,11 @@ var Main = (function() {
     
     
     function setRequirements() {
-        // TODO: Add funcs as well
         
-        // TODO: Add conditionals based on user settings, to see which
-        // requirements do or don't apply.
+        addFunc('Main.showStreams', showStreams);
+        addFunc('Main.showHosts', showHosts);
+        addFunc('Main.showGames', showGames);
+        addFunc('Main.showVideos', showVideos);
         
         addRequirement('Main.showStreams', 'Main.showHosts');
         
@@ -730,53 +759,21 @@ var Main = (function() {
         addRequirement('Main.showStreams', 'Main.showVideos');
         addRequirement('Main.showHosts', 'Main.showVideos');
         addRequirement('Main.showGames', 'Main.showVideos');
+        
+        
+        if (getSettingFromForm('twitchEnabled')) {
+            Twitch.setRequirements();
+        }
+        if (getSettingFromForm('hitboxEnabled')) {
+            Hitbox.setRequirements();
+        }
     }
     
     function startGettingMedia() {
         
-        callback = function() {
-            // This callback will list all streams/videos upon completion of
-            // the final stream/video API call.
-            //
-            // Since we don't know which call chain will finish last, call this
-            // once for each finished call chain. Even in error cases.
-            
-            var twitchStreamDicts = Twitch.getStreamDicts();
-            var twitchVideoDicts = Twitch.getVideoDicts();
-            var hitboxStreamDicts = Hitbox.getStreamDicts();
-            var hitboxVideoDicts = Hitbox.getVideoDicts();
-            
-            var haveTwitchMedia =
-                twitchStreamDicts !== null && twitchVideoDicts !== null;
-            var haveHitboxMedia =
-                hitboxStreamDicts !== null && hitboxVideoDicts !== null;
-            
-            var twitchOK = !getSettingFromForm('twitchEnabled') || haveTwitchMedia;
-            var hitboxOK = !getSettingFromForm('hitboxEnabled') || haveHitboxMedia;
-            
-            if (twitchOK && hitboxOK) {
-                
-                var streamDicts = [];
-                var videoDicts = [];
-                
-                if (getSettingFromForm('twitchEnabled')) {
-                    streamDicts = streamDicts.concat(twitchStreamDicts);
-                    videoDicts = videoDicts.concat(twitchVideoDicts);
-                }
-                if (getSettingFromForm('hitboxEnabled')) {
-                    streamDicts = streamDicts.concat(hitboxStreamDicts);
-                    videoDicts = videoDicts.concat(hitboxVideoDicts);
-                }
-                
-                showStreams(streamDicts);
-                showVideos(videoDicts);
-            }
-        };
-        
         // For each site, we have to make one or more API calls via Ajax.
         // The function we call here will start the chain of API calls for
-        // that site. Once the calls are done, that site's streams/videos
-        // variable should be filled, and then the callback will be called.
+        // that site, to retrieve streams, videos, etc.
         if (getSettingFromForm('twitchEnabled')) {
             Twitch.startGettingMedia();
         }
@@ -796,7 +793,77 @@ var Main = (function() {
         }
     }
     
+    function curry(orig_func) {
+        /* Specify arguments of a function without actually calling
+           that function yet.
+           Source:
+           http://benalman.com/news/2010/09/partial-application-in-javascript/ */
+        var ap = Array.prototype,
+            args = arguments;
+    
+        function fn() {
+            ap.push.apply( fn.args, arguments );
+    
+            return fn.args.length < orig_func.length
+                ? fn
+                : orig_func.apply( this, fn.args );
+        };
+    
+        return function() {
+            fn.args = ap.slice.call( args, 1 );
+            return fn.apply( this, arguments );
+        };
+    }
+    
+    function runAndCheckReq(func, requirementName, targetName) {
+        /* Assumes the target function takes no arguments. */
+        
+        // Allow the requirement function to take arguments.
+        var args = [];
+        for (var i=3, len = arguments.length; i < len; ++i) {
+            args.push(arguments[i]);
+        };
+        
+        // Use apply to pass in arguments as a list.
+        //
+        // ("this" value of undefined should be the same as calling
+        // func without an object - e.g. func(arg1, arg2, ...) )
+        func.apply(undefined, args);
+        
+        // Cross off this function as a requirement for the target
+        // function. If this is the last requirement, run the
+        // target function.
+        // Assumes the target function takes no arguments...
+        removeFromArray(funcRequirements[targetName], requirementName);
+        
+        // Useful debugging message
+        console.log(requirementName + " - " + targetName
+                    + ' [' + funcRequirements[targetName].toString() + ']');
+        
+        if (funcRequirements[targetName].length === 0) {
+            funcs[targetName]();
+        }
+    }
+    
+    
+    
+    function addFunc(name, func) {
+        // TODO: Is it possible to avoid having funcs altogether,
+        // and just replace the methods directly, e.g.
+        // Twitch.setStreams = ... ?
+        // This would eliminate the need to specify "Main.getFunc(...)"
+        // for certain callbacks, which is a hassle to remember, and
+        // really annoying to debug when forgotten.
+        
+        funcs[name] = func;
+    }
+    
+    function getFunc(name) {
+        return funcs[name];
+    }
+    
     function addRequirement(requirementName, targetName) {
+        
         // Add to the function requirement dict.
         if (funcRequirements.hasOwnProperty(targetName) ) {
             funcRequirements[targetName].push(requirementName);
@@ -806,17 +873,10 @@ var Main = (function() {
         }
         
         // Have the requirement function trigger the target function.
-        var oldFunc = funcs[requirementName];
-        // In JS function definition, variable binding from the current scope
-        // should happen, while stuff like object property accessing should
-        // be deferred to when the function actually runs.
-        funcs[requirementName] = function() {
-            oldFunc();
-            removeFromArray(funcRequirements[targetName], requirementName);
-            if (funcRequirements[targetName] === []) {
-                funcs[targetName]();
-            }
-        };
+        var func = funcs[requirementName];
+        
+        funcs[requirementName] = curry(
+            runAndCheckReq, func, requirementName, targetName);
     }
     
     
@@ -833,10 +893,11 @@ var Main = (function() {
             
             if (hasCookie) {
                 if (getSettingFromForm('twitchEnabled')) {
-                    var twitchAuthTokenIsSet = Twitch.setOAuth2Token();
-                    if (twitchAuthTokenIsSet === false) {
-                        // Don't do anything, we're redirecting so we can get
-                        // the token.
+                    var nowRedirecting = Twitch.setOAuth2Token();
+                    
+                    if (nowRedirecting) {
+                        // Don't do anything else here, we're redirecting
+                        // so we can get the token.
                         return;
                     }
                 }
@@ -859,20 +920,23 @@ var Main = (function() {
             );
         },
         
-        callback: function() {
-            callback();
+        addFunc: function(name, func) {
+            addFunc(name, func);
+        },
+        addRequirement: function(requirementName, targetName) {
+            addRequirement(requirementName, targetName);
         },
         dateObjToTimeAgo: function(dateObj) {
             return dateObjToTimeAgo(dateObj);
         },
-        gamesCallback: function() {
-            showGames();
+        getFunc: function(name) {
+            return getFunc(name);
         },
         getSettingFromForm: function(name) {
             return getSettingFromForm(name);
         },
-        hostsCallback: function() {
-            showHosts();
+        showNotification: function(notificationText) {
+            showNotification(notificationText);
         },
         timeSecToHMS: function(totalSeconds) {
             return timeSecToHMS(totalSeconds);

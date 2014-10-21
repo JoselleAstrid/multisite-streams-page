@@ -8,6 +8,8 @@ var Hitbox = (function() {
     
     var userId = null;
     
+    var errorIndicator = "There was an error previously";
+    
     
     function hitboxDateStrToObj(dateStr) {
         // From: API's date/time format, which is in UTC
@@ -44,10 +46,8 @@ var Hitbox = (function() {
         var username = Main.getSettingFromForm('hitboxUsername');
         
         if (username === '') {
-            showNotification("No Hitbox username specified in the settings.");
-            hitboxStreamDicts = [];
-            hitboxVideoDicts = [];
-            Main.callback();
+            Main.showNotification("No Hitbox username specified in the settings.");
+            Main.getFunc('Hitbox.setUserId')(errorIndicator);
             return;
         }
         
@@ -62,31 +62,40 @@ var Hitbox = (function() {
             url: url,
             type: 'GET',
             dataType: 'json',
-            success: setUserId,
-            error: function() {
-                showNotification(
-                    "Couldn't get your Hitbox following listing. Two possible causes: "
+            success: Main.getFunc('Hitbox.setUserId'),
+            error: function(response) {
+                // Two known causes for an error here. Unfortunately, both
+                // seem to give 404 errors, so we can't distinguish between
+                // the two...
+                Main.showNotification(
+                    "Couldn't get your Hitbox following listing. Possible causes: "
                     + "(A) You need to set your Hitbox stream title and game, even if "
                     + "you don't plan to stream. Otherwise I can't find your user info, "
                     + "due to a quirk in how Hitbox accounts work. "
                     + "(B) The username you specified doesn't exist on Hitbox."
                 );
-                hitboxStreamDicts = [];
-                hitboxVideoDicts = [];
-                Main.callback();
+                Main.getFunc('Hitbox.setUserId')(errorIndicator);
             }
         });
     }
     
     function setUserId(liveInfo) {
-        userId = liveInfo.livestream[0].media_user_id;
+        if (liveInfo === errorIndicator) {
+            // Error occurred earlier.
+            userId = errorIndicator;
+            return;
+        }
         
-        getStreams();
-        getVideos();
+        userId = liveInfo.livestream[0].media_user_id;
     }
     
     
     function getStreams() {
+        if (userId === errorIndicator) {
+            // Error occurred earlier.
+            Main.getFunc('Hitbox.setStreams')(errorIndicator);
+            return;
+        }
         
         // Make an API call to get the live streams that this user
         // is following.
@@ -101,12 +110,17 @@ var Hitbox = (function() {
             url: url,
             type: 'GET',
             dataType: 'json',
-            success: setStreams,
-            error: function() {hitboxStreamDicts = []; Main.callback();}
+            success: Main.getFunc('Hitbox.setStreams'),
+            error: function(response) { Main.getFunc('Hitbox.setStreams')(errorIndicator); }
         });
     }
     
     function getVideos() {
+        if (userId === errorIndicator) {
+            // Error occurred earlier.
+            Main.getFunc('Hitbox.setVideos')(errorIndicator);
+            return;
+        }
         
         // Make an API call to get the latest videos of the channels that
         // this user is following.
@@ -123,11 +137,19 @@ var Hitbox = (function() {
             url: url,
             type: 'GET',
             dataType: 'json',
-            success: setVideos,
-            error: function() {hitboxVideoDicts = []; Main.callback();}
+            success: Main.getFunc('Hitbox.setVideos'),
+            error: function(response) { Main.getFunc('Hitbox.setVideos')(errorIndicator); }
         });
     }
     function setStreams(liveList) {
+        
+        if (liveList === errorIndicator) {
+            // This is our case when the Hitbox streams response is an error.
+            // This could either be an actual error or just no streams...
+            // not knowing any better, we'll treat it as no streams.
+            hitboxStreamDicts = [];
+            return;
+        }
         
         var livestreams = liveList.livestream;
         hitboxStreamDicts = [];
@@ -160,10 +182,16 @@ var Hitbox = (function() {
             
             hitboxStreamDicts.push(streamDict);
         }
-        
-        Main.callback();
     }
     function setVideos(videoList) {
+        
+        if (videoList === errorIndicator) {
+            // This is our case when the Hitbox videos response is an error.
+            // This could either be an actual error or just no videos...
+            // not knowing any better, we'll treat it as no videos.
+            hitboxVideoDicts = [];
+            return;
+        }
         
         var videos = videoList.video;
         hitboxVideoDicts = [];
@@ -208,23 +236,23 @@ var Hitbox = (function() {
             
             hitboxVideoDicts.push(videoDict);
         }
-        
-        Main.callback();
     }
     
     
     
     function setRequirements() {
-        // TODO: Add funcs as well
         
-        // TODO: Add conditionals based on user settings, to see which
-        // requirements do or don't apply.
+        Main.addFunc('Hitbox.setUserId', setUserId);
+        Main.addFunc('Hitbox.getStreams', getStreams);
+        Main.addFunc('Hitbox.setStreams', setStreams);
+        Main.addFunc('Hitbox.getVideos', getVideos);
+        Main.addFunc('Hitbox.setVideos', setVideos);
         
-        addRequirement('Hitbox.setUserId', 'Hitbox.getStreams');
-        addRequirement('Hitbox.setStreams', 'Main.showStreams');
+        Main.addRequirement('Hitbox.setUserId', 'Hitbox.getStreams');
+        Main.addRequirement('Hitbox.setStreams', 'Main.showStreams');
         
-        addRequirement('Hitbox.setUserId', 'Hitbox.getVideos');
-        addRequirement('Hitbox.setVideos', 'Main.showVideos');
+        Main.addRequirement('Hitbox.setUserId', 'Hitbox.getVideos');
+        Main.addRequirement('Hitbox.setVideos', 'Main.showVideos');
     }
     
     
@@ -233,9 +261,13 @@ var Hitbox = (function() {
     
     return {
         
+        setRequirements: function() {
+            setRequirements();
+        },
         startGettingMedia: function() {
             getUserId();
         },
+        
         getStreamDicts: function() {
             return hitboxStreamDicts;
         },

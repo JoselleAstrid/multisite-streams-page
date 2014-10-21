@@ -9,12 +9,18 @@ var Twitch = (function() {
     
     var username = null;
     
+    var errorIndicator = "There was an error previously";
     
-    /*
-    If the twitch OAuth2 token is available: set it, and return true.
-    If it's not available: redirect to get it, and return false.
-    */
+    
     function setOAuth2Token() {
+        /*
+        If the twitch OAuth2 token is available: set it.
+        If it's not there yet: redirect to get it.
+        If it's broken: set it to errorIndicator, and put up a notification.
+        
+        Return true if we're redirecting, false otherwise.
+        */
+        
         // The urlFragment, if any, should be the OAuth2 token.
         // If we don't have the token yet, then get it.
         var urlFragment = document.location.hash;
@@ -48,7 +54,7 @@ var Twitch = (function() {
             // Redirect to the authentication URL.
             window.location = authUrl;
         
-            return false;
+            return true;
         }
         
         // If we're here, we have a urlFragment, presumably the OAuth2 token.
@@ -63,17 +69,18 @@ var Twitch = (function() {
             // URL fragment found, but couldn't parse an access token from it.
             //
             // How to test: Type garbage after the #.
-            showNotification(
+            Main.showNotification(
                 "Couldn't find the Twitch authentication token. "
                 + "Try removing everything after the # in the URL, "
                 + "and load the page again."
             );
+            twitchOAuth2Token = errorIndicator;
             return false;
         }
         
         // Access token successfully grabbed.
         twitchOAuth2Token = regexResult[1];
-        return true;
+        return false;
     }
     
     /*
@@ -91,6 +98,10 @@ var Twitch = (function() {
     
     
     function getUsername() {
+        if (twitchOAuth2Token === errorIndicator) {
+            Main.getFunc('Twitch.setUsername')(errorIndicator);
+            return;
+        }
         
         // Apparently Twitch does not support CORS:
         // https://github.com/justintv/Twitch-API/issues/133
@@ -123,6 +134,10 @@ var Twitch = (function() {
     }
     
     function getStreams() {
+        if (twitchOAuth2Token === errorIndicator) {
+            Main.getFunc('Twitch.setStreams')(errorIndicator);
+            return;
+        }
         
         var scriptElmt = document.createElement("script");
         scriptElmt.src = 'https://api.twitch.tv/kraken/streams/followed'
@@ -134,6 +149,10 @@ var Twitch = (function() {
     }
     
     function getVideos() {
+        if (twitchOAuth2Token === errorIndicator) {
+            Main.getFunc('Twitch.setVideos')(errorIndicator);
+            return;
+        }
         
         var scriptElmt = document.createElement("script");
         scriptElmt.src = 'https://api.twitch.tv/kraken/videos/followed'
@@ -147,13 +166,32 @@ var Twitch = (function() {
     
     
     function setUsername(userResponse) {
-        username = userResponse.token.user_name;
+        if (userResponse === errorIndicator) {
+            username = errorIndicator;
+            return;
+        }
         
-        getGames();
-        getHosts();
+        if (userResponse.token.valid === false) {
+            // Authentication failed.
+            //
+            // How to test: Type garbage after "access_token=".
+            Main.showNotification(
+                "There was a problem with Twitch authentication. "
+                + "Try removing everything after the # in the URL, "
+                + "and load the page again."
+            );
+            username = errorIndicator;
+            return;
+        }
+        
+        username = userResponse.token.user_name;
     }
     
     function getHosts() {
+        if (username === errorIndicator) {
+            Main.getFunc('Twitch.setHosts')(errorIndicator);
+            return;
+        }
         
         // Apparently, even if it's not an authenticated call,
         // it still needs to be done using JSONP.
@@ -165,7 +203,6 @@ var Twitch = (function() {
         var scriptElmt = document.createElement("script");
         scriptElmt.src = url
             + '?callback=Twitch.setHosts'
-            //+ '&oauth_token=' + twitchOAuth2Token
             + '&nocache=' + (new Date()).getTime()
             + '&limit=40'
             // TODO: Make a setting for a host limit? If so, should it be
@@ -176,6 +213,10 @@ var Twitch = (function() {
     }
     
     function getGames() {
+        if (username === errorIndicator) {
+            Main.getFunc('Twitch.setGames')(errorIndicator);
+            return;
+        }
         
         // Apparently, even if it's not an authenticated call,
         // it still needs to be done using JSONP.
@@ -187,7 +228,6 @@ var Twitch = (function() {
         var scriptElmt = document.createElement("script");
         scriptElmt.src = url
             + '?callback=Twitch.setGames'
-            //+ '&oauth_token=' + twitchOAuth2Token
             + '&nocache=' + (new Date()).getTime()
             // TODO: Make a setting for a game limit?
             // (Note: Twitch doesn't specify a game limit by default)
@@ -198,25 +238,30 @@ var Twitch = (function() {
     
     
     function setStreams(streamsResponse) {
+        if (streamsResponse === errorIndicator) {
+            twitchStreamDicts = [];
+            return;
+        }
+        
+        if (streamsResponse.error && streamsResponse.error === "Unauthorized") {
+            // Authentication failed.
+            //
+            // How to test: Type garbage after "access_token=". Or load in
+            // Firefox, then load in Chrome, then load in Firefox again with
+            // the same access token.
+            Main.showNotification(
+                "There was a problem with Twitch authentication. "
+                + "Try removing everything after the # in the URL, "
+                + "and load the page again."
+            );
+            twitchStreamDicts = [];
+            return;
+        }
         
         // Stream response examples:
         // https://github.com/justintv/Twitch-API/blob/master/v3_resources/streams.md
         
         var followedStreams = streamsResponse.streams;
-        
-        if (!followedStreams) {
-            // How to test: Type garbage after "access_token=". Or load in
-            // Firefox, then load in Chrome, then load in Firefox again with
-            // the same access token.
-            showNotification(
-                "Couldn't find your Twitch stream listing. "
-                + "Try removing everything after the # in the URL, "
-                + "and load the page again."
-            );
-            twitchStreamDicts = [];
-            Main.callback();
-            return;
-        }
         
         twitchStreamDicts = [];
         
@@ -251,27 +296,30 @@ var Twitch = (function() {
             
             twitchStreamDicts.push(streamDict);
         }
-        
-        Main.callback();
     }
     function setVideos(videosResponse) {
+        if (videosResponse === errorIndicator) {
+            twitchVideoDicts = [];
+            return;
+        }
+        
+        if (videosResponse.error && videosResponse.error === "Unauthorized") {
+            // Authentication failed.
+            //
+            // How to test: Type garbage after "access_token=".
+            Main.showNotification(
+                "There was a problem with Twitch authentication. "
+                + "Try removing everything after the # in the URL, "
+                + "and load the page again."
+            );
+            twitchVideoDicts = [];
+            return;
+        }
         
         // Video response examples:
         // https://github.com/justintv/Twitch-API/blob/master/v3_resources/videos.md
         
         var followedVideos = videosResponse.videos;
-        
-        if (!followedVideos) {
-            // How to test: Type garbage after "access_token=".
-            showNotification(
-                "Couldn't find your Twitch video listing. "
-                + "Try removing everything after the # in the URL, "
-                + "and load the page again."
-            );
-            twitchVideoDicts = [];
-            Main.callback();
-            return;
-        }
         
         twitchVideoDicts = [];
         
@@ -312,11 +360,14 @@ var Twitch = (function() {
             
             twitchVideoDicts.push(videoDict);
         }
-        
-        Main.callback();
     }
     
     function setHosts(hostsResponse) {
+        if (hostsResponse === errorIndicator) {
+            hostDicts = [];
+            return;
+        }
+        
         var followedHosts = hostsResponse.hosts;
         
         hostDicts = [];
@@ -350,11 +401,14 @@ var Twitch = (function() {
             
             hostDicts.push(hostDict);
         }
-        
-        Main.hostsCallback();
     }
     
     function setGames(gamesResponse) {
+        if (gamesResponse === errorIndicator) {
+            gameDicts = [];
+            return;
+        }
+        
         var followedGames = gamesResponse.follows;
         
         gameDicts = [];
@@ -377,27 +431,29 @@ var Twitch = (function() {
             
             gameDicts.push(gameDict);
         }
-        
-        Main.gamesCallback();
     }
     
     
     
     function setRequirements() {
-        // TODO: Add funcs as well
         
-        // TODO: Add conditionals based on user settings, to see which
-        // requirements do or don't apply.
+        Main.addFunc('Twitch.setUsername', setUsername);
+        Main.addFunc('Twitch.setStreams', setStreams);
+        Main.addFunc('Twitch.getHosts', getHosts);
+        Main.addFunc('Twitch.setHosts', setHosts);
+        Main.addFunc('Twitch.getGames', getGames);
+        Main.addFunc('Twitch.setGames', setGames);
+        Main.addFunc('Twitch.setVideos', setVideos);
         
-        addRequirement('Twitch.setStreams', 'Main.showStreams');
+        Main.addRequirement('Twitch.setStreams', 'Main.showStreams');
         
-        addRequirement('Twitch.getUsername', 'Twitch.getHosts');
-        addRequirement('Twitch.setHosts', 'Main.showHosts');
+        Main.addRequirement('Twitch.setUsername', 'Twitch.getHosts');
+        Main.addRequirement('Twitch.setHosts', 'Main.showHosts');
         
-        addRequirement('Twitch.getUsername', 'Twitch.getGames');
-        addRequirement('Twitch.setGames', 'Main.showGames');
+        Main.addRequirement('Twitch.setUsername', 'Twitch.getGames');
+        Main.addRequirement('Twitch.setGames', 'Main.showGames');
         
-        addRequirement('Twitch.setVideos', 'Main.showVideos');
+        Main.addRequirement('Twitch.setVideos', 'Main.showVideos');
     }
     
     
@@ -406,10 +462,22 @@ var Twitch = (function() {
     
     return {
     
+        setOAuth2Token: function() {
+            setOAuth2Token();
+        },
+        setRequirements: function() {
+            setRequirements();
+        },
         startGettingMedia: function() {
-            getUsername();
             getStreams();
+            getUsername();
             getVideos();
+        },
+        getGameDicts: function() {
+            return gameDicts;
+        },
+        getHostDicts: function() {
+            return hostDicts;
         },
         getStreamDicts: function() {
             return twitchStreamDicts;
@@ -417,31 +485,23 @@ var Twitch = (function() {
         getVideoDicts: function() {
             return twitchVideoDicts;
         },
-        getHostDicts: function() {
-            return hostDicts;
-        },
-        getGameDicts: function() {
-            return gameDicts;
-        },
-        setOAuth2Token: function() {
-            setOAuth2Token();
-        },
+        
         
         // JSONP callbacks must be public in order to work.
-        setStreams: function(response) {
-            setStreams(response);
-        },
-        setVideos: function(response) {
-            setVideos(response);
-        },
-        setUsername: function(response) {
-            setUsername(response);
+        setGames: function(response) {
+            Main.getFunc('Twitch.setGames')(response);
         },
         setHosts: function(response) {
-            setHosts(response);
+            Main.getFunc('Twitch.setHosts')(response);
         },
-        setGames: function(response) {
-            setGames(response);
+        setStreams: function(response) {
+            Main.getFunc('Twitch.setStreams')(response);
+        },
+        setUsername: function(response) {
+            Main.getFunc('Twitch.setUsername')(response);
+        },
+        setVideos: function(response) {
+            Main.getFunc('Twitch.setVideos')(response);
         }
     }
 })();
