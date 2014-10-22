@@ -17,10 +17,6 @@ var Main = (function() {
         'hitboxThumbnailServer': 'vie'
     };
     
-    // Black large square. This is used instead of Black square to
-    // achieve better vertical centering alongside other text.
-    var siteIndicatorChar = '⬛';
-    
     var $streams = null;
     
     var settingsDict = null;
@@ -361,7 +357,6 @@ var Main = (function() {
             // $streamContainer.append($channelNameAndViews);
             
             // var $siteIndicator = $('<span>');
-            // $siteIndicator.text(siteIndicatorChar);
             // $siteIndicator.addClass('site-indicator');
             // if (streamDict.site === 'Twitch') {
             //     $siteIndicator.addClass('twitch');
@@ -379,7 +374,6 @@ var Main = (function() {
             $channelNameAndViews.append($textSpan1);
             
             var $siteIndicator = $('<span>');
-            $siteIndicator.text(siteIndicatorChar);
             $siteIndicator.addClass('site-indicator');
             if (streamDict.site === 'Twitch') {
                 $siteIndicator.addClass('twitch');
@@ -500,7 +494,6 @@ var Main = (function() {
             // $videoContainer.append($channelNameAndDate);
             
             // var $siteIndicator = $('<span>');
-            // $siteIndicator.text(siteIndicatorChar);
             // $siteIndicator.addClass('site-indicator');
             // if (videoDict.site === 'Twitch') {
             //     $siteIndicator.addClass('twitch');
@@ -517,7 +510,6 @@ var Main = (function() {
             $channelNameAndDate.append($textSpan1);
             
             var $siteIndicator = $('<span>');
-            $siteIndicator.text(siteIndicatorChar);
             $siteIndicator.addClass('site-indicator');
             if (videoDict.site === 'Twitch') {
                 $siteIndicator.addClass('twitch');
@@ -620,7 +612,6 @@ var Main = (function() {
             // $streamContainer.append($channelNameAndViews);
             
             // var $siteIndicator = $('<span>');
-            // $siteIndicator.text(siteIndicatorChar);
             // $siteIndicator.addClass('site-indicator');
             // if (streamDict.site === 'Twitch') {
             //     $siteIndicator.addClass('twitch');
@@ -638,7 +629,6 @@ var Main = (function() {
             $channelNameAndViews.append($textSpan1);
             
             var $siteIndicator = $('<span>');
-            $siteIndicator.text(siteIndicatorChar);
             $siteIndicator.addClass('site-indicator');
             $siteIndicator.addClass('twitch');
             $channelNameAndViews.append($siteIndicator);
@@ -706,7 +696,6 @@ var Main = (function() {
             //     + gameDict.channelCount + " " + channelWord);
             
             // var $siteIndicator = $('<span>');
-            // $siteIndicator.text(siteIndicatorChar);
             // $siteIndicator.addClass('site-indicator twitch');
             // $viewAndChannelCount.append($siteIndicator);
             
@@ -715,7 +704,6 @@ var Main = (function() {
             $viewAndChannelCount.append($textSpan1);
             
             var $siteIndicator = $('<span>');
-            $siteIndicator.text(siteIndicatorChar);
             $siteIndicator.addClass('site-indicator twitch');
             $viewAndChannelCount.append($siteIndicator);
             
@@ -837,8 +825,8 @@ var Main = (function() {
         removeFromArray(funcRequirements[targetName], requirementName);
         
         // Useful debugging message
-        console.log(requirementName + " - " + targetName
-                    + ' [' + funcRequirements[targetName].toString() + ']');
+        //console.log(requirementName + " - " + targetName
+        //            + ' [' + funcRequirements[targetName].toString() + ']');
         
         if (funcRequirements[targetName].length === 0) {
             funcs[targetName]();

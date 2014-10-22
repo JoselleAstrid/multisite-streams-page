@@ -174,14 +174,17 @@ img.followed-game {
 }
 
 .media-container span.site-indicator {
+  display: inline-block;
+  width: 10px;
+  height: 10px;
   /* top/bottom left/right */
   margin: 0 4px;
 }
 .media-container span.site-indicator.twitch {
-  color: rgb(100,65,165);
+  background-color: rgb(100,65,165);
 }
 .media-container span.site-indicator.hitbox {
-  color: rgb(149,198,0);
+  background-color: rgb(149,198,0);
 }
 
 .media-container div.media-game {
