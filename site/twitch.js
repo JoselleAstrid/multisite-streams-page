@@ -463,7 +463,7 @@ var Twitch = (function() {
     return {
     
         setOAuth2Token: function() {
-            setOAuth2Token();
+            return setOAuth2Token();
         },
         setRequirements: function() {
             setRequirements();
