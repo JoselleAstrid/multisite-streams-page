@@ -83,6 +83,46 @@ var Twitch = (function() {
         return false;
     }
     
+    function onAuthFail() {
+        Main.showNotification(
+            "There was a problem with Twitch authentication. "
+            + "Try removing everything after the # in the URL, "
+            + "and load the page again."
+        );
+    }
+    
+    function onAuthSuccess() {
+        // Remove the fragment from the URL, for two reasons:
+        // 1. If the fragment is still there and the user refreshes the page,
+        //    and the auth token has expired, then the auth will fail. This
+        //    will probably confuse users - "why does the auth occasionally
+        //    just fail?"
+        // 2. It's kinda ugly, and potentially confusing for users
+        //    when they see it.
+        //
+        // The drawback is that a page refresh with a still-valid auth token
+        // will no longer be particularly fast, but that's arguably
+        // outweighed by the above two things.
+        //
+        // As for how to remove the fragment, without triggering a refresh:
+        // http://stackoverflow.com/a/13824103/
+        
+        // First check if we already removed the fragment from a previous call.
+        // If so, we're done.
+        if (window.location.href.indexOf('#') === -1) {
+            return;
+        }
+        
+        // Remove the fragment as much as it can go without adding an entry
+        // in browser history.
+        window.location.replace("#");
+        
+        // Slice off the remaining '#' in HTML5.
+        if (typeof window.history.replaceState == 'function') {
+            history.replaceState({}, '', window.location.href.slice(0, -1));
+        }
+    }
+    
     /*
     Set Ajax headers for Twitch.
     At least that was the plan, but it seems that since JSONP is used for
@@ -175,14 +215,11 @@ var Twitch = (function() {
             // Authentication failed.
             //
             // How to test: Type garbage after "access_token=".
-            Main.showNotification(
-                "There was a problem with Twitch authentication. "
-                + "Try removing everything after the # in the URL, "
-                + "and load the page again."
-            );
+            onAuthFail();
             username = errorIndicator;
             return;
         }
+        onAuthSuccess();
         
         username = userResponse.token.user_name;
     }
@@ -249,14 +286,11 @@ var Twitch = (function() {
             // How to test: Type garbage after "access_token=". Or load in
             // Firefox, then load in Chrome, then load in Firefox again with
             // the same access token.
-            Main.showNotification(
-                "There was a problem with Twitch authentication. "
-                + "Try removing everything after the # in the URL, "
-                + "and load the page again."
-            );
+            onAuthFail();
             twitchStreamDicts = [];
             return;
         }
+        onAuthSuccess();
         
         // Stream response examples:
         // https://github.com/justintv/Twitch-API/blob/master/v3_resources/streams.md
@@ -307,14 +341,11 @@ var Twitch = (function() {
             // Authentication failed.
             //
             // How to test: Type garbage after "access_token=".
-            Main.showNotification(
-                "There was a problem with Twitch authentication. "
-                + "Try removing everything after the # in the URL, "
-                + "and load the page again."
-            );
+            onAuthFail();
             twitchVideoDicts = [];
             return;
         }
+        onAuthSuccess();
         
         // Video response examples:
         // https://github.com/justintv/Twitch-API/blob/master/v3_resources/videos.md
