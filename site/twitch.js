@@ -260,7 +260,7 @@ var Twitch = (function() {
         var url =
             'http://api.twitch.tv/api/users/'
             + username
-            + '/follows/games';
+            + '/follows/games/live';
         
         var scriptElmt = document.createElement("script");
         scriptElmt.src = url
