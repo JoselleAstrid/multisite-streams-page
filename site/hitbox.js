@@ -126,7 +126,7 @@ var Hitbox = (function() {
         // this user is following.
         // (Note: These are the parts of recordings that the user has chosen
         // to save. Basically like Twitch highlights.)
-        var url = 'https://www.hitbox.tv/api/media/video/list?'
+        var url = 'https://preview.hitbox.tv/api/media/video/list?'
             + 'filter=recent&follower_id=' + userId
             + '&limit=' + Main.getSettingFromForm('videoLimit');
         
