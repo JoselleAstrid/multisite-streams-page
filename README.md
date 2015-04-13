@@ -48,7 +48,9 @@ Config = {
 ```
 Replace `yourclientidhere` with the "Client ID" of the Developer Application you registered with Twitch.
 
-Then serve the `site` subdirectory in a webserver. This is easy to test on your local machine if you have Python - open a command prompt in the `site` subdirectory, and then use one of the commands here: http://stackoverflow.com/a/532710
+Then serve the `site` subdirectory in a webserver.
+
+Here's a simple way to test the page on your local machine with Python: open a command prompt in the `site` subdirectory, and then enter `python -m http.server` (or `python -m SimpleHTTPServer` for Python 2.x). Then use an internet browser to navigate to the index page on your default local-server IP and port, e.g. `127.0.0.1:8000/index.html`.
 
 
 Acknowledgments
