@@ -184,7 +184,7 @@ var Twitch = (function() {
             + '?callback=Twitch.setStreams'
             + '&oauth_token=' + twitchOAuth2Token
             + '&nocache=' + (new Date()).getTime()
-            + '&limit=' + Main.getSettingFromForm('streamLimit');
+            + '&limit=' + Settings.get('streamLimit');
         document.getElementsByTagName("head")[0].appendChild(scriptElmt);
     }
     
@@ -199,7 +199,7 @@ var Twitch = (function() {
             + '?callback=Twitch.setVideos'
             + '&oauth_token=' + twitchOAuth2Token
             + '&nocache=' + (new Date()).getTime()
-            + '&limit=' + Main.getSettingFromForm('videoLimit');
+            + '&limit=' + Settings.get('videoLimit');
         document.getElementsByTagName("head")[0].appendChild(scriptElmt);
     }
     
@@ -245,7 +245,7 @@ var Twitch = (function() {
             // TODO: Make a setting for a host limit? If so, should it be
             // tied into the stream limit somehow?
             // (Twitch's default is 40)
-            //+ '&limit=' + Main.getSettingFromForm('hostLimit');
+            //+ '&limit=' + Settings.get('hostLimit');
         document.getElementsByTagName("head")[0].appendChild(scriptElmt);
     }
     
@@ -268,7 +268,7 @@ var Twitch = (function() {
             + '&nocache=' + (new Date()).getTime()
             // TODO: Make a setting for a game limit?
             // (Note: Twitch doesn't specify a game limit by default)
-            //+ '&limit=' + Main.getSettingFromForm('gameLimit');
+            //+ '&limit=' + Settings.get('gameLimit');
         document.getElementsByTagName("head")[0].appendChild(scriptElmt);
     }
     
@@ -382,12 +382,12 @@ var Twitch = (function() {
                 
             videoDict.viewCount = video.views;
             videoDict.channelName = video.channel.display_name;
-            videoDict.duration = Main.timeSecToHMS(video.length);
+            videoDict.duration = Util.timeSecToHMS(video.length);
             videoDict.site = 'Twitch';
             
             var dateObj = new Date(video.recorded_at);
             videoDict.unixTimestamp = dateObj.getTime();
-            videoDict.dateDisplay = Main.dateObjToTimeAgo(dateObj);
+            videoDict.dateDisplay = Util.dateObjToTimeAgo(dateObj);
             
             twitchVideoDicts.push(videoDict);
         }

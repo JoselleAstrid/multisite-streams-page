@@ -43,7 +43,7 @@ var Hitbox = (function() {
             
         // Since the Hitbox API doesn't use OAuth, we just specify
         // the Hitbox username manually in the settings.
-        var username = Main.getSettingFromForm('hitboxUsername');
+        var username = Settings.get('hitboxUsername');
         
         if (username === '') {
             Main.showNotification("No Hitbox username specified in the settings.");
@@ -101,7 +101,7 @@ var Hitbox = (function() {
         // is following.
         var url = 'https://www.hitbox.tv/api/media/live/list?'
             + 'follower_id=' + userId
-            + '&limit=' + Main.getSettingFromForm('streamLimit');
+            + '&limit=' + Settings.get('streamLimit');
         
         // Use $.ajax() instead of $.getJSON() so that we can define a
         // callback to handle errors, including:
@@ -128,7 +128,7 @@ var Hitbox = (function() {
         // to save. Basically like Twitch highlights.)
         var url = 'https://www.hitbox.tv/api/media/video/list?'
             + 'filter=recent&follower_id=' + userId
-            + '&limit=' + Main.getSettingFromForm('videoLimit');
+            + '&limit=' + Settings.get('videoLimit');
         
         // Use $.ajax() instead of $.getJSON() so that we can define a
         // callback to handle errors, including:
@@ -161,7 +161,7 @@ var Hitbox = (function() {
             
             streamDict.channelLink = stream.channel.channel_link;
             streamDict.thumbnailUrl = 'http://edge.'
-                + Main.getSettingFromForm('hitboxThumbnailServer')
+                + Settings.get('hitboxThumbnailServer')
                 + '.hitbox.tv' + stream.media_thumbnail;
             streamDict.title = stream.media_status;
             
@@ -169,7 +169,7 @@ var Hitbox = (function() {
                 streamDict.gameName = stream.category_name;
                 streamDict.gameLink = 'http://www.hitbox.tv/game/' + stream.category_seo_key;
                 streamDict.gameImage = 'http://edge.'
-                    + Main.getSettingFromForm('hitboxThumbnailServer')
+                    + Settings.get('hitboxThumbnailServer')
                     + '.hitbox.tv' + stream.category_logo_large;
             }
             else {
@@ -203,7 +203,7 @@ var Hitbox = (function() {
             
             videoDict.videoLink = 'http://www.hitbox.tv/video/' + video.media_id;
             videoDict.thumbnailUrl = 'http://edge.'
-                + Main.getSettingFromForm('hitboxThumbnailServer')
+                + Settings.get('hitboxThumbnailServer')
                 + '.hitbox.tv' + video.media_thumbnail;
             videoDict.videoTitle = video.media_status;
             videoDict.description = video.media_description || "No description";
@@ -212,7 +212,7 @@ var Hitbox = (function() {
                 videoDict.gameName = video.category_name;
                 videoDict.gameLink = 'http://www.hitbox.tv/game/' + video.category_seo_key;
                 videoDict.gameImage = 'http://edge.'
-                    + Main.getSettingFromForm('hitboxThumbnailServer')
+                    + Settings.get('hitboxThumbnailServer')
                     + '.hitbox.tv' + video.category_logo_large;
             }
             else {
@@ -221,7 +221,7 @@ var Hitbox = (function() {
             
             videoDict.viewCount = video.media_views;
             videoDict.channelName = video.media_user_name;
-            videoDict.duration = Main.timeSecToHMS(video.media_duration);
+            videoDict.duration = Util.timeSecToHMS(video.media_duration);
             videoDict.site = 'Hitbox';
             
             var dateObj = hitboxDateStrToObj(video.media_date_added);
@@ -232,7 +232,7 @@ var Hitbox = (function() {
             //
             // So, we might as well use this same non-API function to calculate
             // time ago for both Twitch and Hitbox. It keeps things consistent.
-            videoDict.dateDisplay = Main.dateObjToTimeAgo(dateObj);
+            videoDict.dateDisplay = Util.dateObjToTimeAgo(dateObj);
             
             hitboxVideoDicts.push(videoDict);
         }

@@ -17,30 +17,6 @@ var Nico = (function() {
     var liveStreamsCallsCompleted = null;
     
     
-    // TODO: Move this function to a Util module
-    function curry(orig_func) {
-        /* Specify arguments of a function without actually calling
-           that function yet.
-           Source:
-           http://benalman.com/news/2010/09/partial-application-in-javascript/ */
-        var ap = Array.prototype,
-            args = arguments;
-    
-        function fn() {
-            ap.push.apply( fn.args, arguments );
-    
-            return fn.args.length < orig_func.length
-                ? fn
-                : orig_func.apply( this, fn.args );
-        };
-    
-        return function() {
-            fn.args = ap.slice.call( args, 1 );
-            return fn.apply( this, arguments );
-        };
-    }
-    
-    
     function yqlProxyAjax(urls, callback, attemptNum) {
         /*
         urls: API URL(s) we want to get, either string or array of strings
@@ -68,7 +44,7 @@ var Nico = (function() {
                 q: 'select * from json where url in (' + urlsForQuery + ')',
                 format: 'json'
             },
-            success: curry(
+            success: Util.curry(
                 function(urls_, callback_, attemptNum_, response){
                     // YQL failed to call Nico.
                     if (response.query.results === null) {
@@ -210,23 +186,35 @@ var Nico = (function() {
             'co393786',
             'co403229',
             'co1022062',
+            'co1145776',
+            'co1232484',
             'co1267031',
+            'co1466195',
+            'co1549630',
             'co1739309',
+            'co1787534',
+            'co1825422',
             'co1866040',
             'co1910962',
             'co1978916',
             'co2001121',
+            'co2012710',
             'co2028854',
             'co2299498',
+            'co2303853',
             'co2335880',
             'co2399333',
+            'co2502783',
             'co2517294',
+            'co2547064',
             'co2616234',
             'co2632757',
+            'co2695630',
             'co2720991',
             'co2745772',
             'co2759290',
-            'co2791640'
+            'co2791640',
+            'co2793014'
         ];
         
         $.each(allLiveStreams, function(i, vInfo){
