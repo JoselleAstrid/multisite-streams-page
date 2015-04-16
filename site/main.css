@@ -126,6 +126,17 @@ h2.section {
   After cutting off the black bars, the result ends up being about 16:9. */
   margin-top: -23px;
 }
+.thumbnail-ctnr.nico-stream {
+  /* Nico streams only:
+  In general we'll only have the community icon, which is 128x128.
+  That needs to be sized and positioned appropriately in the 16:9 space,
+  and it needs a background color too. */
+  text-align: center;
+  background-color: black;
+}
+.thumbnail-ctnr.nico-stream img.media-thumbnail {
+  width: 135px;
+}
 
 
 /* Game box for streams/videos */
@@ -185,6 +196,9 @@ img.followed-game {
 }
 .media-container span.site-indicator.hitbox {
   background-color: rgb(149,198,0);
+}
+.media-container span.site-indicator.nico {
+  background-color: rgb(160,160,160);
 }
 
 .media-container div.media-game {

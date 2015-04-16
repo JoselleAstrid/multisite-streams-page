@@ -10,6 +10,7 @@ var Main = (function() {
     var defaultSettings = {
         'twitchEnabled': true,
         'hitboxEnabled': true,
+        'nicoEnabled': false,
         'hitboxUsername': '',
         'gameDisplay': 'boximage',
         'streamLimit': 25,
@@ -285,6 +286,9 @@ var Main = (function() {
         if (getSettingFromForm('hitboxEnabled')) {
             streamDicts = streamDicts.concat(Hitbox.getStreamDicts());
         }
+        if (getSettingFromForm('nicoEnabled')) {
+            streamDicts = streamDicts.concat(Nico.getStreamDicts());
+        }
         
         // Sort by view count, decreasing order.
         streamDicts.sort( function(a, b) {
@@ -308,6 +312,9 @@ var Main = (function() {
             $streamContainer.append($thumbnailCtnr);
             if (streamDict.site === 'Twitch') {
                 $thumbnailCtnr.addClass('twitch-stream');
+            }
+            else if (streamDict.site === 'Nico') {
+                $thumbnailCtnr.addClass('nico-stream');
             }
             
             var $streamThumbnail = $('<img>');
@@ -350,23 +357,6 @@ var Main = (function() {
             // Else, game display is 'none'
             
             
-            // var $channelNameAndViews = $('<div>');
-            // $channelNameAndViews.text(streamDict.viewCount
-            //                  + ' - ' + streamDict.channelName);
-            // $channelNameAndViews.attr('class', 'channel-name');
-            // $streamContainer.append($channelNameAndViews);
-            
-            // var $siteIndicator = $('<span>');
-            // $siteIndicator.addClass('site-indicator');
-            // if (streamDict.site === 'Twitch') {
-            //     $siteIndicator.addClass('twitch');
-            // }
-            // else {  // Hitbox
-            //     $siteIndicator.addClass('hitbox');
-            // }
-            // $channelNameAndViews.append($siteIndicator);
-            
-            
             var $channelNameAndViews = $('<div>');
             
             var $textSpan1 = $('<span>');
@@ -378,8 +368,11 @@ var Main = (function() {
             if (streamDict.site === 'Twitch') {
                 $siteIndicator.addClass('twitch');
             }
-            else {  // Hitbox
+            else if (streamDict.site === 'Hitbox') {
                 $siteIndicator.addClass('hitbox');
+            }
+            else {  // Nico
+                $siteIndicator.addClass('nico');
             }
             $channelNameAndViews.append($siteIndicator);
             
@@ -404,6 +397,9 @@ var Main = (function() {
         }
         if (getSettingFromForm('hitboxEnabled')) {
             videoDicts = videoDicts.concat(Hitbox.getVideoDicts());
+        }
+        if (getSettingFromForm('nicoEnabled')) {
+            videoDicts = videoDicts.concat(Nico.getVideoDicts());
         }
         
         // Sort by date, latest to earliest.
@@ -487,22 +483,6 @@ var Main = (function() {
             // Else, game display is 'none'
             
             
-            // var $channelNameAndDate = $('<div>');
-            // $channelNameAndDate.text(videoDict.channelName
-            //                   + ' - ' + videoDict.dateDisplay);
-            // $channelNameAndDate.attr('class', 'channel-name');
-            // $videoContainer.append($channelNameAndDate);
-            
-            // var $siteIndicator = $('<span>');
-            // $siteIndicator.addClass('site-indicator');
-            // if (videoDict.site === 'Twitch') {
-            //     $siteIndicator.addClass('twitch');
-            // }
-            // else {  // Hitbox
-            //     $siteIndicator.addClass('hitbox');
-            // }
-            // $channelNameAndDate.append($siteIndicator);
-            
             var $channelNameAndDate = $('<div>');
             
             var $textSpan1 = $('<span>');
@@ -514,8 +494,11 @@ var Main = (function() {
             if (videoDict.site === 'Twitch') {
                 $siteIndicator.addClass('twitch');
             }
-            else {  // Hitbox
+            else if (videoDict.site === 'Hitbox') {
                 $siteIndicator.addClass('hitbox');
+            }
+            else {  // Nico
+                $siteIndicator.addClass('nico');
             }
             $channelNameAndDate.append($siteIndicator);
             
@@ -605,23 +588,6 @@ var Main = (function() {
             // Else, game display is 'none'
             
             
-            // var $channelNameAndViews = $('<div>');
-            // $channelNameAndViews.text(streamDict.viewCount
-            //                  + ' - ' + streamDict.channelName);
-            // $channelNameAndViews.attr('class', 'channel-name');
-            // $streamContainer.append($channelNameAndViews);
-            
-            // var $siteIndicator = $('<span>');
-            // $siteIndicator.addClass('site-indicator');
-            // if (streamDict.site === 'Twitch') {
-            //     $siteIndicator.addClass('twitch');
-            // }
-            // else {  // Hitbox
-            //     $siteIndicator.addClass('hitbox');
-            // }
-            // $channelNameAndViews.append($siteIndicator);
-            
-            
             var $channelNameAndViews = $('<div>');
             
             var $textSpan1 = $('<span>');
@@ -684,21 +650,6 @@ var Main = (function() {
             
             var $viewAndChannelCount = $('<div>');
             
-            // var channelWord;
-            // if (gameDict.channelCount === 1) {
-            //     channelWord = "channel";
-            // }
-            // else {
-            //     channelWord = "channels";
-            // }
-            // $viewAndChannelCount.text(
-            //     gameDict.viewCount + " - "
-            //     + gameDict.channelCount + " " + channelWord);
-            
-            // var $siteIndicator = $('<span>');
-            // $siteIndicator.addClass('site-indicator twitch');
-            // $viewAndChannelCount.append($siteIndicator);
-            
             var $textSpan1 = $('<span>');
             $textSpan1.text(gameDict.viewCount);
             $viewAndChannelCount.append($textSpan1);
@@ -755,6 +706,9 @@ var Main = (function() {
         if (getSettingFromForm('hitboxEnabled')) {
             Hitbox.setRequirements();
         }
+        if (getSettingFromForm('nicoEnabled')) {
+            Nico.setRequirements();
+        }
     }
     
     function startGettingMedia() {
@@ -767,6 +721,9 @@ var Main = (function() {
         }
         if (getSettingFromForm('hitboxEnabled')) {
             Hitbox.startGettingMedia();
+        }
+        if (getSettingFromForm('nicoEnabled')) {
+            Nico.startGettingMedia();
         }
     }
     
@@ -781,6 +738,7 @@ var Main = (function() {
         }
     }
     
+    // TODO: Move this function to a Util module
     function curry(orig_func) {
         /* Specify arguments of a function without actually calling
            that function yet.
