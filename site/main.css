@@ -35,8 +35,23 @@ body {
 
 
 
-#settings-form div {
+/* Settings dialog */
+
+#settings div {
   margin-bottom: 0.5em;
+}
+
+/* Title bar */
+.ui-dialog .ui-dialog-titlebar {
+  padding: .1em 1.0em;
+}
+/* Tabs */
+.ui-tabs .ui-tabs-nav .ui-tabs-anchor {
+  padding: .1em .5em;
+}
+/* Bottom button bar */
+.ui-dialog .ui-dialog-buttonpane {
+  padding: 0;
 }
 
 

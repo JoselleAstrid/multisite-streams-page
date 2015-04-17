@@ -55,57 +55,74 @@
     </div>
       
     <div id="hidden-elements-container" style="display:none;">
-      <form id="settings-form">
+    
+      <div id="settings">
+      
+        <ul>
+          <li><a href="#settings-main">Main</a></li>
+          <li><a href="#settings-twitchhitbox">Twitch + Hitbox</a></li>
+          <li><a href="#settings-nico">Nicovideo</a></li>
+        </ul>
         
-        <div>
-        <input type="checkbox" name="twitchEnabled" />
-        <label for="twitchEnabled">Include Twitch in listing </label>
+        <div id="settings-main">
+          <div>
+          <input type="checkbox" name="twitchEnabled" />
+          <label for="twitchEnabled">Include Twitch in listing </label>
+          </div>
+          
+          <div>
+          <input type="checkbox" name="hitboxEnabled" />
+          <label for="hitboxEnabled">Include Hitbox in listing </label>
+          </div>
+          
+          <div>
+          <input type="checkbox" name="nicoEnabled" />
+          <label for="nicoEnabled">Include Nicovideo in listing </label>
+          </div>
         </div>
         
-        <div>
-        <input type="checkbox" name="hitboxEnabled" />
-        <label for="hitboxEnabled">Include Hitbox in listing </label>
+        <div id="settings-twitchhitbox">
+          <div>
+          <label for="hitboxUsername">Hitbox username: </label>
+          <input type="text" name="hitboxUsername" size="12" />
+          </div>
+          
+          <div>
+          <label for="gameDisplay">Game display: </label>
+          <select name="gameDisplay">
+            <option value="boximage">Box image</option>
+            <option value="name">Name</option>
+            <option value="none">None</option>
+          </select>
+          </div>
+          
+          <div>
+          <label for="streamLimit">Max streams from each site (1-100): </label>
+          <input type="text" name="streamLimit" size="3" />
+          </div>
+          
+          <div>
+          <label for="videoLimit">Max videos from each site (1-100): </label>
+          <input type="text" name="videoLimit" size="3" />
+          </div>
+          
+          <div>
+          <label for="hitboxThumbnailServer">Hitbox thumbnail server: </label>
+          <select name="hitboxThumbnailServer">
+            <option value="bf">edge.bf.hitbox.tv</option>
+            <option value="fra">edge.fra.hitbox.tv</option>
+            <option value="sf">edge.sf.hitbox.tv</option>
+            <option value="vie">edge.vie.hitbox.tv</option>
+          </select>
+          </div>
         </div>
         
-        <div>
-        <input type="checkbox" name="nicoEnabled" />
-        <label for="nicoEnabled">Include Nicovideo in listing </label>
+        <div id="settings-nico">
+        
         </div>
         
-        <div>
-        <label for="hitboxUsername">Hitbox username: </label>
-        <input type="text" name="hitboxUsername" size="12" />
-        </div>
-        
-        <div>
-        <label for="gameDisplay">Game display: </label>
-        <select name="gameDisplay">
-          <option value="boximage">Box image</option>
-          <option value="name">Name</option>
-          <option value="none">None</option>
-        </select>
-        </div>
-        
-        <div>
-        <label for="streamLimit">Max streams from each site (1-100): </label>
-        <input type="text" name="streamLimit" size="3" />
-        </div>
-        
-        <div>
-        <label for="videoLimit">Max videos from each site (1-100): </label>
-        <input type="text" name="videoLimit" size="3" />
-        </div>
-        
-        <div>
-        <label for="hitboxThumbnailServer">Hitbox thumbnail server: </label>
-        <select name="hitboxThumbnailServer">
-          <option value="bf">edge.bf.hitbox.tv</option>
-          <option value="fra">edge.fra.hitbox.tv</option>
-          <option value="sf">edge.sf.hitbox.tv</option>
-          <option value="vie">edge.vie.hitbox.tv</option>
-        </select>
-        </div>
-      </form>
+      </div>
+      
     </div>
     
     

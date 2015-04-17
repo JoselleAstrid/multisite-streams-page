@@ -17,21 +17,21 @@ var Settings = {
         'hitboxThumbnailServer': 'vie'
     },
     
-    $form: null,
+    $container: null,
     
     show: function(saveCallback, cancelCallback) {
         
         var saveFunction = function(){
-            Settings.formToStorage();
+            Settings.fieldsToStorage();
             saveCallback();
-        }
+        };
         var cancelFunction = function(){
             // Revert any changes the user might've made
-            Settings.storageToForm();
+            Settings.storageToFields();
             cancelCallback();
-        }
+        };
         
-        Settings.$form.dialog({
+        Settings.$container.dialog({
             title: "Settings",
             modal: true,
             buttons: {
@@ -44,40 +44,41 @@ var Settings = {
                     $(this).dialog("close");
                 }
             },
-            width: 500
+            width: 500,
+            height: 500
         });
     },
     
     
-    /* Local storage <--> settings form */
+    /* Local storage <--> settings fields */
     
     hasStorage: function() {
         return (localStorage.length > 0);
     },
-    storageToForm: function() {
-        // Go through each setting in the form.
+    storageToFields: function() {
+        // Go through each setting in the fields.
         // If storage covers it, use the value from storage.
         // If storage doesn't cover it (probably a newly added setting
         // since the user's last visit), set the default value, AND
         // update storage with that setting as well.
-        var $fieldElmts = Settings.$form.find('input, select');
+        var $fieldElmts = Settings.$container.find('input, select');
         var storageNeedsUpdate = false;
         $fieldElmts.each(function(i, field) {
-            var settingName = $(field).attr('name');
-            if (localStorage.hasOwnProperty(settingName)) {
-                Settings.setInForm(settingName, localStorage[settingName]);
+            var sName = $(field).attr('name');
+            if (localStorage.hasOwnProperty(sName)) {
+                Settings.setInFields(sName, localStorage[sName]);
             }
             else {
-                Settings.setInForm(settingName, Settings.defaults[settingName]);
+                Settings.setInFields(sName, Settings.defaults[sName]);
                 storageNeedsUpdate = true;
             }
         })
         if (storageNeedsUpdate) {
-            Settings.formToStorage();
+            Settings.fieldsToStorage();
         }
     },
-    formToStorage: function() {
-        var $fieldElmts = Settings.$form.find('input, select');
+    fieldsToStorage: function() {
+        var $fieldElmts = Settings.$container.find('input, select');
         
         $fieldElmts.each(function(i, field) {
             var settingName = $(field).attr('name');
@@ -87,10 +88,10 @@ var Settings = {
     },
     
     
-    /* Settings form <--> settings as JS values */
+    /* Settings fields <--> settings as JS values */
     
     get: function(name) {
-        var $fieldElmt = Settings.$form.find(
+        var $fieldElmt = Settings.$container.find(
             'input[name="'+name+'"], select[name="'+name+'"]'
         );
         if ($fieldElmt) {
@@ -104,8 +105,8 @@ var Settings = {
         }
         return null;
     },
-    setInForm: function(name, value) {
-        var $fieldElmt = Settings.$form.find(
+    setInFields: function(name, value) {
+        var $fieldElmt = Settings.$container.find(
             'input[name="'+name+'"], select[name="'+name+'"]'
         );
         if ($fieldElmt) {
@@ -124,17 +125,20 @@ var Settings = {
     },
     
     
-    fillFormWithDefaults: function() {
-        // Fill the settings form with default values
+    fillFieldsWithDefaults: function() {
+        // Fill the settings fields with default values
         for (settingName in Settings.defaults) {
             if (!Settings.defaults.hasOwnProperty(settingName)) {continue;}
-            Settings.setInForm(settingName, Settings.defaults[settingName]);
+            Settings.setInFields(settingName, Settings.defaults[settingName]);
         }
     },
     
     
     init: function() {
-        Settings.$form = $('#settings-form');
+        // Get the container element which has all the settings
+        Settings.$container = $('#settings');
+        // Initialize the tabbed layout of the settings 
+        Settings.$container.tabs();
     }
     
 };

@@ -547,7 +547,7 @@ var Main = (function() {
         init: function() {
             
             if (Settings.hasStorage()) {
-                Settings.storageToForm();
+                Settings.storageToFields();
                 
                 if (Settings.get('twitchEnabled')) {
                     var nowRedirecting = Twitch.setOAuth2Token();
@@ -563,8 +563,8 @@ var Main = (function() {
             }
             else {
                 // No settings stored yet. Initialize with defaults.
-                Settings.fillFormWithDefaults();
-                Settings.formToStorage();
+                Settings.fillFieldsWithDefaults();
+                Settings.fieldsToStorage();
                 // Prompt the user to set settings for the first time.
                 Settings.show(Util.refreshPage, Util.refreshPage);
             }
