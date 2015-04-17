@@ -3,6 +3,8 @@ body {
   
   background-color: #111;
   color: #D3D3D3;
+  
+  font-family: Arial, sans-serif;
 }
 
 
@@ -17,8 +19,7 @@ body {
   background-color: rgb(255,180,180);
   color: #111;
   
-  font-family: Arial,sans-serif;
-  font-size: 20px;
+  font-size: 20px; font-size: 1.25rem;
 }
 
 
@@ -41,6 +42,11 @@ body {
   margin-bottom: 0.5em;
 }
 
+/* Font in the dialog; override jQuery UI defaults */
+.ui-widget {
+  font-family: Verdana, Arial, sans-serif;
+  font-size: inherit;
+}
 /* Title bar */
 .ui-dialog .ui-dialog-titlebar {
   padding: .1em 1.0em;
@@ -58,6 +64,10 @@ body {
   padding: 0;
 }
 
+span.help-text {
+  font-size: 14.4px; font-size: 0.9rem;
+}
+
 
 
 
@@ -65,8 +75,6 @@ body {
 h2.section {
   /* Go under any streams/videos of the previous section */
   clear: both;
-  
-  font-family: Arial,sans-serif;
 }
 
 
@@ -183,9 +191,7 @@ img.followed-game {
 .media-container div {
   color: rgb(211,211,211);
   
-  font-family: Arial, sans-serif;
-  
-  font-size: 0.9em;
+  font-size: 14.4px; font-size: 0.9rem;
   line-height: 1.5em;
   
   /* Just cut off any text that goes beyond the allotted space */
@@ -217,13 +223,13 @@ img.followed-game {
 }
 
 .media-container div.media-game {
-  font-size: 0.8em;
+  font-size: 12.8px; font-size: 0.8rem;
   color: rgb(160,160,160);
   font-style: italic;
 }
 
 .media-container div.minor-text {
-  font-size: 0.8em;
+  font-size: 12.8px; font-size: 0.8rem;
   color: rgb(130,130,130);
 }
 
@@ -235,7 +241,7 @@ img.followed-game {
   padding: 0 4px;
   opacity: 0.75;
   
-  font-size: 12px;
+  font-size: 12px; font-size: 0.75rem;
 }
 .media-container div.video-view-count {
   left: 4px;

@@ -55,7 +55,7 @@ var Settings = {
             buttons: buttons,
             dialogClass: dialogClass,
             width: 500,
-            height: 600
+            position: { my: "center top", at: "center top+20", of: window }
         });
     },
     
