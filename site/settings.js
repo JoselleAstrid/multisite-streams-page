@@ -20,30 +20,40 @@ var Settings = {
     $container: null,
     
     show: function(saveCallback, cancelCallback) {
+        /* If cancelCallback is null, then there should be no Cancel
+        or close buttons. This makes sense when the user is
+        prompted to set settings on their first visit. */
         
-        var saveFunction = function(){
+        var buttons = {};
+        var dialogClass = "";
+        
+        // Add Save button
+        buttons.Save = function(){
             Settings.fieldsToStorage();
             saveCallback();
+            $(this).dialog("close");
         };
-        var cancelFunction = function(){
-            // Revert any changes the user might've made
-            Settings.storageToFields();
-            cancelCallback();
-        };
+        
+        if (cancelCallback !== null) {
+            // Add Cancel button
+            buttons.Cancel = function(){
+                // Cancel button click: Revert changes the user might've made
+                Settings.storageToFields();
+                cancelCallback();
+                $(this).dialog("close");
+            };
+        }
+        else {
+            // No cancel callback: Don't add a Cancel button, and also
+            // specify a CSS class that hides the close button
+            dialogClass = "no-close";
+        }
         
         Settings.$container.dialog({
             title: "Settings",
             modal: true,
-            buttons: {
-                Save: function() {
-                    saveFunction();
-                    $(this).dialog("close");
-                },
-                Cancel: function() {
-                    cancelFunction();
-                    $(this).dialog("close");
-                }
-            },
+            buttons: buttons,
+            dialogClass: dialogClass,
             width: 500,
             height: 500
         });

@@ -45,6 +45,10 @@ body {
 .ui-dialog .ui-dialog-titlebar {
   padding: .1em 1.0em;
 }
+/* Close button with the no-close dialogClass */
+.no-close .ui-dialog-titlebar-close {
+  display: none;
+}
 /* Tabs */
 .ui-tabs .ui-tabs-nav .ui-tabs-anchor {
   padding: .1em .5em;

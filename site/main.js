@@ -566,7 +566,7 @@ var Main = (function() {
                 Settings.fillFieldsWithDefaults();
                 Settings.fieldsToStorage();
                 // Prompt the user to set settings for the first time.
-                Settings.show(Util.refreshPage, Util.refreshPage);
+                Settings.show(Util.refreshPage, null);
             }
             
             // Initialize settings button.
