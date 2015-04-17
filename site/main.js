@@ -546,9 +546,9 @@ var Main = (function() {
         
         init: function() {
             
-            var hasCookie = Settings.cookieToForm();
-            
-            if (hasCookie) {
+            if (Settings.hasStorage()) {
+                Settings.storageToForm();
+                
                 if (Settings.get('twitchEnabled')) {
                     var nowRedirecting = Twitch.setOAuth2Token();
                     
@@ -562,10 +562,10 @@ var Main = (function() {
                 startGettingMedia();
             }
             else {
-                // No settings cookie yet, need to initialize it
+                // No settings stored yet. Initialize with defaults.
                 Settings.fillFormWithDefaults();
-                Settings.formToCookie();
-                // Prompt the user to set settings for the first time
+                Settings.formToStorage();
+                // Prompt the user to set settings for the first time.
                 Settings.show(Util.refreshPage, Util.refreshPage);
             }
             
