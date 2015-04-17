@@ -55,7 +55,7 @@ var Settings = {
             buttons: buttons,
             dialogClass: dialogClass,
             width: 500,
-            height: 500
+            height: 600
         });
     },
     
@@ -71,7 +71,7 @@ var Settings = {
         // If storage doesn't cover it (probably a newly added setting
         // since the user's last visit), set the default value, AND
         // update storage with that setting as well.
-        var $fieldElmts = Settings.$container.find('input, select');
+        var $fieldElmts = Settings.$container.find('input, select, textarea');
         var storageNeedsUpdate = false;
         $fieldElmts.each(function(i, field) {
             var sName = $(field).attr('name');
@@ -88,7 +88,7 @@ var Settings = {
         }
     },
     fieldsToStorage: function() {
-        var $fieldElmts = Settings.$container.find('input, select');
+        var $fieldElmts = Settings.$container.find('input, select, textarea');
         
         $fieldElmts.each(function(i, field) {
             var settingName = $(field).attr('name');
@@ -102,14 +102,16 @@ var Settings = {
     
     get: function(name) {
         var $fieldElmt = Settings.$container.find(
-            'input[name="'+name+'"], select[name="'+name+'"]'
+            'input[name="'+name+'"], '
+            + 'select[name="'+name+'"], '
+            + 'textarea[name="'+name+'"]'
         );
         if ($fieldElmt) {
             if ($fieldElmt.attr('type') === 'checkbox') {
                 return $fieldElmt.prop('checked');
             }
             else {
-                // This works for select and input/type=text.
+                // This works for select, input/type=text, and textarea.
                 return $fieldElmt.val();
             }
         }
@@ -117,7 +119,9 @@ var Settings = {
     },
     setInFields: function(name, value) {
         var $fieldElmt = Settings.$container.find(
-            'input[name="'+name+'"], select[name="'+name+'"]'
+            'input[name="'+name+'"], '
+            + 'select[name="'+name+'"], '
+            + 'textarea[name="'+name+'"]'
         );
         if ($fieldElmt) {
             if ($fieldElmt.attr('type') === 'checkbox') {
@@ -126,7 +130,7 @@ var Settings = {
                 $fieldElmt.prop('checked', (value === true || value === 'true'));
             }
             else {
-                // This works for select and input/type=text.
+                // This works for select, input/type=text, and textarea.
                 $fieldElmt.val(value);
             }
             return true;

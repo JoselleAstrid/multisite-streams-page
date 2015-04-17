@@ -35,6 +35,13 @@ var Util = {
         }
     },
     
+    splitlines: function(s){
+        /* Split a string s by its newline characters. Return the
+        resulting multiple strings as an array.
+        This regex should handle \r\n, \r, and \n. */
+        return s.split(/\r\n|[\n\r]/);
+    },
+    
     
     
     /* Date/time utility functions */

@@ -178,50 +178,14 @@ var Nico = (function() {
         
         streamDicts = [];
         
-        // TODO: Use a list from settings, not hard-coded
-        var following = [
-            'co156608',
-            'co302682',
-            'co340381',
-            'co393786',
-            'co403229',
-            'co1022062',
-            'co1145776',
-            'co1232484',
-            'co1267031',
-            'co1466195',
-            'co1549630',
-            'co1739309',
-            'co1787534',
-            'co1825422',
-            'co1866040',
-            'co1910962',
-            'co1978916',
-            'co2001121',
-            'co2012710',
-            'co2028854',
-            'co2299498',
-            'co2303853',
-            'co2335880',
-            'co2399333',
-            'co2502783',
-            'co2517294',
-            'co2547064',
-            'co2616234',
-            'co2632757',
-            'co2695630',
-            'co2720991',
-            'co2745772',
-            'co2759290',
-            'co2791640',
-            'co2793014'
-        ];
+        var followingCommunitiesStr = Settings.get('nicoCommunities');
+        var followingCommunities = Util.splitlines(followingCommunitiesStr);
         
         $.each(allLiveStreams, function(i, vInfo){
             var globalId = vInfo.community.global_id;
             
-            if (following.indexOf(globalId) === -1) {
-                // Not following this stream, don't add it to streamDicts
+            if (followingCommunities.indexOf(globalId) === -1) {
+                // Not following this community, don't add to streamDicts
                 return;
             }
             
