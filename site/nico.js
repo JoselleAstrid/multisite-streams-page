@@ -3,6 +3,14 @@ var Nico = (function() {
     var streamDicts = null;
     var videoDicts = null;
     
+    var $coTableContainer = null;
+    var $coEditArea = null;
+    var $coEditButton = null;
+    var $coConfirmArea = null;
+    var $coConfirmButton = null;
+    
+    var coRegex = /^co[0-9]+$/;
+    
     var errorIndicator = "There was an error previously";
     
     // Max number of streams we can get in a single API call.
@@ -233,12 +241,75 @@ var Nico = (function() {
         Main.addFunc('Nico.setStreams', setStreams);
         Main.addFunc('Nico.setVideos', setVideos);
         Main.addFunc('Nico.finishGettingAllLiveStreams', finishGettingAllLiveStreams);
-        //Main.addFunc('Nico.finishSettingAllLiveStreams', finishSettingAllLiveStreams);
         Main.addFunc('Nico.addToAllLiveStreams', addToAllLiveStreams);
         
         Main.addRequirement('Nico.setStreams', 'Main.showStreams');
         
         Main.addRequirement('Nico.setVideos', 'Main.showVideos');
+    }
+    
+    
+    
+    function refreshCommunitiesTable() {
+        var followingCommunitiesStr = Settings.get('nicoCommunities');
+        $coTableContainer.empty();
+        
+        if (followingCommunitiesStr === "") {
+            // No communities specified
+            $coTableContainer.text("(None)");
+            return;
+        }
+        
+        // Communities specified; make a table out of them
+        var $coTable = $(document.createElement('table'));
+        var $coTableBody = $(document.createElement('tbody'));
+        $coTable.append($coTableBody);
+        $coTableContainer.append($coTable);
+        
+        var followingCommunities = Util.splitlines(followingCommunitiesStr);
+        
+        followingCommunities.forEach(function(co){
+            var $row = $(document.createElement('tr'));
+            
+            var $coCell = $(document.createElement('td'));
+            $coCell.text(co);
+            $row.append($coCell);
+            
+            var $linkCell = $(document.createElement('td'));
+            if (coRegex.exec(co) !== null) {
+                var $anchor = $(document.createElement('a'));
+                $anchor.attr('href', 'http://com.nicovideo.jp/community/'+co);
+                $anchor.attr('target', '_blank');
+                $anchor.text("OK");
+                $linkCell.append($anchor);
+            }
+            else {
+                $linkCell.text("Error - typo?");
+            }
+            $row.append($linkCell);
+            
+            $coTableBody.append($row);
+        });
+    }
+    
+    function initSettings() {
+        $coTableContainer = $('#nicoCommunities-table-container');
+        $coEditArea = $('#edit-nicoCommunities');
+        $coEditButton = $('#edit-button-nicoCommunities');
+        $coConfirmArea = $('#confirm-nicoCommunities');
+        $coConfirmButton = $('#confirm-button-nicoCommunities');
+        
+        $coEditButton.click(function(e) {
+            $coEditArea.show();
+            $coConfirmArea.hide();
+        });
+        $coConfirmButton.click(function(e) {
+            refreshCommunitiesTable();
+            $coConfirmArea.show();
+            $coEditArea.hide();
+        });
+        
+        refreshCommunitiesTable();
     }
     
     
@@ -260,6 +331,13 @@ var Nico = (function() {
         },
         getVideoDicts: function() {
             return videoDicts;
+        },
+        
+        refreshCommunitiesTable: function() {
+            refreshCommunitiesTable();
+        },
+        initSettings: function() {
+            initSettings();
         }
     }
 })();

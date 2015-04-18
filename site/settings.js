@@ -10,14 +10,18 @@ var Settings = {
         'twitchEnabled': true,
         'hitboxEnabled': true,
         'nicoEnabled': false,
+        
         'hitboxUsername': '',
         'gameDisplay': 'boximage',
         'streamLimit': 25,
         'videoLimit': 10,
-        'hitboxThumbnailServer': 'vie'
+        'hitboxThumbnailServer': 'vie',
+        
+        'nicoCommunities': ''
     },
     
     $container: null,
+    nicoTabInitialized: false,
     
     show: function(saveCallback, cancelCallback) {
         /* If cancelCallback is null, then there should be no Cancel
@@ -152,7 +156,16 @@ var Settings = {
         // Get the container element which has all the settings
         Settings.$container = $('#settings');
         // Initialize the tabbed layout of the settings 
-        Settings.$container.tabs();
+        Settings.$container.tabs({
+            beforeActivate: function(event, ui) {
+                if (ui.newTab.context.hash === '#settings-nico') {
+                    if (!Settings.nicoTabInitialized) {
+                        Nico.initSettings();
+                        Settings.nicoTabInitialized = true;
+                    }
+                }
+            }
+        });
     }
     
 };

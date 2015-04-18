@@ -118,16 +118,30 @@
         </div>
         
         <div id="settings-nico">
-          <div>
-          <label for="field-nicoCommunities">Communities to watch for: </label>
+          <div>Communities to watch for:</div>
+          <div id="confirm-nicoCommunities">
+            <div id="nicoCommunities-table-container"></div>
+            <button id="edit-button-nicoCommunities" type="button">
+              Edit</button>
           </div>
-          <div>
-          <textarea name="nicoCommunities" id="field-nicoCommunities"
-            rows="13" cols="12"></textarea>
+          <div id="edit-nicoCommunities" style="display:none;">
+            <div>
+              <textarea name="nicoCommunities" id="field-nicoCommunities">
+                </textarea>
+            </div>
+            <div>
+              <button id="confirm-button-nicoCommunities" type="button">
+                Confirm</button>
+            </div>
+            <div class="help-text">
+              Type one community ID per line. A community ID should be "co"
+              followed by numbers. Example: co1234567
+            </div>
           </div>
-          <span class="help-text">
-          For now, only Nico streams are supported, not videos.
-          </span>
+          <br /><br />
+          <div class="help-text">
+            For now, only Nico streams are supported, not videos.
+          </div>
         </div>
         
       </div>

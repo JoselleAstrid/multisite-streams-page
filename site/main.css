@@ -42,11 +42,12 @@ body {
   margin-bottom: 0.5em;
 }
 
-/* Font in the dialog; override jQuery UI defaults */
+/* Font; override jQuery UI defaults */
 .ui-widget {
   font-family: Verdana, Arial, sans-serif;
   font-size: inherit;
 }
+
 /* Title bar */
 .ui-dialog .ui-dialog-titlebar {
   padding: .1em 1.0em;
@@ -64,7 +65,32 @@ body {
   padding: 0;
 }
 
-span.help-text {
+#nicoCommunities-table-container {
+  width: 200px;
+  height: 350px;
+  overflow-y: auto;
+  padding: 8px;
+  border: 1px solid rgb(200,200,200);
+}
+#nicoCommunities-table-container table {
+  border-collapse: collapse;
+  background-color: rgb(240,240,240);
+}
+#nicoCommunities-table-container table tbody tr td {
+  border: 1px solid black;
+  padding: 4px;
+}
+/* Set table anchor colors to be browser-standard colors, since jQuery UI
+makes all its anchors black by default */
+#nicoCommunities-table-container table tbody tr td a:link { color: #0000EE; }
+#nicoCommunities-table-container table tbody tr td a:visited { color: #551A8B; }
+/* Textarea for editing communities list */
+#field-nicoCommunities {
+  width: 150px;
+  height: 320px;
+}
+
+.help-text {
   font-size: 14.4px; font-size: 0.9rem;
 }
 
