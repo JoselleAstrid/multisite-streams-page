@@ -19,69 +19,74 @@ var Nico = (function() {
     var MAX_STREAMS_IN_CALL = 100;
     // Max number of times we'll try a particular API call before giving up.
     var MAX_CALL_ATTEMPTS = 3;
+    // Proxy request server: hardcoded for now. May be a config thing later
+    // if we stick with this proxy-request plan.
+    var PROXY_REQUEST_SERVER = 'http://127.0.0.1:8080/';
+    
+    // Max number of API calls to have active in parallel. Too few and it may
+    // take too long for everything to finish. Too many and some calls might
+    // time out since they waited too long (since Nico seems to throttle
+    // multiple calls to some extent).
+    var MAX_ACTIVE_CALLS = 6;
+    var numActiveCalls = 0;
+    var callQueue = [];
+    
+    // Stream search tag: hardcoded for now. May make this a setting or auto-
+    // generated later.
+    //var searchTag = "rta";
+    var searchTag = "ゲーム";
     
     var allLiveStreams = null;
     var liveStreamsCallsExpected = null;
     var liveStreamsCallsCompleted = null;
+    var numFailedCalls = 0;
     
     
-    function yqlProxyAjax(urls, callback, attemptNum) {
-        /*
-        urls: API URL(s) we want to get, either string or array of strings
-        options: Any jQuery.ajax() options except url and data
-        */
-        var urlsForQuery = '';
+    function proxyAjax(url, callback, attemptNum) {
         
-        if ($.type(urls) === 'string') {
-            urlsForQuery = '"' + urls + '"';
-        }
-        else {
-            $.each(urls, function(i, url){
-                if (i > 0) {
-                    urlsForQuery += ', ';
-                }
-                urlsForQuery += ('"' + url + '"');
-            });
+        if (numActiveCalls >= MAX_ACTIVE_CALLS) {
+            callQueue.push(Util.curry(proxyAjax, url, callback, attemptNum));
+            return;
         }
         
         var options = {
-            type: 'POST',
+            type: 'GET',
             dataType: 'json',
-            url: 'https://query.yahooapis.com/v1/public/yql',
-            data: {
-                q: 'select * from json where url in (' + urlsForQuery + ')',
-                format: 'json'
-            },
+            url: PROXY_REQUEST_SERVER + url,
             success: Util.curry(
-                function(urls_, callback_, attemptNum_, response){
-                    // YQL failed to call Nico.
-                    if (response.query.results === null) {
-                        // Try again if we haven't reached the max attempts.
-                        if (attemptNum_ < MAX_CALL_ATTEMPTS) {
-                            yqlProxyAjax(urls_, callback_, attemptNum_+1);
-                        }
-                        else {
-                            Main.showNotification(
-                                "Nicovideo request came back empty "
-                                + MAX_CALL_ATTEMPTS.toString()
-                                + " times; giving up.");
-                            // TODO: Check if this is the right error
-                            // handling to use.
-                            callback(errorIndicator);
-                        }
-                        return;
+                function(callback_, response){
+                    numActiveCalls--;
+                    if (callQueue.length > 0) {
+                        var waitingAjaxCall = callQueue.shift();
+                        waitingAjaxCall();
                     }
-                    // Call succeeded.
-                    callback(response)
+                    
+                    callback_(response);
                 },
-                urls, callback, attemptNum
+                callback
             ),
-            error: function(response){
-                // TODO: Check if this is the right error handling to use.
-                callback(errorIndicator)
-            }
+            error: Util.curry(
+                function(url_, callback_, attemptNum_, response){
+                    numActiveCalls--;
+                    if (callQueue.length > 0) {
+                        var waitingAjaxCall = callQueue.shift();
+                        waitingAjaxCall();
+                    }
+                    
+                    // Try again if we haven't reached the max attempts.
+                    if (attemptNum_ < MAX_CALL_ATTEMPTS) {
+                        proxyAjax(url_, callback_, attemptNum_+1);
+                    }
+                    else {
+                        callback(errorIndicator);
+                    }
+                },
+                url, callback, attemptNum
+            )
         };
         $.ajax(options);
+        
+        numActiveCalls++;
     }
     
     
@@ -92,26 +97,30 @@ var Nico = (function() {
         var url =
             'http://api.ce.nicovideo.jp/liveapi/v1/video.search.solr'
             + '?__format=json'
-            + '&word=ゲーム'
+            + '&word=' + searchTag
             + '&limit=' + MAX_STREAMS_IN_CALL.toString();
         
         // To call Nico's API without getting a Cross Origin error, use CORS
-        // via YQL (Yahoo) proxy.
-        yqlProxyAjax(url, Main.getFunc('Nico.finishGettingAllLiveStreams'), 1);
+        // via proxy.
+        proxyAjax(url, Main.getFunc('Nico.finishGettingAllLiveStreams'), 1);
     }
     
     function finishGettingAllLiveStreams(response) {
         
+        allLiveStreams = [];
+        
         if (response === errorIndicator) {
-            // YQL's response is an error.
-            streamDicts = [];
+            Main.showNotification(
+                "Initial Nicovideo request didn't work after "
+                + MAX_CALL_ATTEMPTS.toString()
+                + " tries; giving up.");
+            Main.getFunc('Nico.setStreams')();
             return;
         }
         
-        var nlvResponse = response.query.results.nicolive_video_response;
+        var nlvResponse = response.nicolive_video_response;
         var totalCount = parseInt(nlvResponse.total_count.filtered);
         liveStreamsCallsExpected = 1;
-        allLiveStreams = [];
         
         if (totalCount <= MAX_STREAMS_IN_CALL) {
             // Oh, we've already retrieved all the live streams.
@@ -134,7 +143,7 @@ var Nico = (function() {
             urls.push(
                 'http://api.ce.nicovideo.jp/liveapi/v1/video.search.solr'
                 + '?__format=json'
-                + '&word=ゲーム'
+                + '&word=' + searchTag
                 + '&from=' + currentIndex.toString()
                 + '&limit=' + MAX_STREAMS_IN_CALL.toString()
             );
@@ -147,30 +156,30 @@ var Nico = (function() {
         addToAllLiveStreams(response);
         
         $.each(urls, function(i, url){
-            yqlProxyAjax(url, Main.getFunc('Nico.addToAllLiveStreams'), 1);
+            proxyAjax(url, Main.getFunc('Nico.addToAllLiveStreams'), 1);
         });
     }
     
     function addToAllLiveStreams(response) {
         
         if (response === errorIndicator) {
-            // YQL's response is an error.
-            streamDicts = [];
-            return;
+            numFailedCalls++;
+            Main.showNotification(
+                "Nicovideo requests failed after "
+                + MAX_CALL_ATTEMPTS.toString()
+                + " tries: "
+                + numFailedCalls.toString());
         }
-        
-        if (response.query.results === null) {
-            // YQL didn't get any results.
-        }
-        
-        var nlvResponse = response.query.results.nicolive_video_response;
-        
-        // If count is 0 then there is no video_info key, so need to check.
-        if (nlvResponse.count > 0) {
-            var videoInfos = nlvResponse.video_info;
-            $.each(videoInfos, function(i, videoInfo){
-                allLiveStreams.push(videoInfo);
-            });
+        else {
+            var nlvResponse = response.nicolive_video_response;
+            
+            // If count is 0 then there is no video_info key, so need to check.
+            if (nlvResponse.count > 0) {
+                var videoInfos = nlvResponse.video_info;
+                $.each(videoInfos, function(i, videoInfo){
+                    allLiveStreams.push(videoInfo);
+                });
+            }
         }
         
         liveStreamsCallsCompleted++;
