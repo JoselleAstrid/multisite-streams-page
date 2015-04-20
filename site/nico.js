@@ -126,6 +126,16 @@ var Nico = (function() {
         });
     }
     
+    function reportCallCompleted() {
+        liveStreamsCallsCompleted++;
+        if (liveStreamsCallsCompleted === liveStreamsCallsExpected) {
+            // allLiveStreams has all the live streams now. Next step is to get
+            // only the streams we're interested in, and only the info we need
+            // from them.
+            Main.getFunc('Nico.setStreams')();
+        }
+    }
+    
     function continueGettingLiveStreams(keyword, response) {
         
         numTotalCalls++;
@@ -138,9 +148,7 @@ var Nico = (function() {
                 + " tries: "
                 + numFailedCalls.toString() + " of "
                 + numTotalCalls.toString());
-            // TODO: This doesn't maximize the number of streams we can
-            // get in this error case.
-            Main.getFunc('Nico.setStreams')();
+            reportCallCompleted();
             return;
         }
         
@@ -216,13 +224,7 @@ var Nico = (function() {
             }
         }
         
-        liveStreamsCallsCompleted++;
-        if (liveStreamsCallsCompleted === liveStreamsCallsExpected) {
-            // allLiveStreams has all the live streams now. Next step is to get
-            // only the streams we're interested in, and only the info we need
-            // from them.
-            Main.getFunc('Nico.setStreams')();
-        }
+        reportCallCompleted();
     }
     
     function setStreams() {
@@ -231,12 +233,17 @@ var Nico = (function() {
         
         var followingCommunities = Settings.get('nicoCommunities');
         var followingCos = followingCommunities.map(function(x){return x.co;});
+        var addedCos = [];
         
         $.each(allLiveStreams, function(i, vInfo){
             var globalId = vInfo.community.global_id;
             
             if (followingCos.indexOf(globalId) === -1) {
                 // Not following this community, don't add to streamDicts
+                return;
+            }
+            if (addedCos.indexOf(globalId) !== -1) {
+                // Already added this community, don't add to streamDicts
                 return;
             }
             
@@ -256,6 +263,7 @@ var Nico = (function() {
             d.site = 'Nico';
             
             streamDicts.push(d);
+            addedCos.push(globalId);
         });
     }
     
