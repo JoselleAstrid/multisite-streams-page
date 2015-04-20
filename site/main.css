@@ -85,7 +85,7 @@ makes all its anchors black by default */
 #nicoCommunities-table-container table tbody tr td a:link { color: #0000EE; }
 #nicoCommunities-table-container table tbody tr td a:visited { color: #551A8B; }
 /* Textarea for editing communities list */
-#field-nicoCommunities {
+#textarea-nicoCommunities {
   width: 150px;
   height: 320px;
 }

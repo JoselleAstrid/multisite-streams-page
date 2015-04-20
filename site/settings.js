@@ -17,11 +17,26 @@ var Settings = {
         'videoLimit': 10,
         'hitboxThumbnailServer': 'vie',
         
-        'nicoCommunities': ''
+        'nicoCommunities': []
     },
+    
+    fieldTypes: ['input', 'select', 'textarea'],
+    
+    nicoCommunities: null,
     
     $container: null,
     nicoTabInitialized: false,
+    
+    
+    
+    get$field: function(key) {
+        var selector = Settings.fieldTypes.map(
+            function(fieldType){return fieldType+'[name="'+key+'"]';}
+        ).join(', ');
+        return Settings.$container.find(selector);
+    },
+    
+    
     
     show: function(saveCallback, cancelCallback) {
         /* If cancelCallback is null, then there should be no Cancel
@@ -64,52 +79,63 @@ var Settings = {
     },
     
     
+    
     /* Local storage <--> settings fields */
     
     hasStorage: function() {
         return (localStorage.length > 0);
     },
+    
     storageToFields: function() {
-        // Go through each setting in the fields.
+        // Go through each setting to set the settings fields. (This is either
+        // an input field or a field/property of Settings.)
+        //
         // If storage covers it, use the value from storage.
         // If storage doesn't cover it (probably a newly added setting
         // since the user's last visit), set the default value, AND
-        // update storage with that setting as well.
-        var $fieldElmts = Settings.$container.find('input, select, textarea');
+        // update the other way, fields to storage.
+        var settingsKeys = Object.keys(Settings.defaults);
         var storageNeedsUpdate = false;
-        $fieldElmts.each(function(i, field) {
-            var sName = $(field).attr('name');
-            if (localStorage.hasOwnProperty(sName)) {
-                Settings.setInFields(sName, localStorage[sName]);
+        
+        settingsKeys.forEach(function(key) {
+            if (localStorage.hasOwnProperty(key)) {
+                // Use JSON.parse since local storage can only have strings,
+                // while our settings can be in any format.
+                Settings.setInField(key, JSON.parse(localStorage[key]));
             }
             else {
-                Settings.setInFields(sName, Settings.defaults[sName]);
+                Settings.setInField(key, Settings.defaults[key]);
                 storageNeedsUpdate = true;
             }
-        })
+        });
         if (storageNeedsUpdate) {
             Settings.fieldsToStorage();
         }
     },
+    
     fieldsToStorage: function() {
-        var $fieldElmts = Settings.$container.find('input, select, textarea');
+        var settingsKeys = Object.keys(Settings.defaults);
         
-        $fieldElmts.each(function(i, field) {
-            var settingName = $(field).attr('name');
-            var settingValue = Settings.get(settingName);
-            localStorage[settingName] = settingValue;
+        settingsKeys.forEach(function(key) {
+            var settingValue = Settings.get(key);
+            // Use JSON.stringify since our settings can be in any format,
+            // while local storage only accepts strings.
+            localStorage[key] = JSON.stringify(settingValue);
         });
     },
     
     
-    /* Settings fields <--> settings as JS values */
     
-    get: function(name) {
-        var $fieldElmt = Settings.$container.find(
-            'input[name="'+name+'"], '
-            + 'select[name="'+name+'"], '
-            + 'textarea[name="'+name+'"]'
-        );
+    /* Settings field <--> setting as JS values */
+    
+    get: function(key) {
+        // Case 1: There's a Settings field for this setting.
+        if (Settings.hasOwnProperty(key)) {
+            return Settings[key];
+        }
+        
+        // Case 2: There's an HTML field element for this setting.
+        var $fieldElmt = Settings.get$field(key);
         if ($fieldElmt) {
             if ($fieldElmt.attr('type') === 'checkbox') {
                 return $fieldElmt.prop('checked');
@@ -119,14 +145,20 @@ var Settings = {
                 return $fieldElmt.val();
             }
         }
+        
+        // Couldn't find this setting.
         return null;
     },
-    setInFields: function(name, value) {
-        var $fieldElmt = Settings.$container.find(
-            'input[name="'+name+'"], '
-            + 'select[name="'+name+'"], '
-            + 'textarea[name="'+name+'"]'
-        );
+    
+    setInField: function(key, value) {
+        // Case 1: There's a Settings field for this setting.
+        if (Settings.hasOwnProperty(key)) {
+            Settings[key] = value;
+            return true;
+        }
+        
+        // Case 2: There's an HTML field element for this setting.
+        var $fieldElmt = Settings.get$field(key);
         if ($fieldElmt) {
             if ($fieldElmt.attr('type') === 'checkbox') {
                 // This will handle strings of 'true' or 'false',
@@ -139,17 +171,20 @@ var Settings = {
             }
             return true;
         }
+        
+        // Couldn't find this setting.
         return false;
     },
     
     
+    
     fillFieldsWithDefaults: function() {
         // Fill the settings fields with default values
-        for (settingName in Settings.defaults) {
-            if (!Settings.defaults.hasOwnProperty(settingName)) {continue;}
-            Settings.setInFields(settingName, Settings.defaults[settingName]);
-        }
+        Object.keys(Settings.defaults).forEach(function(key){
+            Settings.setInField(key, Settings.defaults[key]);
+        });
     },
+    
     
     
     init: function() {

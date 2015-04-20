@@ -32,8 +32,8 @@ var Nico = (function() {
     var callQueue = [];
     
     // Stream search keywords: hardcoded for now. May make this a setting later.
-    //var searchKeywords = ["rta", "ゲーム+練習"];
-    var searchKeywords = ["ゲーム"];
+    var searchKeywords = ["rta", "ゲーム+練習"];
+    //var searchKeywords = ["ゲーム"];
     
     var allLiveStreams = [];
     var liveStreamsCallsExpected = 0;
@@ -92,6 +92,14 @@ var Nico = (function() {
     
     
     function startGettingAllLiveStreams() {
+        
+        if (Settings.get('nicoCommunities').length === 0) {
+            Main.showNotification(
+                "You haven't specified any Nicovideo communities to watch for."
+            );
+            Main.getFunc('Nico.setStreams')();
+            return;
+        }
         
         searchKeywords.forEach(function(keyword){
                 
@@ -221,13 +229,13 @@ var Nico = (function() {
         
         streamDicts = [];
         
-        var followingCommunitiesStr = Settings.get('nicoCommunities');
-        var followingCommunities = Util.splitlines(followingCommunitiesStr);
+        var followingCommunities = Settings.get('nicoCommunities');
+        var followingCos = followingCommunities.map(function(x){return x.co;});
         
         $.each(allLiveStreams, function(i, vInfo){
             var globalId = vInfo.community.global_id;
             
-            if (followingCommunities.indexOf(globalId) === -1) {
+            if (followingCos.indexOf(globalId) === -1) {
                 // Not following this community, don't add to streamDicts
                 return;
             }
@@ -285,17 +293,38 @@ var Nico = (function() {
     
     
     
+    function startEditingCommunities() {
+        var communities = Settings.get('nicoCommunities');
+        var cos = communities.map(function(x){return x.co;});
+        $('#textarea-nicoCommunities').text(cos.join('\n'));
+    }
+    
+    function finishEditingCommunities() {
+        var text = $('#textarea-nicoCommunities').val();
+        if (text === "") {
+            Settings.setInField('nicoCommunities', []);
+            return;
+        }
+        
+        var cos = Util.splitlines(text);
+        var communities = [];
+        cos.forEach(function(co){
+            communities.push({'co': co});
+        });
+        Settings.setInField('nicoCommunities', communities);
+    }
+    
     function refreshCommunitiesTable() {
         // TODO: Handle the case where checking all communities requires
         // multiple calls
-        // TODO: Check if the table has been changed or not, before doing the
-        // AJAX thing
+        // TODO: Store the checked community names, and check if the table
+        // has been changed or not before doing the AJAX thing
         // TODO: Support re-checking in case the network call fails?
         
-        var followingCommunitiesStr = Settings.get('nicoCommunities');
+        var followingCommunities = Settings.get('nicoCommunities');
         $coTableContainer.empty();
         
-        if (followingCommunitiesStr === "") {
+        if (followingCommunities.length === 0) {
             // No communities specified
             $coTableContainer.text("(None)");
             return;
@@ -307,10 +336,10 @@ var Nico = (function() {
         $coTable.append($coTableBody);
         $coTableContainer.append($coTable);
         
-        var followingCommunities = Util.splitlines(followingCommunitiesStr);
-        var noTypoCommunities = [];
+        var noTypoCos = [];
         
-        followingCommunities.forEach(function(co){
+        followingCommunities.forEach(function(community){
+            var co = community.co;
             var $row = $(document.createElement('tr'));
             
             var $coCell = $(document.createElement('td'));
@@ -322,7 +351,7 @@ var Nico = (function() {
             $nameCell.addClass('coName');
             if (coRegex.exec(co) !== null) {
                 $nameCell.text("Checking...");
-                noTypoCommunities.push(co);
+                noTypoCos.push(co);
             }
             else {
                 $nameCell.text("Typo?");
@@ -334,7 +363,7 @@ var Nico = (function() {
         
         var params = {
             '__format': 'json',
-            'id': noTypoCommunities.join(',')
+            'id': noTypoCos.join(',')
         };
         
         proxyAjax(
@@ -360,11 +389,20 @@ var Nico = (function() {
             return;
         }
         
-        var communities = response.nicovideo_community_response.community;
         var coToName = {};
-        communities.forEach(function(community){
+        var count = parseInt(response.nicovideo_community_response.count);
+        
+        if (count > 1) {
+            var communities = response.nicovideo_community_response.community;
+            communities.forEach(function(community){
+                coToName[community.global_id] = community.name;
+            });
+        }
+        else if (count === 1) {
+            var community = response.nicovideo_community_response.community;
             coToName[community.global_id] = community.name;
-        });
+        }
+        // Else, count is 0, and there's no entries to add
         
         $rows.each(function(i, row) {
             var $row = $(row);
@@ -398,10 +436,12 @@ var Nico = (function() {
         $coConfirmButton = $('#confirm-button-nicoCommunities');
         
         $coEditButton.click(function(e) {
+            startEditingCommunities();
             $coEditArea.show();
             $coConfirmArea.hide();
         });
         $coConfirmButton.click(function(e) {
+            finishEditingCommunities();
             refreshCommunitiesTable();
             $coConfirmArea.show();
             $coEditArea.hide();
