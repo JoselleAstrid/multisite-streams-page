@@ -330,6 +330,8 @@ var Nico = (function() {
         // TODO: Support re-checking in case the network call fails?
         
         var followingCommunities = Settings.get('nicoCommunities');
+        
+        $('#nico-community-count').text(followingCommunities.length.toString());
         $coTableContainer.empty();
         
         if (followingCommunities.length === 0) {
@@ -373,7 +375,6 @@ var Nico = (function() {
             '__format': 'json',
             'id': noTypoCos.join(',')
         };
-        
         proxyAjax(
             'http://api.ce.nicovideo.jp/api/v1/community.array',
             params,
