@@ -32,8 +32,8 @@ var Nico = (function() {
     var callQueue = [];
     
     // Stream search keywords: hardcoded for now. May make this a setting later.
-    var searchKeywords = ["rta", "ゲーム+練習"];
-    //var searchKeywords = ["ゲーム"];
+    //var searchKeywords = ["rta", "ゲーム+練習"];
+    var searchKeywords = ["ゲーム"];
     
     var allLiveStreams = [];
     var liveStreamsCallsExpected = 0;
@@ -42,17 +42,18 @@ var Nico = (function() {
     var numFailedCalls = 0;
     
     
-    function proxyAjax(url, callback, attemptNum) {
+    function proxyAjax(url, params, callback, attemptNum) {
         
         if (numActiveCalls >= MAX_ACTIVE_CALLS) {
-            callQueue.push(Util.curry(proxyAjax, url, callback, attemptNum));
+            callQueue.push(Util.curry(proxyAjax, url, params, callback, attemptNum));
             return;
         }
         
         var options = {
-            type: 'GET',
+            type: 'POST',
             dataType: 'json',
             url: PROXY_REQUEST_SERVER + url,
+            data: params,
             success: Util.curry(
                 function(callback_, response){
                     numActiveCalls--;
@@ -66,7 +67,7 @@ var Nico = (function() {
                 callback
             ),
             error: Util.curry(
-                function(url_, callback_, attemptNum_, response){
+                function(url_, params_, callback_, attemptNum_, response){
                     numActiveCalls--;
                     if (callQueue.length > 0) {
                         var waitingAjaxCall = callQueue.shift();
@@ -75,13 +76,13 @@ var Nico = (function() {
                     
                     // Try again if we haven't reached the max attempts.
                     if (attemptNum_ < MAX_CALL_ATTEMPTS) {
-                        proxyAjax(url_, callback_, attemptNum_+1);
+                        proxyAjax(url_, params_, callback_, attemptNum_+1);
                     }
                     else {
                         callback(errorIndicator);
                     }
                 },
-                url, callback, attemptNum
+                url, params, callback, attemptNum
             )
         };
         $.ajax(options);
@@ -96,17 +97,19 @@ var Nico = (function() {
                 
             // Make an API call to get the first 'page' of live streams under
             // this keyword.
-            var url =
-                'http://api.ce.nicovideo.jp/liveapi/v1/video.search.solr'
-                + '?__format=json'
-                + '&word=' + keyword
-                + '&limit=' + MAX_STREAMS_IN_CALL.toString();
-            
+            //
             // To call Nico's API without getting a Cross Origin error, use CORS
             // via proxy.
+            var params = {
+                '__format': 'json',
+                'word': keyword,
+                'limit': MAX_STREAMS_IN_CALL.toString()
+            };
+            
             liveStreamsCallsExpected++;
             proxyAjax(
-                url,
+                'http://api.ce.nicovideo.jp/liveapi/v1/video.search.solr',
+                params,
                 Util.curry(
                     Main.getFunc('Nico.continueGettingLiveStreams'), keyword
                 ),
@@ -151,23 +154,27 @@ var Nico = (function() {
         // so far. For some reason the API may not give any streams at
         // indices 0 to 2.)
         var currentIndex = MAX_STREAMS_IN_CALL;
-        var urls = [];
+        var paramSets = [];
         
         while (currentIndex < totalCount) {
-            urls.push(
-                'http://api.ce.nicovideo.jp/liveapi/v1/video.search.solr'
-                + '?__format=json'
-                + '&word=' + keyword
-                + '&from=' + currentIndex.toString()
-                + '&limit=' + MAX_STREAMS_IN_CALL.toString()
-            );
+            paramSets.push({
+                '__format': 'json',
+                'word': keyword,
+                'from': currentIndex.toString(),
+                'limit': MAX_STREAMS_IN_CALL.toString()
+            });
             
             currentIndex += MAX_STREAMS_IN_CALL;
         }
         
-        $.each(urls, function(i, url){
+        $.each(paramSets, function(i, paramSet){
             liveStreamsCallsExpected++;
-            proxyAjax(url, Main.getFunc('Nico.addToAllLiveStreams'), 1);
+            proxyAjax(
+                'http://api.ce.nicovideo.jp/liveapi/v1/video.search.solr',
+                paramSet,
+                Main.getFunc('Nico.addToAllLiveStreams'),
+                1
+            );
         });
         
         // Add the streams obtained from our first call.
