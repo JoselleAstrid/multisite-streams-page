@@ -18,7 +18,7 @@ var Nico = (function() {
     // the max is 149, but it's actually 100.
     var MAX_STREAMS_IN_CALL = 100;
     // Max number of times we'll try a particular API call before giving up.
-    var MAX_CALL_ATTEMPTS = 3;
+    var MAX_CALL_ATTEMPTS = 2;
     // Proxy request server: hardcoded for now. May be a config thing later
     // if we stick with this proxy-request plan.
     var PROXY_REQUEST_SERVER = 'http://127.0.0.1:8080/';
@@ -31,14 +31,14 @@ var Nico = (function() {
     var numActiveCalls = 0;
     var callQueue = [];
     
-    // Stream search tag: hardcoded for now. May make this a setting or auto-
-    // generated later.
-    //var searchTag = "rta";
-    var searchTag = "ゲーム";
+    // Stream search keywords: hardcoded for now. May make this a setting later.
+    var searchKeywords = ["rta", "ゲーム+練習"];
+    //var searchKeywords = ["ゲーム"];
     
-    var allLiveStreams = null;
-    var liveStreamsCallsExpected = null;
-    var liveStreamsCallsCompleted = null;
+    var allLiveStreams = [];
+    var liveStreamsCallsExpected = 0;
+    var liveStreamsCallsCompleted = 0;
+    var numTotalCalls = 0;
     var numFailedCalls = 0;
     
     
@@ -90,37 +90,51 @@ var Nico = (function() {
     }
     
     
-    function startGettingAllLiveStreams(attemptNum) {
+    function startGettingAllLiveStreams() {
         
-        // Make an API call to get the first 'page' of all live streams.
-        
-        var url =
-            'http://api.ce.nicovideo.jp/liveapi/v1/video.search.solr'
-            + '?__format=json'
-            + '&word=' + searchTag
-            + '&limit=' + MAX_STREAMS_IN_CALL.toString();
-        
-        // To call Nico's API without getting a Cross Origin error, use CORS
-        // via proxy.
-        proxyAjax(url, Main.getFunc('Nico.finishGettingAllLiveStreams'), 1);
+        searchKeywords.forEach(function(keyword){
+                
+            // Make an API call to get the first 'page' of live streams under
+            // this keyword.
+            var url =
+                'http://api.ce.nicovideo.jp/liveapi/v1/video.search.solr'
+                + '?__format=json'
+                + '&word=' + keyword
+                + '&limit=' + MAX_STREAMS_IN_CALL.toString();
+            
+            // To call Nico's API without getting a Cross Origin error, use CORS
+            // via proxy.
+            liveStreamsCallsExpected++;
+            proxyAjax(
+                url,
+                Util.curry(
+                    Main.getFunc('Nico.continueGettingLiveStreams'), keyword
+                ),
+                1
+            );
+        });
     }
     
-    function finishGettingAllLiveStreams(response) {
+    function continueGettingLiveStreams(keyword, response) {
         
-        allLiveStreams = [];
+        numTotalCalls++;
         
         if (response === errorIndicator) {
+            numFailedCalls++;
             Main.showNotification(
-                "Initial Nicovideo request didn't work after "
+                "Nicovideo requests failed after "
                 + MAX_CALL_ATTEMPTS.toString()
-                + " tries; giving up.");
+                + " tries: "
+                + numFailedCalls.toString() + " of "
+                + numTotalCalls.toString());
+            // TODO: This doesn't maximize the number of streams we can
+            // get in this error case.
             Main.getFunc('Nico.setStreams')();
             return;
         }
         
         var nlvResponse = response.nicolive_video_response;
         var totalCount = parseInt(nlvResponse.total_count.filtered);
-        liveStreamsCallsExpected = 1;
         
         if (totalCount <= MAX_STREAMS_IN_CALL) {
             // Oh, we've already retrieved all the live streams.
@@ -143,24 +157,28 @@ var Nico = (function() {
             urls.push(
                 'http://api.ce.nicovideo.jp/liveapi/v1/video.search.solr'
                 + '?__format=json'
-                + '&word=' + searchTag
+                + '&word=' + keyword
                 + '&from=' + currentIndex.toString()
                 + '&limit=' + MAX_STREAMS_IN_CALL.toString()
             );
             
             currentIndex += MAX_STREAMS_IN_CALL;
-            liveStreamsCallsExpected++;
         }
         
-        // Add the streams obtained from our first call.
-        addToAllLiveStreams(response);
-        
         $.each(urls, function(i, url){
+            liveStreamsCallsExpected++;
             proxyAjax(url, Main.getFunc('Nico.addToAllLiveStreams'), 1);
         });
+        
+        // Add the streams obtained from our first call.
+        // (Should be done AFTER increasing the calls expected, or the
+        // calls completed will match up with the calls expected too soon.)
+        addToAllLiveStreams(response);
     }
     
     function addToAllLiveStreams(response) {
+        
+        numTotalCalls++;
         
         if (response === errorIndicator) {
             numFailedCalls++;
@@ -168,7 +186,8 @@ var Nico = (function() {
                 "Nicovideo requests failed after "
                 + MAX_CALL_ATTEMPTS.toString()
                 + " tries: "
-                + numFailedCalls.toString());
+                + numFailedCalls.toString() + " of "
+                + numTotalCalls.toString());
         }
         else {
             var nlvResponse = response.nicolive_video_response;
@@ -249,7 +268,7 @@ var Nico = (function() {
         
         Main.addFunc('Nico.setStreams', setStreams);
         Main.addFunc('Nico.setVideos', setVideos);
-        Main.addFunc('Nico.finishGettingAllLiveStreams', finishGettingAllLiveStreams);
+        Main.addFunc('Nico.continueGettingLiveStreams', continueGettingLiveStreams);
         Main.addFunc('Nico.addToAllLiveStreams', addToAllLiveStreams);
         
         Main.addRequirement('Nico.setStreams', 'Main.showStreams');
@@ -331,7 +350,7 @@ var Nico = (function() {
             setRequirements();
         },
         startGettingMedia: function() {
-            startGettingAllLiveStreams(1);
+            startGettingAllLiveStreams();
             getVideos();
         },
         
