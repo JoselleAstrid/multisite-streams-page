@@ -286,6 +286,12 @@ var Nico = (function() {
     
     
     function refreshCommunitiesTable() {
+        // TODO: Handle the case where checking all communities requires
+        // multiple calls
+        // TODO: Check if the table has been changed or not, before doing the
+        // AJAX thing
+        // TODO: Support re-checking in case the network call fails?
+        
         var followingCommunitiesStr = Settings.get('nicoCommunities');
         $coTableContainer.empty();
         
@@ -302,28 +308,85 @@ var Nico = (function() {
         $coTableContainer.append($coTable);
         
         var followingCommunities = Util.splitlines(followingCommunitiesStr);
+        var noTypoCommunities = [];
         
         followingCommunities.forEach(function(co){
             var $row = $(document.createElement('tr'));
             
             var $coCell = $(document.createElement('td'));
+            $coCell.addClass('co');
             $coCell.text(co);
             $row.append($coCell);
             
-            var $linkCell = $(document.createElement('td'));
+            var $nameCell = $(document.createElement('td'));
+            $nameCell.addClass('coName');
             if (coRegex.exec(co) !== null) {
+                $nameCell.text("Checking...");
+                noTypoCommunities.push(co);
+            }
+            else {
+                $nameCell.text("Typo?");
+            }
+            $row.append($nameCell);
+            
+            $coTableBody.append($row);
+        });
+        
+        var params = {
+            '__format': 'json',
+            'id': noTypoCommunities.join(',')
+        };
+        
+        proxyAjax(
+            'http://api.ce.nicovideo.jp/api/v1/community.array',
+            params,
+            refreshCommunityLinks,
+            1
+        );
+    }
+    
+    function refreshCommunityLinks(response) {
+        
+        var $rows = $coTableContainer.find('tr');
+        
+        if (response === errorIndicator) {
+            $rows.each(function(i, row) {
+                var $nameCell = $(row).children('td.coName');
+                
+                if ($nameCell.text() === "Checking...") {
+                    $nameCell.text("Checking failed");
+                }
+            });
+            return;
+        }
+        
+        var communities = response.nicovideo_community_response.community;
+        var coToName = {};
+        communities.forEach(function(community){
+            coToName[community.global_id] = community.name;
+        });
+        
+        $rows.each(function(i, row) {
+            var $row = $(row);
+            var $nameCell = $row.children('td.coName');
+            
+            if ($nameCell.text() !== "Checking...") {return;}
+            
+            $nameCell.empty();
+            
+            var co = $row.children('td.co').text();
+            
+            if (coToName.hasOwnProperty(co)) {
                 var $anchor = $(document.createElement('a'));
                 $anchor.attr('href', 'http://com.nicovideo.jp/community/'+co);
                 $anchor.attr('target', '_blank');
-                $anchor.text("OK");
-                $linkCell.append($anchor);
+                $anchor.text(coToName[co]);
+                
+                $nameCell.append($anchor);
             }
             else {
-                $linkCell.text("Error - typo?");
+                $nameCell.text("Not found");
             }
-            $row.append($linkCell);
-            
-            $coTableBody.append($row);
         });
     }
     
