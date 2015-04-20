@@ -235,7 +235,7 @@ var Nico = (function() {
         var followingCos = followingCommunities.map(function(x){return x.co;});
         var addedCos = [];
         
-        $.each(allLiveStreams, function(i, vInfo){
+        allLiveStreams.forEach(function(vInfo){
             var globalId = vInfo.community.global_id;
             
             if (followingCos.indexOf(globalId) === -1) {
@@ -257,7 +257,7 @@ var Nico = (function() {
                 d.thumbnailUrl = vInfo.community.thumbnail;
             }
             d.title = vInfo.video.title;
-            d.gameName = null;
+            d.gameName = "Not supported on this site";
             d.viewCount = vInfo.video.view_counter;
             d.channelName = vInfo.community.name;
             d.site = 'Nico';

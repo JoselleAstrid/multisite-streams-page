@@ -21,6 +21,44 @@ var Main = (function() {
     }
     
     
+    function addGameDisplay(d, $container, $thumbnailCtnr) {
+        /* Add a display indicating the game being played, for a
+        stream, video, or host. */
+            
+        if (d.gameName === "Not supported on this site") {
+            return;
+        }
+        
+        if (Settings.get('gameDisplay') === 'boximage') {
+            // Game as box image
+            if (d.gameName !== null) {
+                var $gameImageCtnr = $('<a>');
+                $gameImageCtnr.attr('href', d.gameLink);
+                $thumbnailCtnr.append($gameImageCtnr);
+            
+                var $gameImage = $('<img>');
+                $gameImage.attr('class', 'game-image');
+                $gameImage.attr('src', d.gameImage);
+                $gameImage.attr('title', d.gameName);
+                $gameImageCtnr.append($gameImage);
+            }
+        }
+        else if (Settings.get('gameDisplay') === 'name') {
+            // Game as name text
+            var $game = $('<div>');
+            $game.attr('class', 'media-game');
+            if (d.gameName !== null) {
+                $game.text(d.gameName);
+            }
+            else {
+                $game.text("No game selected");
+            }
+            $container.append($game);
+        }
+        // Else, game display is 'none'
+    }
+    
+    
     function showStreams() {
                 
         var streamDicts = [];
@@ -45,75 +83,49 @@ var Main = (function() {
         
         var i;
         for (i = 0; i < streamDicts.length; i++) {
-            var streamDict = streamDicts[i];
+            var d = streamDicts[i];
             
             var $streamContainer = $('<a>');
-            $streamContainer.attr('href', streamDict.channelLink);
-            $streamContainer.attr('title', streamDict.title);
+            $streamContainer.attr('href', d.channelLink);
+            $streamContainer.attr('title', d.title);
             
             
             var $thumbnailCtnr = $('<div>');
             $thumbnailCtnr.attr('class', 'thumbnail-ctnr');
             $streamContainer.append($thumbnailCtnr);
-            if (streamDict.site === 'Twitch') {
+            if (d.site === 'Twitch') {
                 $thumbnailCtnr.addClass('twitch-stream');
             }
-            else if (streamDict.site === 'Nico') {
+            else if (d.site === 'Nico') {
                 $thumbnailCtnr.addClass('nico-stream');
             }
             
             var $streamThumbnail = $('<img>');
             $streamThumbnail.attr('class', 'media-thumbnail');
-            $streamThumbnail.attr('src', streamDict.thumbnailUrl);
+            $streamThumbnail.attr('src', d.thumbnailUrl);
             $thumbnailCtnr.append($streamThumbnail);
             
             
             var $streamTitle = $('<div>');
-            $streamTitle.text(streamDict.title);
+            $streamTitle.text(d.title);
             $streamContainer.append($streamTitle);
             
             
-            if (Settings.get('gameDisplay') === 'boximage') {
-                // Game as box image
-                if (streamDict.gameName !== null) {
-                    var $gameImageCtnr = $('<a>');
-                    $gameImageCtnr.attr('href', streamDict.gameLink);
-                    $thumbnailCtnr.append($gameImageCtnr);
-                
-                    var $gameImage = $('<img>');
-                    $gameImage.attr('class', 'game-image');
-                    $gameImage.attr('src', streamDict.gameImage);
-                    $gameImage.attr('title', streamDict.gameName);
-                    $gameImageCtnr.append($gameImage);
-                }
-            }
-            else if (Settings.get('gameDisplay') === 'name') {
-                // Game as name text
-                var $game = $('<div>');
-                $game.attr('class', 'media-game');
-                if (streamDict.gameName !== null) {
-                    $game.text(streamDict.gameName);
-                }
-                else {
-                    $game.text("No game selected");
-                }
-                $streamContainer.append($game);
-            }
-            // Else, game display is 'none'
+            addGameDisplay(d, $streamContainer, $thumbnailCtnr);
             
             
             var $channelNameAndViews = $('<div>');
             
             var $textSpan1 = $('<span>');
-            $textSpan1.text(streamDict.viewCount);
+            $textSpan1.text(d.viewCount);
             $channelNameAndViews.append($textSpan1);
             
             var $siteIndicator = $('<span>');
             $siteIndicator.addClass('site-indicator');
-            if (streamDict.site === 'Twitch') {
+            if (d.site === 'Twitch') {
                 $siteIndicator.addClass('twitch');
             }
-            else if (streamDict.site === 'Hitbox') {
+            else if (d.site === 'Hitbox') {
                 $siteIndicator.addClass('hitbox');
             }
             else {  // Nico
@@ -122,7 +134,7 @@ var Main = (function() {
             $channelNameAndViews.append($siteIndicator);
             
             var $textSpan2 = $('<span>');
-            $textSpan2.text(streamDict.channelName);
+            $textSpan2.text(d.channelName);
             $channelNameAndViews.append($textSpan2);
             
             $streamContainer.append($channelNameAndViews);
@@ -199,33 +211,7 @@ var Main = (function() {
             $videoContainer.append($description);
             
             
-            if (Settings.get('gameDisplay') === 'boximage') {
-                // Game as box image
-                if (videoDict.gameName !== null) {
-                    var $gameImageCtnr = $('<a>');
-                    $gameImageCtnr.attr('href', videoDict.gameLink);
-                    $thumbnailCtnr.append($gameImageCtnr);
-                
-                    var $gameImage = $('<img>');
-                    $gameImage.attr('class', 'game-image');
-                    $gameImage.attr('src', videoDict.gameImage);
-                    $gameImage.attr('title', videoDict.gameName);
-                    $gameImageCtnr.append($gameImage);
-                }
-            }
-            else if (Settings.get('gameDisplay') === 'name') {
-                // Game as text
-                var $game = $('<div>');
-                $game.attr('class', 'media-game');
-                if (videoDict.gameName !== null) {
-                    $game.text(videoDict.gameName);
-                }
-                else {
-                    $game.text("No game selected");
-                }
-                $videoContainer.append($game);
-            }
-            // Else, game display is 'none'
+            addGameDisplay(videoDict, $videoContainer, $thumbnailCtnr);
             
             
             var $channelNameAndDate = $('<div>');
@@ -304,33 +290,7 @@ var Main = (function() {
             $container.append($streamTitle);
             
             
-            if (Settings.get('gameDisplay') === 'boximage') {
-                // Game as box image
-                if (dict.gameName !== null) {
-                    var $gameImageCtnr = $('<a>');
-                    $gameImageCtnr.attr('href', dict.gameLink);
-                    $thumbnailCtnr.append($gameImageCtnr);
-                
-                    var $gameImage = $('<img>');
-                    $gameImage.attr('class', 'game-image');
-                    $gameImage.attr('src', dict.gameImage);
-                    $gameImage.attr('title', dict.gameName);
-                    $gameImageCtnr.append($gameImage);
-                }
-            }
-            else if (Settings.get('gameDisplay') === 'name') {
-                // Game as name text
-                var $game = $('<div>');
-                $game.attr('class', 'media-game');
-                if (dict.gameName !== null) {
-                    $game.text(dict.gameName);
-                }
-                else {
-                    $game.text("No game selected");
-                }
-                $container.append($game);
-            }
-            // Else, game display is 'none'
+            addGameDisplay(dict, $container, $thumbnailCtnr);
             
             
             var $channelNameAndViews = $('<div>');
