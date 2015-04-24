@@ -10,6 +10,8 @@ var Hitbox = (function() {
     
     var errorIndicator = "There was an error previously";
     
+    var signalDone = {};
+    
     
     function hitboxDateStrToObj(dateStr) {
         // From: API's date/time format, which is in UTC
@@ -47,7 +49,7 @@ var Hitbox = (function() {
         
         if (username === '') {
             Main.showNotification("No Hitbox username specified in the settings.");
-            Main.getFunc('Hitbox.setUserId')(errorIndicator);
+            setUserId(errorIndicator);
             return;
         }
         
@@ -62,7 +64,7 @@ var Hitbox = (function() {
             url: url,
             type: 'GET',
             dataType: 'json',
-            success: Main.getFunc('Hitbox.setUserId'),
+            success: setUserId,
             error: function(response) {
                 // Two known causes for an error here. Unfortunately, both
                 // seem to give 404 errors, so we can't distinguish between
@@ -74,7 +76,7 @@ var Hitbox = (function() {
                     + "due to a quirk in how Hitbox accounts work. "
                     + "(B) The username you specified doesn't exist on Hitbox."
                 );
-                Main.getFunc('Hitbox.setUserId')(errorIndicator);
+                setUserId(errorIndicator);
             }
         });
     }
@@ -87,13 +89,16 @@ var Hitbox = (function() {
         }
         
         userId = liveInfo.livestream[0].media_user_id;
+        
+        getStreams();
+        getVideos();
     }
     
     
     function getStreams() {
         if (userId === errorIndicator) {
             // Error occurred earlier.
-            Main.getFunc('Hitbox.setStreams')(errorIndicator);
+            setStreams(errorIndicator);
             return;
         }
         
@@ -110,15 +115,15 @@ var Hitbox = (function() {
             url: url,
             type: 'GET',
             dataType: 'json',
-            success: Main.getFunc('Hitbox.setStreams'),
-            error: function(response) { Main.getFunc('Hitbox.setStreams')(errorIndicator); }
+            success: setStreams,
+            error: function(response) { setStreams(errorIndicator); }
         });
     }
     
     function getVideos() {
         if (userId === errorIndicator) {
             // Error occurred earlier.
-            Main.getFunc('Hitbox.setVideos')(errorIndicator);
+            setVideos(errorIndicator);
             return;
         }
         
@@ -137,21 +142,24 @@ var Hitbox = (function() {
             url: url,
             type: 'GET',
             dataType: 'json',
-            success: Main.getFunc('Hitbox.setVideos'),
-            error: function(response) { Main.getFunc('Hitbox.setVideos')(errorIndicator); }
+            success: setVideos,
+            error: function(response) { setVideos(errorIndicator); }
         });
     }
+    
     function setStreams(liveList) {
+        var livestreams;
         
         if (liveList === errorIndicator) {
             // This is our case when the Hitbox streams response is an error.
             // This could either be an actual error or just no streams...
             // not knowing any better, we'll treat it as no streams.
-            hitboxStreamDicts = [];
-            return;
+            livestreams = [];
+        }
+        else {
+            livestreams = liveList.livestream;
         }
         
-        var livestreams = liveList.livestream;
         hitboxStreamDicts = [];
         
         var i;
@@ -182,18 +190,24 @@ var Hitbox = (function() {
             
             hitboxStreamDicts.push(streamDict);
         }
+        
+        signalDone.setStreams.resolve();
     }
+    
     function setVideos(videoList) {
+        var videos;
         
         if (videoList === errorIndicator) {
             // This is our case when the Hitbox videos response is an error.
             // This could either be an actual error or just no videos...
             // not knowing any better, we'll treat it as no videos.
-            hitboxVideoDicts = [];
+            videos = [];
             return;
         }
+        else {
+            videos = videoList.video;
+        }
         
-        var videos = videoList.video;
         hitboxVideoDicts = [];
         
         var i;
@@ -236,23 +250,19 @@ var Hitbox = (function() {
             
             hitboxVideoDicts.push(videoDict);
         }
+        
+        signalDone.setVideos.resolve();
     }
     
     
     
     function setRequirements() {
         
-        Main.addFunc('Hitbox.setUserId', setUserId);
-        Main.addFunc('Hitbox.getStreams', getStreams);
-        Main.addFunc('Hitbox.setStreams', setStreams);
-        Main.addFunc('Hitbox.getVideos', getVideos);
-        Main.addFunc('Hitbox.setVideos', setVideos);
+        signalDone.setStreams = $.Deferred();
+        signalDone.setVideos = $.Deferred();
         
-        Main.addRequirement('Hitbox.setUserId', 'Hitbox.getStreams');
-        Main.addRequirement('Hitbox.setStreams', 'Main.showStreams');
-        
-        Main.addRequirement('Hitbox.setUserId', 'Hitbox.getVideos');
-        Main.addRequirement('Hitbox.setVideos', 'Main.showVideos');
+        Main.addRequirement('showStreams', signalDone.setStreams);
+        Main.addRequirement('showVideos', signalDone.setVideos);
     }
     
     

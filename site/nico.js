@@ -41,6 +41,8 @@ var Nico = (function() {
     var numTotalCalls = 0;
     var numFailedCalls = 0;
     
+    var signalDone = {};
+    
     
     function proxyAjax(url, params, callback, attemptNum) {
         
@@ -97,7 +99,7 @@ var Nico = (function() {
             Main.showNotification(
                 "You haven't specified any Nicovideo communities to watch for."
             );
-            Main.getFunc('Nico.setStreams')();
+            setStreams();
             return;
         }
         
@@ -118,9 +120,7 @@ var Nico = (function() {
             proxyAjax(
                 'http://api.ce.nicovideo.jp/liveapi/v1/video.search.solr',
                 params,
-                Util.curry(
-                    Main.getFunc('Nico.continueGettingLiveStreams'), keyword
-                ),
+                Util.curry(continueGettingLiveStreams, keyword),
                 1
             );
         });
@@ -132,7 +132,7 @@ var Nico = (function() {
             // allLiveStreams has all the live streams now. Next step is to get
             // only the streams we're interested in, and only the info we need
             // from them.
-            Main.getFunc('Nico.setStreams')();
+            setStreams();
         }
     }
     
@@ -188,7 +188,7 @@ var Nico = (function() {
             proxyAjax(
                 'http://api.ce.nicovideo.jp/liveapi/v1/video.search.solr',
                 paramSet,
-                Main.getFunc('Nico.addToAllLiveStreams'),
+                addToAllLiveStreams,
                 1
             );
         });
@@ -265,38 +265,31 @@ var Nico = (function() {
             streamDicts.push(d);
             addedCos.push(globalId);
         });
+        
+        signalDone.setStreams.resolve();
     }
     
     function getVideos() {
         
         // TODO: Implement for real
-        Main.getFunc('Nico.setVideos')(errorIndicator);
+        setVideos();
     }
     
-    function setVideos(response) {
-        
-        if (response === errorIndicator) {
-            // Nico's response is an error.
-            videoDicts = [];
-            return;
-        }
+    function setVideos() {
         
         // TODO: Implement for real
         videoDicts = [];
+        
+        signalDone.setVideos.resolve();
     }
     
     
     
     function setRequirements() {
-        
-        Main.addFunc('Nico.setStreams', setStreams);
-        Main.addFunc('Nico.setVideos', setVideos);
-        Main.addFunc('Nico.continueGettingLiveStreams', continueGettingLiveStreams);
-        Main.addFunc('Nico.addToAllLiveStreams', addToAllLiveStreams);
-        
-        Main.addRequirement('Nico.setStreams', 'Main.showStreams');
-        
-        Main.addRequirement('Nico.setVideos', 'Main.showVideos');
+        signalDone.setStreams = $.Deferred();
+        Main.addRequirement('showStreams', signalDone.setStreams);
+        signalDone.setVideos = $.Deferred();
+        Main.addRequirement('showVideos', signalDone.setVideos);
     }
     
     

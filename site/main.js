@@ -9,8 +9,8 @@ var Main = (function() {
     
     var $streams = null;
     
-    var funcs = {};
-    var funcRequirements = {};
+    var signalDone = {};
+    var requireDone = {};
     
     
     function showNotification(notificationText) {
@@ -142,6 +142,8 @@ var Main = (function() {
             
             $container.append($streamContainer);
         }
+        
+        signalDone.showStreams.resolve();
     }
     
     
@@ -317,6 +319,8 @@ var Main = (function() {
         if (hostDicts.length > 0) {
             $('#hosts-container').show();
         }
+        
+        signalDone.showHosts.resolve();
     }
     
     
@@ -384,27 +388,45 @@ var Main = (function() {
         if (gameDicts.length > 0) {
             $('#games-container').show();
         }
+        
+        signalDone.showGames.resolve();
     }
     
     
+    function addRequirement(targetName, deferredEvent) {
+        /* This only applies to adding requirements for Main
+        functions to run, since there would be issues with implementing
+        targetName for any module (while keeping things simple).
+        
+        So, each individual site's module should just use
+        requireDone[...].push(...) for its own internal requirements,
+        instead of calling this. */
+        requireDone[targetName].push(deferredEvent);
+    }
     
     function setRequirements() {
+        /* Define complicated function call requirements - e.g.
+        "once events e1 and e2 complete, call function f". */
         
-        addFunc('Main.showStreams', showStreams);
-        addFunc('Main.showHosts', showHosts);
-        addFunc('Main.showGames', showGames);
-        addFunc('Main.showVideos', showVideos);
+        requireDone.showStreams = [];
+        requireDone.showHosts = [];
+        requireDone.showGames = [];
+        requireDone.showVideos = [];
         
-        addRequirement('Main.showStreams', 'Main.showHosts');
+        signalDone.showStreams = $.Deferred();
+        signalDone.showHosts = $.Deferred();
+        signalDone.showGames = $.Deferred();
         
-        addRequirement('Main.showStreams', 'Main.showGames');
-        addRequirement('Main.showHosts', 'Main.showGames');
+        addRequirement('showHosts', signalDone.showStreams);
         
-        addRequirement('Main.showStreams', 'Main.showVideos');
-        addRequirement('Main.showHosts', 'Main.showVideos');
-        addRequirement('Main.showGames', 'Main.showVideos');
+        addRequirement('showGames', signalDone.showStreams);
+        addRequirement('showGames', signalDone.showHosts);
         
+        addRequirement('showVideos', signalDone.showStreams);
+        addRequirement('showVideos', signalDone.showHosts);
+        addRequirement('showVideos', signalDone.showGames);
         
+        // Call on each site's modules to add more requireDone items.
         if (Settings.get('twitchEnabled')) {
             Twitch.setRequirements();
         }
@@ -414,6 +436,15 @@ var Main = (function() {
         if (Settings.get('nicoEnabled')) {
             Nico.setRequirements();
         }
+        
+        // $.when(e1, e2, ...).done(f) will set f to be called once all the
+        // deferred events e1, e2, ... finish.
+        //
+        // Use apply() to pass an array as an argument list.
+        $.when.apply(null, requireDone.showStreams).done(showStreams);
+        $.when.apply(null, requireDone.showHosts).done(showHosts);
+        $.when.apply(null, requireDone.showGames).done(showGames);
+        $.when.apply(null, requireDone.showVideos).done(showVideos);
     }
     
     function startGettingMedia() {
@@ -430,72 +461,6 @@ var Main = (function() {
         if (Settings.get('nicoEnabled')) {
             Nico.startGettingMedia();
         }
-    }
-    
-    
-    
-    function runAndCheckReq(func, requirementName, targetName) {
-        /* Assumes the target function takes no arguments. */
-        
-        // Allow the requirement function to take arguments.
-        var args = [];
-        for (var i=3, len = arguments.length; i < len; ++i) {
-            args.push(arguments[i]);
-        };
-        
-        // Use apply to pass in arguments as a list.
-        //
-        // ("this" value of undefined should be the same as calling
-        // func without an object - e.g. func(arg1, arg2, ...) )
-        func.apply(undefined, args);
-        
-        // Cross off this function as a requirement for the target
-        // function. If this is the last requirement, run the
-        // target function.
-        // Assumes the target function takes no arguments...
-        Util.removeFromArray(funcRequirements[targetName], requirementName);
-        
-        // Useful debugging message
-        //console.log(requirementName + " - " + targetName
-        //            + ' [' + funcRequirements[targetName].toString() + ']');
-        
-        if (funcRequirements[targetName].length === 0) {
-            funcs[targetName]();
-        }
-    }
-    
-    
-    
-    function addFunc(name, func) {
-        // TODO: Is it possible to avoid having funcs altogether,
-        // and just replace the methods directly, e.g.
-        // Twitch.setStreams = ... ?
-        // This would eliminate the need to specify "Main.getFunc(...)"
-        // for certain callbacks, which is a hassle to remember, and
-        // really annoying to debug when forgotten.
-        
-        funcs[name] = func;
-    }
-    
-    function getFunc(name) {
-        return funcs[name];
-    }
-    
-    function addRequirement(requirementName, targetName) {
-        
-        // Add to the function requirement dict.
-        if (funcRequirements.hasOwnProperty(targetName) ) {
-            funcRequirements[targetName].push(requirementName);
-        }
-        else {
-            funcRequirements[targetName] = [requirementName];
-        }
-        
-        // Have the requirement function trigger the target function.
-        var func = funcs[requirementName];
-        
-        funcs[requirementName] = Util.curry(
-            runAndCheckReq, func, requirementName, targetName);
     }
     
     
@@ -537,14 +502,8 @@ var Main = (function() {
             );
         },
         
-        addFunc: function(name, func) {
-            addFunc(name, func);
-        },
-        addRequirement: function(requirementName, targetName) {
-            addRequirement(requirementName, targetName);
-        },
-        getFunc: function(name) {
-            return getFunc(name);
+        addRequirement: function(deferredEvent, targetName) {
+            addRequirement(deferredEvent, targetName);
         },
         showNotification: function(notificationText) {
             showNotification(notificationText);

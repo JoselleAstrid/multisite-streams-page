@@ -11,6 +11,8 @@ var Twitch = (function() {
     
     var errorIndicator = "There was an error previously";
     
+    var signalDone = {};
+    
     
     function setOAuth2Token() {
         /*
@@ -139,7 +141,7 @@ var Twitch = (function() {
     
     function getUsername() {
         if (twitchOAuth2Token === errorIndicator) {
-            Main.getFunc('Twitch.setUsername')(errorIndicator);
+            setUsername(errorIndicator);
             return;
         }
         
@@ -175,7 +177,7 @@ var Twitch = (function() {
     
     function getStreams() {
         if (twitchOAuth2Token === errorIndicator) {
-            Main.getFunc('Twitch.setStreams')(errorIndicator);
+            setStreams(errorIndicator);
             return;
         }
         
@@ -190,7 +192,7 @@ var Twitch = (function() {
     
     function getVideos() {
         if (twitchOAuth2Token === errorIndicator) {
-            Main.getFunc('Twitch.setVideos')(errorIndicator);
+            setVideos(errorIndicator);
             return;
         }
         
@@ -222,11 +224,14 @@ var Twitch = (function() {
         onAuthSuccess();
         
         username = userResponse.token.user_name;
+        
+        getHosts();
+        getGames();
     }
     
     function getHosts() {
         if (username === errorIndicator) {
-            Main.getFunc('Twitch.setHosts')(errorIndicator);
+            setHosts(errorIndicator);
             return;
         }
         
@@ -251,7 +256,7 @@ var Twitch = (function() {
     
     function getGames() {
         if (username === errorIndicator) {
-            Main.getFunc('Twitch.setGames')(errorIndicator);
+            setGames(errorIndicator);
             return;
         }
         
@@ -275,27 +280,27 @@ var Twitch = (function() {
     
     
     function setStreams(streamsResponse) {
-        if (streamsResponse === errorIndicator) {
-            twitchStreamDicts = [];
-            return;
-        }
+        var followedStreams;
         
-        if (streamsResponse.error && streamsResponse.error === "Unauthorized") {
+        if (streamsResponse === errorIndicator) {
+            followedStreams = [];
+        }
+        else if (streamsResponse.error && streamsResponse.error === "Unauthorized") {
             // Authentication failed.
             //
             // How to test: Type garbage after "access_token=". Or load in
             // Firefox, then load in Chrome, then load in Firefox again with
             // the same access token.
             onAuthFail();
-            twitchStreamDicts = [];
-            return;
+            followedStreams = [];
         }
-        onAuthSuccess();
+        else {
+            onAuthSuccess();
+            followedStreams = streamsResponse.streams;
+        }
         
         // Stream response examples:
         // https://github.com/justintv/Twitch-API/blob/master/v3_resources/streams.md
-        
-        var followedStreams = streamsResponse.streams;
         
         twitchStreamDicts = [];
         
@@ -330,27 +335,30 @@ var Twitch = (function() {
             
             twitchStreamDicts.push(streamDict);
         }
-    }
-    function setVideos(videosResponse) {
-        if (videosResponse === errorIndicator) {
-            twitchVideoDicts = [];
-            return;
-        }
         
-        if (videosResponse.error && videosResponse.error === "Unauthorized") {
+        signalDone.setStreams.resolve();
+    }
+    
+    function setVideos(videosResponse) {
+        var followedVideos;
+        
+        if (videosResponse === errorIndicator) {
+            followedVideos = [];
+        }
+        else if (videosResponse.error && videosResponse.error === "Unauthorized") {
             // Authentication failed.
             //
             // How to test: Type garbage after "access_token=".
             onAuthFail();
-            twitchVideoDicts = [];
-            return;
+            followedVideos = [];
         }
-        onAuthSuccess();
+        else {
+            onAuthSuccess();
+            followedVideos = videosResponse.videos;
+        }
         
         // Video response examples:
         // https://github.com/justintv/Twitch-API/blob/master/v3_resources/videos.md
-        
-        var followedVideos = videosResponse.videos;
         
         twitchVideoDicts = [];
         
@@ -391,15 +399,19 @@ var Twitch = (function() {
             
             twitchVideoDicts.push(videoDict);
         }
+        
+        signalDone.setVideos.resolve();
     }
     
     function setHosts(hostsResponse) {
-        if (hostsResponse === errorIndicator) {
-            hostDicts = [];
-            return;
-        }
+        var followedHosts;
         
-        var followedHosts = hostsResponse.hosts;
+        if (hostsResponse === errorIndicator) {
+            followedHosts = [];
+        }
+        else {
+            followedHosts = hostsResponse.hosts;
+        }
         
         hostDicts = [];
         
@@ -432,15 +444,19 @@ var Twitch = (function() {
             
             hostDicts.push(hostDict);
         }
+        
+        signalDone.setHosts.resolve();
     }
     
     function setGames(gamesResponse) {
-        if (gamesResponse === errorIndicator) {
-            gameDicts = [];
-            return;
-        }
+        var followedGames;
         
-        var followedGames = gamesResponse.follows;
+        if (gamesResponse === errorIndicator) {
+            followedGames = [];
+        }
+        else {
+            followedGames = gamesResponse.follows;
+        }
         
         gameDicts = [];
         
@@ -462,29 +478,23 @@ var Twitch = (function() {
             
             gameDicts.push(gameDict);
         }
+        
+        signalDone.setGames.resolve();
     }
     
     
     
     function setRequirements() {
         
-        Main.addFunc('Twitch.setUsername', setUsername);
-        Main.addFunc('Twitch.setStreams', setStreams);
-        Main.addFunc('Twitch.getHosts', getHosts);
-        Main.addFunc('Twitch.setHosts', setHosts);
-        Main.addFunc('Twitch.getGames', getGames);
-        Main.addFunc('Twitch.setGames', setGames);
-        Main.addFunc('Twitch.setVideos', setVideos);
+        signalDone.setStreams = $.Deferred();
+        signalDone.setHosts = $.Deferred();
+        signalDone.setGames = $.Deferred();
+        signalDone.setVideos = $.Deferred();
         
-        Main.addRequirement('Twitch.setStreams', 'Main.showStreams');
-        
-        Main.addRequirement('Twitch.setUsername', 'Twitch.getHosts');
-        Main.addRequirement('Twitch.setHosts', 'Main.showHosts');
-        
-        Main.addRequirement('Twitch.setUsername', 'Twitch.getGames');
-        Main.addRequirement('Twitch.setGames', 'Main.showGames');
-        
-        Main.addRequirement('Twitch.setVideos', 'Main.showVideos');
+        Main.addRequirement('showStreams', signalDone.setStreams);
+        Main.addRequirement('showHosts', signalDone.setHosts);
+        Main.addRequirement('showGames', signalDone.setGames);
+        Main.addRequirement('showVideos', signalDone.setVideos);
     }
     
     
@@ -520,19 +530,19 @@ var Twitch = (function() {
         
         // JSONP callbacks must be public in order to work.
         setGames: function(response) {
-            Main.getFunc('Twitch.setGames')(response);
+            setGames(response);
         },
         setHosts: function(response) {
-            Main.getFunc('Twitch.setHosts')(response);
+            setHosts(response);
         },
         setStreams: function(response) {
-            Main.getFunc('Twitch.setStreams')(response);
+            setStreams(response);
         },
         setUsername: function(response) {
-            Main.getFunc('Twitch.setUsername')(response);
+            setUsername(response);
         },
         setVideos: function(response) {
-            Main.getFunc('Twitch.setVideos')(response);
+            setVideos(response);
         }
     }
 })();
