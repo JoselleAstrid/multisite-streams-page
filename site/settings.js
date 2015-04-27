@@ -10,6 +10,7 @@ var Settings = {
         'twitchEnabled': true,
         'hitboxEnabled': true,
         'nicoEnabled': false,
+        'displayTiming': 'asTheyArrive',
         
         'hitboxUsername': '',
         'gameDisplay': 'boximage',
@@ -22,6 +23,8 @@ var Settings = {
     
     fieldTypes: ['input', 'select', 'textarea'],
     
+    // Settings values that aren't just strings, and thus need to be
+    // stored somewhere other than an input field
     nicoCommunities: null,
     
     $container: null,
@@ -140,6 +143,10 @@ var Settings = {
             if ($fieldElmt.attr('type') === 'checkbox') {
                 return $fieldElmt.prop('checked');
             }
+            else if ($fieldElmt.attr('type') === 'radio') {
+                // This works for select, input/type=text, and textarea.
+                return $fieldElmt.filter(':checked').val();
+            }
             else {
                 // This works for select, input/type=text, and textarea.
                 return $fieldElmt.val();
@@ -164,6 +171,13 @@ var Settings = {
                 // This will handle strings of 'true' or 'false',
                 // or boolean values.
                 $fieldElmt.prop('checked', (value === true || value === 'true'));
+            }
+            else if ($fieldElmt.attr('type') === 'radio') {
+                // In this case $fieldElmt is actually multiple elements - each
+                // of the radio button choices. This line checks the appropriate
+                // radio button and unchecks the others. Note how the parameter
+                // needs to be an array for this behavior to happen.
+                $fieldElmt.val([value]);
             }
             else {
                 // This works for select, input/type=text, and textarea.

@@ -1,10 +1,5 @@
 var Twitch = (function() {
     
-    var twitchStreamDicts = null;
-    var twitchVideoDicts = null;
-    var hostDicts = null;
-    var gameDicts = null;
-    
     var twitchOAuth2Token = null;
     
     var username = null;
@@ -302,7 +297,7 @@ var Twitch = (function() {
         // Stream response examples:
         // https://github.com/justintv/Twitch-API/blob/master/v3_resources/streams.md
         
-        twitchStreamDicts = [];
+        var twitchStreamDicts = [];
         
         var i;
         for (i = 0; i < followedStreams.length; i++) {
@@ -336,6 +331,7 @@ var Twitch = (function() {
             twitchStreamDicts.push(streamDict);
         }
         
+        Main.addStreams(twitchStreamDicts);
         signalDone.setStreams.resolve();
     }
     
@@ -360,7 +356,7 @@ var Twitch = (function() {
         // Video response examples:
         // https://github.com/justintv/Twitch-API/blob/master/v3_resources/videos.md
         
-        twitchVideoDicts = [];
+        var twitchVideoDicts = [];
         
         var i;
         for (i = 0; i < followedVideos.length; i++) {
@@ -400,6 +396,7 @@ var Twitch = (function() {
             twitchVideoDicts.push(videoDict);
         }
         
+        Main.addVideos(twitchVideoDicts);
         signalDone.setVideos.resolve();
     }
     
@@ -413,7 +410,7 @@ var Twitch = (function() {
             followedHosts = hostsResponse.hosts;
         }
         
-        hostDicts = [];
+        var hostDicts = [];
         
         var i;
         for (i = 0; i < followedHosts.length; i++) {
@@ -445,6 +442,7 @@ var Twitch = (function() {
             hostDicts.push(hostDict);
         }
         
+        Main.addHosts(hostDicts);
         signalDone.setHosts.resolve();
     }
     
@@ -458,7 +456,7 @@ var Twitch = (function() {
             followedGames = gamesResponse.follows;
         }
         
-        gameDicts = [];
+        var gameDicts = [];
         
         var i;
         for (i = 0; i < followedGames.length; i++) {
@@ -479,6 +477,7 @@ var Twitch = (function() {
             gameDicts.push(gameDict);
         }
         
+        Main.addGames(gameDicts);
         signalDone.setGames.resolve();
     }
     
@@ -513,18 +512,6 @@ var Twitch = (function() {
             getStreams();
             getUsername();
             getVideos();
-        },
-        getGameDicts: function() {
-            return gameDicts;
-        },
-        getHostDicts: function() {
-            return hostDicts;
-        },
-        getStreamDicts: function() {
-            return twitchStreamDicts;
-        },
-        getVideoDicts: function() {
-            return twitchVideoDicts;
         },
         
         

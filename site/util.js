@@ -26,6 +26,17 @@ var Util = {
         window.location.reload();
     },
     
+    splitlines: function(s){
+        /* Split a string s by its newline characters. Return the
+        resulting multiple strings as an array.
+        This regex should handle \r\n, \r, and \n. */
+        return s.split(/\r\n|[\n\r]/);
+    },
+    
+    
+    
+    /* Arrays */
+    
     removeFromArray: function(arr, value) {
         /* Remove all instances of value from the array arr. */
         for(var i = arr.length - 1; i >= 0; i--) {
@@ -35,11 +46,40 @@ var Util = {
         }
     },
     
-    splitlines: function(s){
-        /* Split a string s by its newline characters. Return the
-        resulting multiple strings as an array.
-        This regex should handle \r\n, \r, and \n. */
-        return s.split(/\r\n|[\n\r]/);
+    sortedLocation: function(element, array, comparer, start, end) {
+        /* Determine where the element would go in the already-sorted
+        array if inserted.
+        The return value is the index AFTER which the element would be
+        inserted. -1 means at the beginning of the array.
+        
+        Source: http://stackoverflow.com/a/18341744/ and /a/20261974/ */
+        if (array.length === 0) {return -1;}
+    
+        start = start || 0;
+        end = end || array.length;
+        var pivot = parseInt(start + (end - start) / 2, 10);
+        if (array[pivot] === element) {return pivot;}
+
+        var c = comparer(element, array[pivot]);
+        if (end - start <= 1) {return c < 0 ? pivot - 1 : pivot;}
+
+        if (c < 0) {
+            return Util.sortedLocation(element, array, comparer, start, pivot);
+        } else if (c === 0) {
+            return pivot;
+        } else {  // c > 0
+            return Util.sortedLocation(element, array, comparer, pivot, end);
+        }
+    },
+    
+    sortedInsert: function(element, array, comparer) {
+        /* Insert element into the already-sorted array. comparer
+        defines the sorting comparison method.
+        
+        Source: http://stackoverflow.com/questions/1344500/ */
+        
+        array.splice(Util.sortedLocation(element, array, comparer) + 1, 0, element);
+        return array;
     },
     
     

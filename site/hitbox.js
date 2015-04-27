@@ -3,9 +3,6 @@ var Hitbox = (function() {
     // 2014-01-17 00:45:02
     var hitboxDateRegex = /^(\d\d\d\d)-(\d\d)-(\d\d) (\d\d):(\d\d):(\d\d)$/;
     
-    var hitboxStreamDicts = null;
-    var hitboxVideoDicts = null;
-    
     var userId = null;
     
     var errorIndicator = "There was an error previously";
@@ -160,7 +157,7 @@ var Hitbox = (function() {
             livestreams = liveList.livestream;
         }
         
-        hitboxStreamDicts = [];
+        var hitboxStreamDicts = [];
         
         var i;
         for (i = 0; i < livestreams.length; i++) {
@@ -191,6 +188,7 @@ var Hitbox = (function() {
             hitboxStreamDicts.push(streamDict);
         }
         
+        Main.addStreams(hitboxStreamDicts);
         signalDone.setStreams.resolve();
     }
     
@@ -208,7 +206,7 @@ var Hitbox = (function() {
             videos = videoList.video;
         }
         
-        hitboxVideoDicts = [];
+        var hitboxVideoDicts = [];
         
         var i;
         for (i = 0; i < videos.length; i++) {
@@ -251,6 +249,7 @@ var Hitbox = (function() {
             hitboxVideoDicts.push(videoDict);
         }
         
+        Main.addVideos(hitboxVideoDicts);
         signalDone.setVideos.resolve();
     }
     
@@ -276,13 +275,6 @@ var Hitbox = (function() {
         },
         startGettingMedia: function() {
             getUserId();
-        },
-        
-        getStreamDicts: function() {
-            return hitboxStreamDicts;
-        },
-        getVideoDicts: function() {
-            return hitboxVideoDicts;
         }
     }
 })();

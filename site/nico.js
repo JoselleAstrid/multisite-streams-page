@@ -1,8 +1,5 @@
 var Nico = (function() {
     
-    var streamDicts = null;
-    var videoDicts = null;
-    
     var $coTableContainer = null;
     var $coEditArea = null;
     var $coEditButton = null;
@@ -229,7 +226,7 @@ var Nico = (function() {
     
     function setStreams() {
         
-        streamDicts = [];
+        var streamDicts = [];
         
         var followingCommunities = Settings.get('nicoCommunities');
         var followingCos = followingCommunities.map(function(x){return x.co;});
@@ -266,6 +263,7 @@ var Nico = (function() {
             addedCos.push(globalId);
         });
         
+        Main.addStreams(streamDicts);
         signalDone.setStreams.resolve();
     }
     
@@ -278,8 +276,9 @@ var Nico = (function() {
     function setVideos() {
         
         // TODO: Implement for real
-        videoDicts = [];
+        var videoDicts = [];
         
+        Main.addVideos(videoDicts);
         signalDone.setVideos.resolve();
     }
     
@@ -464,13 +463,6 @@ var Nico = (function() {
         startGettingMedia: function() {
             startGettingAllLiveStreams();
             getVideos();
-        },
-        
-        getStreamDicts: function() {
-            return streamDicts;
-        },
-        getVideoDicts: function() {
-            return videoDicts;
         },
         
         refreshCommunitiesTable: function() {
