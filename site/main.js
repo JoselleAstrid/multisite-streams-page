@@ -18,7 +18,6 @@ var Main = (function() {
     var pendingGames = [];
     var pendingVideos = [];
     
-    var signalDone = {};
     var requireDone = {};
     
     
@@ -152,7 +151,6 @@ var Main = (function() {
         });
         
         pendingStreams = [];
-        signalDone.showStreams.resolve();
     }
     
     
@@ -223,7 +221,6 @@ var Main = (function() {
         }
         
         pendingHosts = [];
-        signalDone.showHosts.resolve();
     }
     
     
@@ -286,7 +283,6 @@ var Main = (function() {
         }
         
         pendingGames = [];
-        signalDone.showGames.resolve();
     }
     
     
@@ -405,19 +401,6 @@ var Main = (function() {
         requireDone.showGames = [];
         requireDone.showVideos = [];
         
-        signalDone.showStreams = $.Deferred();
-        signalDone.showHosts = $.Deferred();
-        signalDone.showGames = $.Deferred();
-        
-        addRequirement('showHosts', signalDone.showStreams);
-        
-        addRequirement('showGames', signalDone.showStreams);
-        addRequirement('showGames', signalDone.showHosts);
-        
-        addRequirement('showVideos', signalDone.showStreams);
-        addRequirement('showVideos', signalDone.showHosts);
-        addRequirement('showVideos', signalDone.showGames);
-        
         // Call on each site's modules to add more requireDone items.
         if (Settings.get('twitchEnabled')) {
             Twitch.setRequirements();
@@ -429,14 +412,36 @@ var Main = (function() {
             Nico.setRequirements();
         }
         
-        // $.when(e1, e2, ...).done(f) will set f to be called once all the
-        // deferred events e1, e2, ... finish.
-        //
-        // Use apply() to pass an array as an argument list.
-        $.when.apply(null, requireDone.showStreams).done(showStreams);
-        $.when.apply(null, requireDone.showHosts).done(showHosts);
-        $.when.apply(null, requireDone.showGames).done(showGames);
-        $.when.apply(null, requireDone.showVideos).done(showVideos);
+        if (Settings.get('displayTiming') === 'asTheyArrive') {
+            // Call the show functions each time media arrives.
+            //
+            // $.when(e).done(f) will set up function f to be called once
+            // the event e finishes.
+            requireDone.showStreams.forEach(function(x){
+                $.when(x).done(showStreams);
+            });
+            requireDone.showHosts.forEach(function(x){
+                $.when(x).done(showHosts);
+            });
+            requireDone.showGames.forEach(function(x){
+                $.when(x).done(showGames);
+            });
+            requireDone.showVideos.forEach(function(x){
+                $.when(x).done(showVideos);
+            });
+        }
+        else {  // 'whenAllSitesComplete'
+            // Call the show functions only when all the media of a
+            // particular type has arrived.
+            //
+            // $.when(e1, e2, ...).done(f) will set up function f to be called
+            // once all the deferred events e1, e2, ... finish. Use apply()
+            // to pass an array as an argument list.
+            $.when.apply(null, requireDone.showStreams).done(showStreams);
+            $.when.apply(null, requireDone.showHosts).done(showHosts);
+            $.when.apply(null, requireDone.showGames).done(showGames);
+            $.when.apply(null, requireDone.showVideos).done(showVideos);
+        }
     }
     
     function startGettingMedia() {
