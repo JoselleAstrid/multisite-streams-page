@@ -32,13 +32,13 @@ var Nico = (function() {
     var searchKeywords = ["rta", "ゲーム+練習"];
     //var searchKeywords = ["ゲーム"];
     
-    var allLiveStreams = [];
+    var followingCos = [];
+    var addedStreamCos = [];
+    
     var liveStreamsCallsExpected = 0;
     var liveStreamsCallsCompleted = 0;
     var numTotalCalls = 0;
     var numFailedCalls = 0;
-    
-    var signalDone = {};
     
     
     function proxyAjax(url, params, callback, attemptNum) {
@@ -92,6 +92,12 @@ var Nico = (function() {
     
     function startGettingAllLiveStreams() {
         
+        var followingCommunities = Settings.get('nicoCommunities');
+        // co<number> ids of following streams
+        followingCos = followingCommunities.map(function(x){return x.co;});
+        // Track which communities we've found as live streams already
+        addedStreamCos = [];
+        
         if (Settings.get('nicoCommunities').length === 0) {
             Main.showNotification(
                 "You haven't specified any Nicovideo communities to watch for."
@@ -123,29 +129,13 @@ var Nico = (function() {
         });
     }
     
-    function reportCallCompleted() {
-        liveStreamsCallsCompleted++;
-        if (liveStreamsCallsCompleted === liveStreamsCallsExpected) {
-            // allLiveStreams has all the live streams now. Next step is to get
-            // only the streams we're interested in, and only the info we need
-            // from them.
-            setStreams();
-        }
-    }
-    
     function continueGettingLiveStreams(keyword, response) {
         
         numTotalCalls++;
         
         if (response === errorIndicator) {
-            numFailedCalls++;
-            Main.showNotification(
-                "Nicovideo requests failed after "
-                + MAX_CALL_ATTEMPTS.toString()
-                + " tries: "
-                + numFailedCalls.toString() + " of "
-                + numTotalCalls.toString());
-            reportCallCompleted();
+            // Just process this one response and finish.
+            setStreams(response);
             return;
         }
         
@@ -154,8 +144,8 @@ var Nico = (function() {
         
         if (totalCount <= MAX_STREAMS_IN_CALL) {
             // Oh, we've already retrieved all the live streams.
-            // Skip to the next step then.
-            addToAllLiveStreams(response);
+            // Just process this one response and finish.
+            setStreams(response);
             return;
         }
         
@@ -180,24 +170,25 @@ var Nico = (function() {
             currentIndex += MAX_STREAMS_IN_CALL;
         }
         
-        $.each(paramSets, function(i, paramSet){
+        paramSets.forEach(function(paramSet){
             liveStreamsCallsExpected++;
             proxyAjax(
                 'http://api.ce.nicovideo.jp/liveapi/v1/video.search.solr',
                 paramSet,
-                addToAllLiveStreams,
+                setStreams,
                 1
             );
         });
         
         // Add the streams obtained from our first call.
-        // (Should be done AFTER increasing the calls expected, or the
+        // (Should do this AFTER increasing the calls expected, otherwise the
         // calls completed will match up with the calls expected too soon.)
-        addToAllLiveStreams(response);
+        setStreams(response);
     }
     
-    function addToAllLiveStreams(response) {
+    function setStreams(response) {
         
+        var streams = [];
         numTotalCalls++;
         
         if (response === errorIndicator) {
@@ -212,34 +203,26 @@ var Nico = (function() {
         else {
             var nlvResponse = response.nicolive_video_response;
             
-            // If count is 0 then there is no video_info key, so need to check.
+            // If count is 0 then there is no video_info key, so need to check
+            // for that case.
             if (nlvResponse.count > 0) {
-                var videoInfos = nlvResponse.video_info;
-                $.each(videoInfos, function(i, videoInfo){
-                    allLiveStreams.push(videoInfo);
+                nlvResponse.video_info.forEach(function(videoInfo){
+                    streams.push(videoInfo);
                 });
             }
         }
         
-        reportCallCompleted();
-    }
-    
-    function setStreams() {
         
         var streamDicts = [];
         
-        var followingCommunities = Settings.get('nicoCommunities');
-        var followingCos = followingCommunities.map(function(x){return x.co;});
-        var addedCos = [];
-        
-        allLiveStreams.forEach(function(vInfo){
+        streams.forEach(function(vInfo){
             var globalId = vInfo.community.global_id;
             
             if (followingCos.indexOf(globalId) === -1) {
                 // Not following this community, don't add to streamDicts
                 return;
             }
-            if (addedCos.indexOf(globalId) !== -1) {
+            if (addedStreamCos.indexOf(globalId) !== -1) {
                 // Already added this community, don't add to streamDicts
                 return;
             }
@@ -260,11 +243,11 @@ var Nico = (function() {
             d.site = 'Nico';
             
             streamDicts.push(d);
-            addedCos.push(globalId);
+            addedStreamCos.push(globalId);
         });
         
+        liveStreamsCallsCompleted++;
         Main.addStreams(streamDicts);
-        signalDone.setStreams.resolve();
     }
     
     function getVideos() {
@@ -279,16 +262,6 @@ var Nico = (function() {
         var videoDicts = [];
         
         Main.addVideos(videoDicts);
-        signalDone.setVideos.resolve();
-    }
-    
-    
-    
-    function setRequirements() {
-        signalDone.setStreams = $.Deferred();
-        Main.addRequirement('showStreams', signalDone.setStreams);
-        signalDone.setVideos = $.Deferred();
-        Main.addRequirement('showVideos', signalDone.setVideos);
     }
     
     
@@ -457,9 +430,6 @@ var Nico = (function() {
     
     return {
         
-        setRequirements: function() {
-            setRequirements();
-        },
         startGettingMedia: function() {
             startGettingAllLiveStreams();
             getVideos();

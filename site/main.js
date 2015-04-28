@@ -13,12 +13,6 @@ var Main = (function() {
     var $hostElements = [];
     var $gameElements = [];
     var $videoElements = [];
-    var pendingStreams = [];
-    var pendingHosts = [];
-    var pendingGames = [];
-    var pendingVideos = [];
-    
-    var requireDone = {};
     
     
     function showNotification(notificationText) {
@@ -67,7 +61,7 @@ var Main = (function() {
     }
     
     
-    function showStreams() {
+    function addStreams(pendingStreams) {
         
         var $container = $('#streams');
         // Do sorting by view count, highest first.
@@ -149,12 +143,10 @@ var Main = (function() {
             // can refer to these for insertAfter()
             $streamElements.splice(index + 1, 0, $streamContainer);
         });
-        
-        pendingStreams = [];
     }
     
     
-    function showHosts() {
+    function addHosts(pendingHosts) {
         
         var $outerContainer = $('#hosts');
         
@@ -219,12 +211,10 @@ var Main = (function() {
         if ($hostElements.length > 0) {
             $('#hosts-container').show();
         }
-        
-        pendingHosts = [];
     }
     
     
-    function showGames() {
+    function addGames(pendingGames) {
         
         var $container = $('#games');
         
@@ -281,12 +271,10 @@ var Main = (function() {
         if ($gameElements.length > 0) {
             $('#games-container').show();
         }
-        
-        pendingGames = [];
     }
     
     
-    function showVideos() {
+    function addVideos(pendingVideos) {
         
         var $container = $('#videos');
         // Do sorting by date, latest to earliest.
@@ -376,73 +364,8 @@ var Main = (function() {
             videoDicts.splice(index + 1, 0, d);
             $videoElements.splice(index + 1, 0, $videoContainer);
         });
-        
-        pendingVideos = [];
     }
     
-    
-    function addRequirement(targetName, deferredEvent) {
-        /* This only applies to adding requirements for Main
-        functions to run, since there would be issues with implementing
-        targetName for any module (while keeping things simple).
-        
-        So, each individual site's module should just use
-        requireDone[...].push(...) for its own internal requirements,
-        instead of calling this. */
-        requireDone[targetName].push(deferredEvent);
-    }
-    
-    function setRequirements() {
-        /* Define complicated function call requirements - e.g.
-        "once events e1 and e2 complete, call function f". */
-        
-        requireDone.showStreams = [];
-        requireDone.showHosts = [];
-        requireDone.showGames = [];
-        requireDone.showVideos = [];
-        
-        // Call on each site's modules to add more requireDone items.
-        if (Settings.get('twitchEnabled')) {
-            Twitch.setRequirements();
-        }
-        if (Settings.get('hitboxEnabled')) {
-            Hitbox.setRequirements();
-        }
-        if (Settings.get('nicoEnabled')) {
-            Nico.setRequirements();
-        }
-        
-        if (Settings.get('displayTiming') === 'asTheyArrive') {
-            // Call the show functions each time media arrives.
-            //
-            // $.when(e).done(f) will set up function f to be called once
-            // the event e finishes.
-            requireDone.showStreams.forEach(function(x){
-                $.when(x).done(showStreams);
-            });
-            requireDone.showHosts.forEach(function(x){
-                $.when(x).done(showHosts);
-            });
-            requireDone.showGames.forEach(function(x){
-                $.when(x).done(showGames);
-            });
-            requireDone.showVideos.forEach(function(x){
-                $.when(x).done(showVideos);
-            });
-        }
-        else {  // 'whenAllSitesComplete'
-            // Call the show functions only when all the media of a
-            // particular type has arrived.
-            //
-            // $.when(e1, e2, ...).done(f) will set up function f to be called
-            // once all the deferred events e1, e2, ... finish. Use apply()
-            // to pass an array as an argument list.
-            $.when.apply(null, requireDone.showStreams).done(showStreams);
-            $.when.apply(null, requireDone.showHosts).done(showHosts);
-            $.when.apply(null, requireDone.showGames).done(showGames);
-            $.when.apply(null, requireDone.showVideos).done(showVideos);
-        }
-    }
     
     function startGettingMedia() {
         
@@ -480,7 +403,6 @@ var Main = (function() {
                         return;
                     }
                 }
-                setRequirements();
                 startGettingMedia();
             }
             else {
@@ -499,24 +421,21 @@ var Main = (function() {
             );
         },
         
-        addRequirement: function(deferredEvent, targetName) {
-            addRequirement(deferredEvent, targetName);
-        },
         showNotification: function(notificationText) {
             showNotification(notificationText);
         },
         
         addStreams: function(streams) {
-            streams.forEach(function(x){ pendingStreams.push(x); });
+            addStreams(streams);
         },
         addHosts: function(hosts) {
-            hosts.forEach(function(x){ pendingHosts.push(x); });
+            addHosts(hosts);
         },
         addGames: function(games) {
-            games.forEach(function(x){ pendingGames.push(x); });
+            addGames(games);
         },
         addVideos: function(videos) {
-            videos.forEach(function(x){ pendingVideos.push(x); });
+            addVideos(videos);
         }
     }
 })();

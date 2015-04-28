@@ -10,7 +10,6 @@ var Settings = {
         'twitchEnabled': true,
         'hitboxEnabled': true,
         'nicoEnabled': false,
-        'displayTiming': 'asTheyArrive',
         
         'hitboxUsername': '',
         'gameDisplay': 'boximage',

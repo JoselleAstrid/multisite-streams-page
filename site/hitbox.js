@@ -7,8 +7,6 @@ var Hitbox = (function() {
     
     var errorIndicator = "There was an error previously";
     
-    var signalDone = {};
-    
     
     function hitboxDateStrToObj(dateStr) {
         // From: API's date/time format, which is in UTC
@@ -189,7 +187,6 @@ var Hitbox = (function() {
         }
         
         Main.addStreams(hitboxStreamDicts);
-        signalDone.setStreams.resolve();
     }
     
     function setVideos(videoList) {
@@ -250,18 +247,6 @@ var Hitbox = (function() {
         }
         
         Main.addVideos(hitboxVideoDicts);
-        signalDone.setVideos.resolve();
-    }
-    
-    
-    
-    function setRequirements() {
-        
-        signalDone.setStreams = $.Deferred();
-        signalDone.setVideos = $.Deferred();
-        
-        Main.addRequirement('showStreams', signalDone.setStreams);
-        Main.addRequirement('showVideos', signalDone.setVideos);
     }
     
     
@@ -270,9 +255,6 @@ var Hitbox = (function() {
     
     return {
         
-        setRequirements: function() {
-            setRequirements();
-        },
         startGettingMedia: function() {
             getUserId();
         }

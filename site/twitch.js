@@ -6,8 +6,6 @@ var Twitch = (function() {
     
     var errorIndicator = "There was an error previously";
     
-    var signalDone = {};
-    
     
     function setOAuth2Token() {
         /*
@@ -332,7 +330,6 @@ var Twitch = (function() {
         }
         
         Main.addStreams(twitchStreamDicts);
-        signalDone.setStreams.resolve();
     }
     
     function setVideos(videosResponse) {
@@ -397,7 +394,6 @@ var Twitch = (function() {
         }
         
         Main.addVideos(twitchVideoDicts);
-        signalDone.setVideos.resolve();
     }
     
     function setHosts(hostsResponse) {
@@ -443,7 +439,6 @@ var Twitch = (function() {
         }
         
         Main.addHosts(hostDicts);
-        signalDone.setHosts.resolve();
     }
     
     function setGames(gamesResponse) {
@@ -478,22 +473,6 @@ var Twitch = (function() {
         }
         
         Main.addGames(gameDicts);
-        signalDone.setGames.resolve();
-    }
-    
-    
-    
-    function setRequirements() {
-        
-        signalDone.setStreams = $.Deferred();
-        signalDone.setHosts = $.Deferred();
-        signalDone.setGames = $.Deferred();
-        signalDone.setVideos = $.Deferred();
-        
-        Main.addRequirement('showStreams', signalDone.setStreams);
-        Main.addRequirement('showHosts', signalDone.setHosts);
-        Main.addRequirement('showGames', signalDone.setGames);
-        Main.addRequirement('showVideos', signalDone.setVideos);
     }
     
     
@@ -504,9 +483,6 @@ var Twitch = (function() {
     
         setOAuth2Token: function() {
             return setOAuth2Token();
-        },
-        setRequirements: function() {
-            setRequirements();
         },
         startGettingMedia: function() {
             getStreams();
