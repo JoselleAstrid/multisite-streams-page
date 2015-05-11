@@ -28,6 +28,11 @@ var Nico = (function() {
     var numActiveCalls = 0;
     var callQueue = [];
     
+    // Track unique server calls/requests (i.e. not counting retries). 
+    var numTotalRequests = 0;
+    var numCompletedRequests = 0;
+    var numFailedRequests = 0;
+    
     // Stream search keywords: hardcoded for now. May make this a setting later.
     var searchKeywords = ["rta", "ゲーム+練習"];
     //var searchKeywords = ["ゲーム"];
@@ -35,16 +40,27 @@ var Nico = (function() {
     var followingCos = [];
     var addedStreamCos = [];
     
-    var liveStreamsCallsExpected = 0;
-    var liveStreamsCallsCompleted = 0;
-    var numTotalCalls = 0;
-    var numFailedCalls = 0;
+    
+    function incTotalRequests() {
+        numTotalRequests++;
+        Main.updateRequestStatus("Nico", numTotalRequests, numCompletedRequests);
+    }
+    function incCompletedRequests() {
+        numCompletedRequests++;
+        Main.updateRequestStatus("Nico", numTotalRequests, numCompletedRequests);
+    }
     
     
-    function proxyAjax(url, params, callback, attemptNum) {
+    function proxyAjax(url, params, callback, attemptNum, wasQueued) {
+        
+        if (attemptNum === 1 && wasQueued !== true) {
+            incTotalRequests();
+        }
         
         if (numActiveCalls >= MAX_ACTIVE_CALLS) {
-            callQueue.push(Util.curry(proxyAjax, url, params, callback, attemptNum));
+            callQueue.push(
+                Util.curry(proxyAjax, url, params, callback, attemptNum, true)
+            );
             return;
         }
         
@@ -61,6 +77,7 @@ var Nico = (function() {
                         waitingAjaxCall();
                     }
                     
+                    incCompletedRequests();
                     callback_(response);
                 },
                 callback
@@ -78,7 +95,8 @@ var Nico = (function() {
                         proxyAjax(url_, params_, callback_, attemptNum_+1);
                     }
                     else {
-                        callback(errorIndicator);
+                        incCompletedRequests();
+                        callback_(errorIndicator);
                     }
                 },
                 url, params, callback, attemptNum
@@ -119,7 +137,6 @@ var Nico = (function() {
                 'limit': MAX_STREAMS_IN_CALL.toString()
             };
             
-            liveStreamsCallsExpected++;
             proxyAjax(
                 'http://api.ce.nicovideo.jp/liveapi/v1/video.search.solr',
                 params,
@@ -130,8 +147,6 @@ var Nico = (function() {
     }
     
     function continueGettingLiveStreams(keyword, response) {
-        
-        numTotalCalls++;
         
         if (response === errorIndicator) {
             // Just process this one response and finish.
@@ -171,7 +186,6 @@ var Nico = (function() {
         }
         
         paramSets.forEach(function(paramSet){
-            liveStreamsCallsExpected++;
             proxyAjax(
                 'http://api.ce.nicovideo.jp/liveapi/v1/video.search.solr',
                 paramSet,
@@ -189,16 +203,15 @@ var Nico = (function() {
     function setStreams(response) {
         
         var streams = [];
-        numTotalCalls++;
         
         if (response === errorIndicator) {
-            numFailedCalls++;
+            numFailedRequests++;
             Main.showNotification(
                 "Nicovideo requests failed after "
                 + MAX_CALL_ATTEMPTS.toString()
                 + " tries: "
-                + numFailedCalls.toString() + " of "
-                + numTotalCalls.toString());
+                + numFailedRequests.toString() + " of "
+                + numCompletedRequests.toString());
         }
         else {
             var nlvResponse = response.nicolive_video_response;
@@ -246,7 +259,6 @@ var Nico = (function() {
             addedStreamCos.push(globalId);
         });
         
-        liveStreamsCallsCompleted++;
         Main.addStreams(streamDicts);
     }
     

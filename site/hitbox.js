@@ -7,6 +7,11 @@ var Hitbox = (function() {
     
     var errorIndicator = "There was an error previously";
     
+    // Track server calls/requests.
+    var numTotalRequests = 0;
+    var numCompletedRequests = 0;
+    
+    
     
     function hitboxDateStrToObj(dateStr) {
         // From: API's date/time format, which is in UTC
@@ -36,6 +41,42 @@ var Hitbox = (function() {
     
     
     
+    function incTotalRequests() {
+        numTotalRequests++;
+        Main.updateRequestStatus("Hitbox", numTotalRequests, numCompletedRequests);
+    }
+    function incCompletedRequests() {
+        numCompletedRequests++;
+        Main.updateRequestStatus("Hitbox", numTotalRequests, numCompletedRequests);
+    }
+    
+    function ajaxRequest(url, params, callback, errorCallback) {
+        incTotalRequests();
+        
+        $.ajax({
+            url: url,
+            type: 'GET',
+            dataType: 'json',
+            data: params,
+            success: Util.curry(
+                function(callback_, response){
+                    incCompletedRequests();
+                    callback_(response);
+                },
+                callback
+            ),
+            error: Util.curry(
+                function(callback_, response){
+                    incCompletedRequests();
+                    callback_(response);
+                },
+                errorCallback
+            )
+        });
+    }
+    
+    
+    
     function getUserId() {
             
         // Since the Hitbox API doesn't use OAuth, we just specify
@@ -51,16 +92,12 @@ var Hitbox = (function() {
         // Make an API call to get this Hitbox user's info.
         var url = 'https://www.hitbox.tv/api/media/live/' + username;
         
-        // Use $.ajax() instead of $.getJSON() so that we can define a
-        // callback to handle errors, including:
-        // - The username doesn't exist
-        // - The user hasn't set their stream title and game
-        $.ajax({
-            url: url,
-            type: 'GET',
-            dataType: 'json',
-            success: setUserId,
-            error: function(response) {
+        ajaxRequest(
+            url, {},
+            // Success callback
+            setUserId,
+            // Error callback
+            function(response) {
                 // Two known causes for an error here. Unfortunately, both
                 // seem to give 404 errors, so we can't distinguish between
                 // the two...
@@ -73,7 +110,7 @@ var Hitbox = (function() {
                 );
                 setUserId(errorIndicator);
             }
-        });
+        );
     }
     
     function setUserId(liveInfo) {
@@ -99,20 +136,17 @@ var Hitbox = (function() {
         
         // Make an API call to get the live streams that this user
         // is following.
-        var url = 'https://www.hitbox.tv/api/media/live/list?'
-            + 'follower_id=' + userId
-            + '&limit=' + Settings.get('streamLimit');
+        var url = 'https://www.hitbox.tv/api/media/live/list';
+        var params = {
+            'follower_id': userId,
+            'limit': Settings.get('streamLimit')
+        };
         
-        // Use $.ajax() instead of $.getJSON() so that we can define a
-        // callback to handle errors, including:
-        // - no streams being live (that returns an error for some reason)
-        $.ajax({
-            url: url,
-            type: 'GET',
-            dataType: 'json',
-            success: setStreams,
-            error: function(response) { setStreams(errorIndicator); }
-        });
+        ajaxRequest(
+            url, params,
+            setStreams,
+            function(response) { setStreams(errorIndicator); }
+        );
     }
     
     function getVideos() {
@@ -126,20 +160,18 @@ var Hitbox = (function() {
         // this user is following.
         // (Note: These are the parts of recordings that the user has chosen
         // to save. Basically like Twitch highlights.)
-        var url = 'https://www.hitbox.tv/api/media/video/list?'
-            + 'filter=recent&follower_id=' + userId
-            + '&limit=' + Settings.get('videoLimit');
+        var url = 'https://www.hitbox.tv/api/media/video/list?';
+        var params = {
+            'filter': 'recent',
+            'follower_id': userId,
+            'limit': Settings.get('videoLimit')
+        };
         
-        // Use $.ajax() instead of $.getJSON() so that we can define a
-        // callback to handle errors, including:
-        // - no videos from channels you follow
-        $.ajax({
-            url: url,
-            type: 'GET',
-            dataType: 'json',
-            success: setVideos,
-            error: function(response) { setVideos(errorIndicator); }
-        });
+        ajaxRequest(
+            url, params,
+            setVideos,
+            function(response) { setVideos(errorIndicator); }
+        );
     }
     
     function setStreams(liveList) {

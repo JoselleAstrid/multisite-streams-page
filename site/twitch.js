@@ -6,6 +6,10 @@ var Twitch = (function() {
     
     var errorIndicator = "There was an error previously";
     
+    // Track server calls/requests.
+    var numTotalRequests = 0;
+    var numCompletedRequests = 0;
+    
     
     function setOAuth2Token() {
         /*
@@ -118,16 +122,49 @@ var Twitch = (function() {
         }
     }
     
-    /*
-    Set Ajax headers for Twitch.
-    At least that was the plan, but it seems that since JSONP is used for
-    Twitch, this may not really be needed.
-    */
+    
+    
     function setAjaxHeader(xhr) {
-        // API version; must be v3 to get followed videos
+        // API version
         xhr.setRequestHeader('Accept', 'application/vnd.twitchtv.v3+json');
-        // OAuth2
-        xhr.setRequestHeader('Authorization', twitchOAuth2Token);
+    }
+    
+    function incTotalRequests() {
+        numTotalRequests++;
+        Main.updateRequestStatus(
+            "Twitch", numTotalRequests, numCompletedRequests
+        );
+    }
+    function incCompletedRequests() {
+        numCompletedRequests++;
+        Main.updateRequestStatus(
+            "Twitch", numTotalRequests, numCompletedRequests
+        );
+    }
+    
+    function ajaxRequest(url, params, callback) {
+        incTotalRequests();
+        
+        var data = params;
+        data.oauth_token = twitchOAuth2Token;
+        
+        // Apparently Twitch does not support CORS:
+        // https://github.com/justintv/Twitch-API/issues/133
+        // So we must use JSONP.
+        $.ajax({
+            url: url,
+            type: 'GET',
+            data: data,
+            dataType: 'jsonp',
+            success: Util.curry(
+                function(callback_, response){
+                    incCompletedRequests();
+                    callback_(response);
+                },
+                callback
+            ),
+            beforeSend: setAjaxHeader
+        });
     }
     
     
@@ -140,32 +177,8 @@ var Twitch = (function() {
         
         // Apparently Twitch does not support CORS:
         // https://github.com/justintv/Twitch-API/issues/133
-        
-        // If CORS worked, we'd do something like this... (using $.ajax()
-        // instead of $.getJSON to pass a header, which is needed to specify
-        // the API version and for OAuth2)
-        // http://stackoverflow.com/questions/3229823/
-        //$.ajax({
-        //    url: 'https://api.twitch.tv/kraken',
-        //    type: 'GET',
-        //    dataType: 'json',
-        //    success: setUsername,
-        //    beforeSend: setAjaxHeader
-        //});
-        
-        // But since we must use JSONP, we do this instead.
-        
-        var scriptElmt = document.createElement("script");
-        scriptElmt.src = 'https://api.twitch.tv/kraken'
-            + '?callback=Twitch.setUsername'
-            + '&oauth_token=' + twitchOAuth2Token
-            + '&nocache=' + (new Date()).getTime();
-        document.getElementsByTagName("head")[0].appendChild(scriptElmt);
-        
-        // The JSONP callback functions must exist in the global scope at the
-        // time the <script> tag is evaluated by the browser (i.e. once
-        // the request has completed).
-        // http://stackoverflow.com/a/3840118
+        // So we must use JSONP.
+        ajaxRequest('https://api.twitch.tv/kraken', {}, setUsername);
     }
     
     function getStreams() {
@@ -174,13 +187,11 @@ var Twitch = (function() {
             return;
         }
         
-        var scriptElmt = document.createElement("script");
-        scriptElmt.src = 'https://api.twitch.tv/kraken/streams/followed'
-            + '?callback=Twitch.setStreams'
-            + '&oauth_token=' + twitchOAuth2Token
-            + '&nocache=' + (new Date()).getTime()
-            + '&limit=' + Settings.get('streamLimit');
-        document.getElementsByTagName("head")[0].appendChild(scriptElmt);
+        ajaxRequest(
+            'https://api.twitch.tv/kraken/streams/followed',
+            {'limit': Settings.get('streamLimit')},
+            setStreams
+        );
     }
     
     function getVideos() {
@@ -189,13 +200,11 @@ var Twitch = (function() {
             return;
         }
         
-        var scriptElmt = document.createElement("script");
-        scriptElmt.src = 'https://api.twitch.tv/kraken/videos/followed'
-            + '?callback=Twitch.setVideos'
-            + '&oauth_token=' + twitchOAuth2Token
-            + '&nocache=' + (new Date()).getTime()
-            + '&limit=' + Settings.get('videoLimit');
-        document.getElementsByTagName("head")[0].appendChild(scriptElmt);
+        ajaxRequest(
+            'https://api.twitch.tv/kraken/videos/followed',
+            {'limit': Settings.get('videoLimit')},
+            setVideos
+        );
     }
     
     
@@ -228,23 +237,15 @@ var Twitch = (function() {
             return;
         }
         
-        // Apparently, even if it's not an authenticated call,
-        // it still needs to be done using JSONP.
         var url =
-            'http://api.twitch.tv/api/users/'
+            'https://api.twitch.tv/api/users/'
             + username
             + '/followed/hosting';
         
-        var scriptElmt = document.createElement("script");
-        scriptElmt.src = url
-            + '?callback=Twitch.setHosts'
-            + '&nocache=' + (new Date()).getTime()
-            + '&limit=40'
-            // TODO: Make a setting for a host limit? If so, should it be
-            // tied into the stream limit somehow?
-            // (Twitch's default is 40)
-            //+ '&limit=' + Settings.get('hostLimit');
-        document.getElementsByTagName("head")[0].appendChild(scriptElmt);
+        // TODO: Make a setting for a host limit? If so, should it be
+        // tied into the stream limit somehow?
+        // (Twitch's site uses a limit of 40.)
+        ajaxRequest(url, {'limit': '40'}, setHosts);
     }
     
     function getGames() {
@@ -253,21 +254,16 @@ var Twitch = (function() {
             return;
         }
         
-        // Apparently, even if it's not an authenticated call,
-        // it still needs to be done using JSONP.
         var url =
-            'http://api.twitch.tv/api/users/'
+            'https://api.twitch.tv/api/users/'
             + username
             + '/follows/games/live';
         
-        var scriptElmt = document.createElement("script");
-        scriptElmt.src = url
-            + '?callback=Twitch.setGames'
-            + '&nocache=' + (new Date()).getTime()
-            // TODO: Make a setting for a game limit?
-            // (Note: Twitch doesn't specify a game limit by default)
-            //+ '&limit=' + Settings.get('gameLimit');
-        document.getElementsByTagName("head")[0].appendChild(scriptElmt);
+        // TODO: Make a setting for a game limit? If so, should it be
+        // tied into the stream limit somehow?
+        // (Twitch's site doesn't specify a game limit. But there is a
+        // parameter for it named 'limit'.)
+        ajaxRequest(url, {}, setGames);
     }
     
     
@@ -488,24 +484,6 @@ var Twitch = (function() {
             getStreams();
             getUsername();
             getVideos();
-        },
-        
-        
-        // JSONP callbacks must be public in order to work.
-        setGames: function(response) {
-            setGames(response);
-        },
-        setHosts: function(response) {
-            setHosts(response);
-        },
-        setStreams: function(response) {
-            setStreams(response);
-        },
-        setUsername: function(response) {
-            setUsername(response);
-        },
-        setVideos: function(response) {
-            setVideos(response);
         }
     }
 })();

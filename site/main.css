@@ -29,9 +29,14 @@ body {
 }
 
 
-
-#settings-button {
+#top-bar > * {
+  margin: 0 10px;
+}
+#settings-button, #request-status {
   float: right;
+}
+#request-status > * {
+  margin: 0 5px;
 }
 
 

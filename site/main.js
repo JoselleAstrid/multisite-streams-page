@@ -13,6 +13,7 @@ var Main = (function() {
     var $hostElements = [];
     var $gameElements = [];
     var $videoElements = [];
+    var requestStatusE = null;
     
     
     function showNotification(notificationText) {
@@ -20,6 +21,47 @@ var Main = (function() {
         
         $notificationArea.text(notificationText);
         $notificationArea.show();
+    }
+    
+    function updateRequestStatus(
+        siteName, numTotalRequests, numCompletedRequests) {
+    
+        // Look for an element of id request-status-<siteName>. This is the
+        // element where we show this site's requests status.
+        var statusId = 'request-status-' + siteName;
+        var siteStatusE = document.getElementById(statusId);
+        // If that element doesn't exist yet, then create it.
+        if (!siteStatusE) {
+            siteStatusE = document.createElement('span');
+            siteStatusE.id = statusId;
+            requestStatusE.appendChild(siteStatusE);
+        }
+    
+        // Update the status.
+        if (numTotalRequests === numCompletedRequests) {
+            // All sent requests have completed
+            siteStatusE.textContent = "";
+            siteStatusE.style.display = 'none';
+        }
+        else {
+            // Still some requests left to go
+            siteStatusE.textContent = 
+                siteName + ": " + numCompletedRequests.toString() + " of "
+                + numTotalRequests.toString();
+            siteStatusE.style.display = 'inline-block';
+        }
+        
+        // Determine whether to hide the entire request status container.
+        var allSitesDone = true;
+        $(requestStatusE).find('span').each(
+            function(index, e){if (e.textContent !== ""){allSitesDone = false;}}
+        );
+        if (allSitesDone) {
+            requestStatusE.style.display = 'none';
+        }
+        else {
+            requestStatusE.style.display = 'inline-block';
+        }
     }
     
     
@@ -385,44 +427,55 @@ var Main = (function() {
     
     
     
+    function init() {
+        
+        requestStatusE = document.getElementById('request-status');
+            
+        if (Settings.hasStorage()) {
+            Settings.storageToFields();
+            
+            if (Settings.get('twitchEnabled')) {
+                var nowRedirecting = Twitch.setOAuth2Token();
+                
+                if (nowRedirecting) {
+                    // Don't do anything else here, we're redirecting
+                    // so we can get the token.
+                    return;
+                }
+            }
+            startGettingMedia();
+        }
+        else {
+            // No settings stored yet. Initialize with defaults.
+            Settings.fillFieldsWithDefaults();
+            Settings.fieldsToStorage();
+            // Prompt the user to set settings for the first time.
+            Settings.show(Util.refreshPage, null);
+        }
+        
+        // Initialize settings button.
+        $('#settings-button').click(
+            function() {
+                Settings.show(Util.refreshPage, function(){});
+            }
+        );
+    }
+    
+    
+    
     // Public methods
     
     return {
         
         init: function() {
-            
-            if (Settings.hasStorage()) {
-                Settings.storageToFields();
-                
-                if (Settings.get('twitchEnabled')) {
-                    var nowRedirecting = Twitch.setOAuth2Token();
-                    
-                    if (nowRedirecting) {
-                        // Don't do anything else here, we're redirecting
-                        // so we can get the token.
-                        return;
-                    }
-                }
-                startGettingMedia();
-            }
-            else {
-                // No settings stored yet. Initialize with defaults.
-                Settings.fillFieldsWithDefaults();
-                Settings.fieldsToStorage();
-                // Prompt the user to set settings for the first time.
-                Settings.show(Util.refreshPage, null);
-            }
-            
-            // Initialize settings button.
-            $('#settings-button').click(
-                function() {
-                    Settings.show(Util.refreshPage, function(){});
-                }
-            );
+            init();
         },
         
         showNotification: function(notificationText) {
             showNotification(notificationText);
+        },
+        updateRequestStatus: function(site, numTotalRequests, numCompletedRequests) {
+            updateRequestStatus(site, numTotalRequests, numCompletedRequests);
         },
         
         addStreams: function(streams) {
