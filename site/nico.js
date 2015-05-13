@@ -16,9 +16,6 @@ var Nico = (function() {
     var MAX_STREAMS_IN_CALL = 100;
     // Max number of times we'll try a particular API call before giving up.
     var MAX_CALL_ATTEMPTS = 2;
-    // Proxy request server: hardcoded for now. May be a config thing later
-    // if we stick with this proxy-request plan.
-    var PROXY_REQUEST_SERVER = 'http://127.0.0.1:8080/';
     
     // Max number of API calls to have active in parallel. Too few and it may
     // take too long for everything to finish. Too many and some calls might
@@ -64,43 +61,88 @@ var Nico = (function() {
             return;
         }
         
-        var options = {
-            type: 'POST',
-            dataType: 'json',
-            url: PROXY_REQUEST_SERVER + url,
-            data: params,
-            success: Util.curry(
-                function(callback_, response){
-                    numActiveCalls--;
-                    if (callQueue.length > 0) {
-                        var waitingAjaxCall = callQueue.shift();
-                        waitingAjaxCall();
-                    }
-                    
+        // Get the proxy request server from Config. If this is not set, then
+        // default to Yahoo's YQL. (It's not the most reliable proxy,
+        // but it's the only proxy known that's run by a big company, so
+        // this app's load should be minimal for them.)
+        var proxyRequestServer = Config.proxyRequestServer || 'yql';
+        
+        var successCallback = Util.curry(
+            function(callback_, response){
+                numActiveCalls--;
+                if (callQueue.length > 0) {
+                    var waitingAjaxCall = callQueue.shift();
+                    waitingAjaxCall();
+                }
+                
+                incCompletedRequests();
+                callback_(response);
+            },
+            callback
+        );
+        var errorCallback = Util.curry(
+            function(url_, params_, callback_, attemptNum_, response){
+                numActiveCalls--;
+                if (callQueue.length > 0) {
+                    var waitingAjaxCall = callQueue.shift();
+                    waitingAjaxCall();
+                }
+                
+                // Try again if we haven't reached the max attempts.
+                if (attemptNum_ < MAX_CALL_ATTEMPTS) {
+                    proxyAjax(url_, params_, callback_, attemptNum_+1);
+                }
+                else {
                     incCompletedRequests();
-                    callback_(response);
-                },
-                callback
-            ),
-            error: Util.curry(
-                function(url_, params_, callback_, attemptNum_, response){
-                    numActiveCalls--;
-                    if (callQueue.length > 0) {
-                        var waitingAjaxCall = callQueue.shift();
-                        waitingAjaxCall();
-                    }
+                    callback_(errorIndicator);
+                }
+            },
+            url, params, callback, attemptNum
+        );
+        
+        var proxyUrl;
+        if (proxyRequestServer === 'yql') {
+            // For Yahoo's YQL, the request must be built in a particular way,
+            // and the response must be unwrapped as well.
+            proxyUrl = 'https://query.yahooapis.com/v1/public/yql';
+            
+            var requestUrl = url + '?' + $.param(params);
+            var query = 'select * from json where url="' + requestUrl + '"';
+            params = {'q': query, 'format': 'json'};
+            
+            successCallback = Util.curry(
+                function(callback_, response){
+                    var results = response.query.results;
                     
-                    // Try again if we haven't reached the max attempts.
-                    if (attemptNum_ < MAX_CALL_ATTEMPTS) {
-                        proxyAjax(url_, params_, callback_, attemptNum_+1);
+                    if (results !== null) {
+                        callback_(results);
                     }
                     else {
-                        incCompletedRequests();
+                        // results should be null if the YQL call failed.
                         callback_(errorIndicator);
                     }
                 },
-                url, params, callback, attemptNum
-            )
+                successCallback
+            );
+        }
+        else {
+            // If the proxy server's not YQL, then it's assumed to work by
+            // simply appending the request URL to a base URL (which should be
+            // the proxyRequestServer value), and it's assumed to return the
+            // request as-is instead of wrapping it (unlike YQL).
+            //
+            // For example, the following Node-run proxy has this behavior:
+            // https://www.npmjs.com/package/cors-anywhere
+            proxyUrl = proxyRequestServer + url;
+        }
+        
+        var options = {
+            type: 'POST',
+            dataType: 'json',
+            url: proxyUrl,
+            data: params,
+            success: successCallback,
+            error: errorCallback
         };
         $.ajax(options);
         
