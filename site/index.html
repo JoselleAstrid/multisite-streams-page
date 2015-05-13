@@ -135,16 +135,25 @@
               <textarea id="textarea-nicoCommunities">
                 </textarea>
             </div>
-            <div>
-              <button id="confirm-button-nicoCommunities" type="button">
-                Confirm</button>
-            </div>
             <div class="help-text">
               Type one community ID per line. A community ID should be "co"
               followed by numbers. Example: co1234567
             </div>
+            <div>
+              <button id="confirm-button-nicoCommunities" type="button">
+                Confirm</button>
+            </div>
           </div>
           <br /><br />
+          
+          <label for="field-nicoSearchKeywords">Search keywords: </label>
+          <select name="nicoSearchKeywords" id="field-nicoSearchKeywords">
+            <option value="rta, 練習+ゲーム">rta OR (練習 AND ゲーム)</option>
+            <option value="ゲーム">ゲーム</option>
+            <option value="ゲーム, 一般">ゲーム OR 一般</option>
+          </select>
+          <br /><br />
+          
           <div class="help-text">
             For now, only Nico streams are supported, not videos.
           </div>

@@ -9,6 +9,7 @@ var Nico = (function() {
     var coRegex = /^co[0-9]+$/;
     
     var errorIndicator = "There was an error previously";
+    var maintenanceIndicator = "Nico is under maintenance";
     
     // Max number of streams we can get in a single API call.
     // For search.solr, http://www59.atwiki.jp/nicoapi/pages/48.html says
@@ -30,10 +31,6 @@ var Nico = (function() {
     var numCompletedRequests = 0;
     var numFailedRequests = 0;
     
-    // Stream search keywords: hardcoded for now. May make this a setting later.
-    var searchKeywords = ["rta", "ゲーム+練習"];
-    //var searchKeywords = ["ゲーム"];
-    
     var followingCos = [];
     var addedStreamCos = [];
     
@@ -46,7 +43,6 @@ var Nico = (function() {
         numCompletedRequests++;
         Main.updateRequestStatus("Nico", numTotalRequests, numCompletedRequests);
     }
-    
     
     function proxyAjax(url, params, callback, attemptNum, wasQueued) {
         
@@ -83,18 +79,32 @@ var Nico = (function() {
         var errorCallback = Util.curry(
             function(url_, params_, callback_, attemptNum_, response){
                 numActiveCalls--;
+                
+                // If any pending Ajax calls are waiting, dequeue a call. 
                 if (callQueue.length > 0) {
                     var waitingAjaxCall = callQueue.shift();
                     waitingAjaxCall();
                 }
                 
-                // Try again if we haven't reached the max attempts.
-                if (attemptNum_ < MAX_CALL_ATTEMPTS) {
-                    proxyAjax(url_, params_, callback_, attemptNum_+1);
+                // Check the response (which jQuery wraps under the responseJSON
+                // key) for Nico's maintenance status.
+                if (response.responseJSON
+                    && response.responseJSON.nicovideo_response
+                    && response.responseJSON.nicovideo_response['@status']
+                       === 'maintenance') {
+                    // Nicolive is under maintenance.
+                    incCompletedRequests();
+                    callback_(maintenanceIndicator);
                 }
-                else {
+                else if (attemptNum_ >= MAX_CALL_ATTEMPTS) {
+                    // Reached the max number of attempts for this call;
+                    // giving up.
                     incCompletedRequests();
                     callback_(errorIndicator);
+                }
+                else {
+                    // Trying again.
+                    proxyAjax(url_, params_, callback_, attemptNum_+1);
                 }
             },
             url, params, callback, attemptNum
@@ -111,18 +121,37 @@ var Nico = (function() {
             params = {'q': query, 'format': 'json'};
             
             successCallback = Util.curry(
-                function(callback_, response){
+                function(succCallback, errCallback, response){
                     var results = response.query.results;
                     
                     if (results !== null) {
-                        callback_(results);
+                        // YQL doesn't consider the maintenance case an error,
+                        // so we check for the case explicitly again here.
+                        //
+                        // YQL is silly and changes the @status key to
+                        // _status.
+                        if (results.nicovideo_response
+                            && results.nicovideo_response['_status']
+                               === 'maintenance') {
+                            // Tidy up the response as if it came from jQuery,
+                            // then call the error callback.
+                            var newResponse = {'responseJSON': results};
+                            newResponse.responseJSON.nicovideo_response['@status'] =
+                                results.nicovideo_response['_status'];
+                            delete newResponse.responseJSON.nicovideo_response._status;
+                            errCallback(newResponse);
+                        }
+                        else {
+                            succCallback(results);
+                        }
                     }
                     else {
-                        // results should be null if the YQL call failed.
-                        callback_(errorIndicator);
+                        // results should be null if YQL failed to get
+                        // Nico's response.
+                        errCallback(results);
                     }
                 },
-                successCallback
+                successCallback, errorCallback
             );
         }
         else {
@@ -150,6 +179,7 @@ var Nico = (function() {
     }
     
     
+    
     function startGettingAllLiveStreams() {
         
         var followingCommunities = Settings.get('nicoCommunities');
@@ -164,6 +194,18 @@ var Nico = (function() {
             );
             setStreams();
             return;
+        }
+        
+        var keywordsSetting = Settings.get('nicoSearchKeywords');
+        var searchKeywords;
+        if (keywordsSetting.indexOf(',') === -1) {
+            // Only one keyword.
+            searchKeywords = [keywordsSetting];
+        }
+        else {
+            // Multiple keywords; make an array out of them.
+            // Keyword separator is a comma followed by any number of spaces.
+            searchKeywords = keywordsSetting.split(/,[ ]*/);
         }
         
         searchKeywords.forEach(function(keyword){
@@ -190,7 +232,7 @@ var Nico = (function() {
     
     function continueGettingLiveStreams(keyword, response) {
         
-        if (response === errorIndicator) {
+        if (response === errorIndicator || response === maintenanceIndicator) {
             // Just process this one response and finish.
             setStreams(response);
             return;
@@ -254,6 +296,10 @@ var Nico = (function() {
                 + " tries: "
                 + numFailedRequests.toString() + " of "
                 + numCompletedRequests.toString());
+        }
+        else if (response === maintenanceIndicator) {
+            Main.showNotification(
+                "Nicolive is currently under maintenance.");
         }
         else {
             var nlvResponse = response.nicolive_video_response;
@@ -406,12 +452,20 @@ var Nico = (function() {
         
         var $rows = $coTableContainer.find('tr');
         
-        if (response === errorIndicator) {
+        if (response === errorIndicator || response === maintenanceIndicator) {
+            var cellText;
+            if (response === errorIndicator) {
+                cellText = "Checking failed";
+            }
+            else if (response === maintenanceIndicator) {
+                cellText = "Nico is under maintenance";
+            }
+            
             $rows.each(function(i, row) {
                 var $nameCell = $(row).children('td.coName');
                 
                 if ($nameCell.text() === "Checking...") {
-                    $nameCell.text("Checking failed");
+                    $nameCell.text(cellText);
                 }
             });
             return;

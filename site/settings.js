@@ -17,7 +17,8 @@ var Settings = {
         'videoLimit': 10,
         'hitboxThumbnailServer': 'vie',
         
-        'nicoCommunities': []
+        'nicoCommunities': [],
+        'nicoSearchKeywords': 'rta, 練習+ゲーム'
     },
     
     fieldTypes: ['input', 'select', 'textarea'],
