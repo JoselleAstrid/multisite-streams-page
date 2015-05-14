@@ -35,6 +35,7 @@ var Nico = (function() {
     var addedStreamCos = [];
     
     
+    
     function incTotalRequests() {
         numTotalRequests++;
         Main.updateRequestStatus("Nico", numTotalRequests, numCompletedRequests);
@@ -43,6 +44,12 @@ var Nico = (function() {
         numCompletedRequests++;
         Main.updateRequestStatus("Nico", numTotalRequests, numCompletedRequests);
     }
+    
+    function requestsAreDone() {
+        return numTotalRequests === numCompletedRequests;
+    }
+    
+    
     
     function proxyAjax(url, params, callback, attemptNum, wasQueued) {
         
@@ -71,8 +78,8 @@ var Nico = (function() {
                     waitingAjaxCall();
                 }
                 
-                incCompletedRequests();
                 callback_(response);
+                incCompletedRequests();
             },
             callback
         );
@@ -93,14 +100,14 @@ var Nico = (function() {
                     && response.responseJSON.nicovideo_response['@status']
                        === 'maintenance') {
                     // Nicolive is under maintenance.
-                    incCompletedRequests();
                     callback_(maintenanceIndicator);
+                    incCompletedRequests();
                 }
                 else if (attemptNum_ >= MAX_CALL_ATTEMPTS) {
                     // Reached the max number of attempts for this call;
                     // giving up.
-                    incCompletedRequests();
                     callback_(errorIndicator);
+                    incCompletedRequests();
                 }
                 else {
                     // Trying again.
@@ -541,6 +548,9 @@ var Nico = (function() {
         startGettingMedia: function() {
             startGettingAllLiveStreams();
             getVideos();
+        },
+        requestsAreDone: function() {
+            return requestsAreDone();
         },
         
         refreshCommunitiesTable: function() {

@@ -50,6 +50,12 @@ var Hitbox = (function() {
         Main.updateRequestStatus("Hitbox", numTotalRequests, numCompletedRequests);
     }
     
+    function requestsAreDone() {
+        return numTotalRequests === numCompletedRequests;
+    }
+    
+    
+    
     function ajaxRequest(url, params, callback, errorCallback) {
         incTotalRequests();
         
@@ -60,15 +66,15 @@ var Hitbox = (function() {
             data: params,
             success: Util.curry(
                 function(callback_, response){
-                    incCompletedRequests();
                     callback_(response);
+                    incCompletedRequests();
                 },
                 callback
             ),
             error: Util.curry(
                 function(callback_, response){
-                    incCompletedRequests();
                     callback_(response);
+                    incCompletedRequests();
                 },
                 errorCallback
             )
@@ -289,6 +295,9 @@ var Hitbox = (function() {
         
         startGettingMedia: function() {
             getUserId();
+        },
+        requestsAreDone: function() {
+            return requestsAreDone();
         }
     }
 })();

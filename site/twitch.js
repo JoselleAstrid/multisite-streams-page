@@ -124,11 +124,6 @@ var Twitch = (function() {
     
     
     
-    function setAjaxHeader(xhr) {
-        // API version
-        xhr.setRequestHeader('Accept', 'application/vnd.twitchtv.v3+json');
-    }
-    
     function incTotalRequests() {
         numTotalRequests++;
         Main.updateRequestStatus(
@@ -140,6 +135,17 @@ var Twitch = (function() {
         Main.updateRequestStatus(
             "Twitch", numTotalRequests, numCompletedRequests
         );
+    }
+    
+    function requestsAreDone() {
+        return numTotalRequests === numCompletedRequests;
+    }
+    
+    
+    
+    function setAjaxHeader(xhr) {
+        // API version
+        xhr.setRequestHeader('Accept', 'application/vnd.twitchtv.v3+json');
     }
     
     function ajaxRequest(url, params, callback) {
@@ -158,8 +164,8 @@ var Twitch = (function() {
             dataType: 'jsonp',
             success: Util.curry(
                 function(callback_, response){
-                    incCompletedRequests();
                     callback_(response);
+                    incCompletedRequests();
                 },
                 callback
             ),
@@ -484,6 +490,9 @@ var Twitch = (function() {
             getStreams();
             getUsername();
             getVideos();
+        },
+        requestsAreDone: function() {
+            return requestsAreDone();
         }
     }
 })();

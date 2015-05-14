@@ -13,7 +13,32 @@ var Main = (function() {
     var $hostElements = [];
     var $gameElements = [];
     var $videoElements = [];
+    
     var requestStatusE = null;
+    var mediaContainerEs = null;
+    
+    var SITE_NAMES = ['Twitch', 'Hitbox', 'Nico'];
+    var SITE_NAMES_TO_MODULES = {
+        'Twitch': Twitch,
+        'Hitbox': Hitbox,
+        'Nico': Nico
+    };
+    var mediaTypesToSites = null;
+    
+    
+    
+    function haveEnabledSite(siteName) {
+        if (siteName === 'Twitch') {
+            return Settings.get('twitchEnabled');
+        }
+        else if (siteName === 'Hitbox') {
+            return Settings.get('hitboxEnabled');
+        }
+        else if (siteName === 'Nico') {
+            return Settings.get('nicoEnabled');
+        }
+    }
+    
     
     
     function showNotification(notificationText) {
@@ -51,18 +76,44 @@ var Main = (function() {
             siteStatusE.style.display = 'inline-block';
         }
         
-        // Determine whether to hide the entire request status container.
-        var allSitesDone = true;
-        $(requestStatusE).find('span').each(
-            function(index, e){if (e.textContent !== ""){allSitesDone = false;}}
-        );
-        if (allSitesDone) {
+        // If there are no pending requests, hide the entire
+        // request status container. Otherwise, ensure the container is shown.
+        var requestsAreDone = SITE_NAMES.every(function(siteName){
+            return SITE_NAMES_TO_MODULES[siteName].requestsAreDone();
+        });
+        if (requestsAreDone) {
             requestStatusE.style.display = 'none';
         }
         else {
             requestStatusE.style.display = 'inline-block';
         }
+        
+        // If we know a particular media section is done (due to all the
+        // relevant sites' requests being done), AND there were no media found
+        // for that section, then update the placeholder text accordingly.
+        //
+        // Here we loop over each media type.
+        $.each(mediaTypesToSites, function(mediaType, sites) {
+                
+            var allSitesWithThisMediaAreDone =
+                mediaTypesToSites[mediaType].every(function(siteModule){
+                    return siteModule.requestsAreDone();
+                });
+                
+            if (allSitesWithThisMediaAreDone) {
+                // All sites dealing with this media type have completed all
+                // of their requests.
+                //
+                // If the section is still empty, change the placeholder text
+                // to reflect this.
+                var mediaContainerE = mediaContainerEs[mediaType];
+                $(mediaContainerE).find('span.empty-section-text').text(
+                    "No " + mediaType + " found"
+                );
+            }
+        });
     }
+    
     
     
     function addGameDisplay(d, $container, $thumbnailCtnr) {
@@ -103,13 +154,19 @@ var Main = (function() {
     }
     
     
+    
     function addStreams(pendingStreams) {
         
         var $container = $('#streams');
+        
         // Do sorting by view count, highest first.
         var compareFunc = function(a, b) {
             return parseInt(b.viewCount) - parseInt(a.viewCount);
         };
+        
+        if ($streamElements.length === 0 && pendingStreams.length > 0) {
+            $container.find('span.empty-section-text').remove();
+        }
         
         
         pendingStreams.forEach(function(d) {
@@ -192,6 +249,10 @@ var Main = (function() {
         
         var $outerContainer = $('#hosts');
         
+        if ($hostElements.length === 0 && pendingHosts.length > 0) {
+            $outerContainer.find('span.empty-section-text').remove();
+        }
+        
         
         pendingHosts.forEach(function(d) {
             
@@ -249,16 +310,16 @@ var Main = (function() {
             $outerContainer.append($container);
             $hostElements.push($container);
         });
-        
-        if ($hostElements.length > 0) {
-            $('#hosts-container').show();
-        }
     }
     
     
     function addGames(pendingGames) {
         
         var $container = $('#games');
+        
+        if ($gameElements.length === 0 && pendingGames.length > 0) {
+            $container.find('span.empty-section-text').remove();
+        }
         
         
         pendingGames.forEach(function(d) {
@@ -309,20 +370,21 @@ var Main = (function() {
             $container.append($gameContainer);
             $gameElements.push($gameContainer);
         });
-        
-        if ($gameElements.length > 0) {
-            $('#games-container').show();
-        }
     }
     
     
     function addVideos(pendingVideos) {
         
         var $container = $('#videos');
+        
         // Do sorting by date, latest to earliest.
         var compareFunc = function(a, b) {
             return parseInt(b.unixTimestamp) - parseInt(a.unixTimestamp);
         };
+        
+        if ($videoElements.length === 0 && pendingVideos.length > 0) {
+            $container.find('span.empty-section-text').remove();
+        }
         
         
         pendingVideos.forEach(function(d) {
@@ -411,25 +473,28 @@ var Main = (function() {
     
     function startGettingMedia() {
         
+        var numEnabledSites = 0;
+        
         // For each site, we have to make one or more API calls via Ajax.
         // The function we call here will start the chain of API calls for
         // that site, to retrieve streams, videos, etc.
-        if (Settings.get('twitchEnabled')) {
-            Twitch.startGettingMedia();
-        }
-        if (Settings.get('hitboxEnabled')) {
-            Hitbox.startGettingMedia();
-        }
-        if (Settings.get('nicoEnabled')) {
-            Nico.startGettingMedia();
+        SITE_NAMES.forEach(function(siteName){
+            if (haveEnabledSite(siteName)) {
+                SITE_NAMES_TO_MODULES[siteName].startGettingMedia();
+                numEnabledSites++;
+            }
+        });
+        
+        if (numEnabledSites === 0) {
+            showNotification(
+                "No stream sites are enabled! Go to Settings to enable a site."
+            );
         }
     }
     
     
     
     function init() {
-        
-        requestStatusE = document.getElementById('request-status');
             
         if (Settings.hasStorage()) {
             Settings.storageToFields();
@@ -443,6 +508,70 @@ var Main = (function() {
                     return;
                 }
             }
+        
+            requestStatusE = document.getElementById('request-status');
+            $(requestStatusE).hide();
+            
+            // Add placeholder text for each media section.
+            $('.media-container').each( function() {
+                var spanE = document.createElement('span');
+                spanE.textContent = "Waiting...";
+                $(spanE).addClass('empty-section-text');
+                this.appendChild(spanE);
+            });
+        
+            // Track which sites will provide what kinds of media types.
+            mediaTypesToSites = {};
+            var mediaTypesToSiteNames = {
+                'streams': ['Twitch', 'Hitbox', 'Nico'],
+                'hosts': ['Twitch'],
+                'games': ['Twitch'],
+                'videos': ['Twitch', 'Hitbox']
+            };
+            $.each(mediaTypesToSiteNames, function(mediaType, siteStrs){
+                mediaTypesToSites[mediaType] = [];
+                
+                siteStrs.forEach( function(s){
+                    if (haveEnabledSite(s)) {
+                        mediaTypesToSites[mediaType].push(
+                            SITE_NAMES_TO_MODULES[s]
+                        );
+                    }
+                });
+            });
+            
+            // Show/hide media sections depending on which sites are being
+            // used.
+            mediaContainerEs = {};
+            var containerIds = {
+                'streams': 'streams',
+                'hosts': 'hosts',
+                'games': 'games',
+                'videos': 'videos'
+            };
+            mediaContainerEs.streams = document.getElementById('streams');
+            mediaContainerEs.hosts = document.getElementById('hosts');
+            mediaContainerEs.games = document.getElementById('games');
+            mediaContainerEs.videos = document.getElementById('videos');
+                                               
+            $.each(mediaTypesToSites, function(mediaType, sites) {
+                mediaContainerEs[mediaType] = document.getElementById(
+                    containerIds[mediaType]
+                );
+                var headerE = document.getElementById(
+                    containerIds[mediaType] + '-header'
+                );
+                    
+                if (sites.length > 0) {
+                    $(mediaContainerEs[mediaType]).show();
+                    $(headerE).show();
+                }
+                else {
+                    $(mediaContainerEs[mediaType]).hide();
+                    $(headerE).hide();
+                }
+            });
+            
             startGettingMedia();
         }
         else {
