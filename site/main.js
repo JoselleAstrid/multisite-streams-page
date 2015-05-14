@@ -66,26 +66,14 @@ var Main = (function() {
         if (numTotalRequests === numCompletedRequests) {
             // All sent requests have completed
             siteStatusE.textContent = "";
-            siteStatusE.style.display = 'none';
+            $(siteStatusE).hide();
         }
         else {
             // Still some requests left to go
             siteStatusE.textContent = 
                 siteName + ": " + numCompletedRequests.toString() + " of "
                 + numTotalRequests.toString();
-            siteStatusE.style.display = 'inline-block';
-        }
-        
-        // If there are no pending requests, hide the entire
-        // request status container. Otherwise, ensure the container is shown.
-        var requestsAreDone = SITE_NAMES.every(function(siteName){
-            return SITE_NAMES_TO_MODULES[siteName].requestsAreDone();
-        });
-        if (requestsAreDone) {
-            requestStatusE.style.display = 'none';
-        }
-        else {
-            requestStatusE.style.display = 'inline-block';
+            $(siteStatusE).show();
         }
         
         // If we know a particular media section is done (due to all the
@@ -112,6 +100,22 @@ var Main = (function() {
                 );
             }
         });
+        
+        // Check if there are any pending requests from any site.
+        // If not:
+        // - Hide the entire request status container.
+        // - Show the page footer. (Showing this earlier makes it move all
+        //   the place during page loading, which seems weird.)
+        var requestsAreDone = SITE_NAMES.every(function(siteName){
+            return SITE_NAMES_TO_MODULES[siteName].requestsAreDone();
+        });
+        if (requestsAreDone) {
+            $(requestStatusE).hide();
+            $('#footer').show();
+        }
+        else {
+            $(requestStatusE).show();
+        }
     }
     
     
@@ -495,6 +499,11 @@ var Main = (function() {
     
     
     function init() {
+        
+        $(document.getElementById('footer')).hide();
+        
+        requestStatusE = document.getElementById('request-status');
+        $(requestStatusE).hide();
             
         if (Settings.hasStorage()) {
             Settings.storageToFields();
@@ -508,9 +517,6 @@ var Main = (function() {
                     return;
                 }
             }
-        
-            requestStatusE = document.getElementById('request-status');
-            $(requestStatusE).hide();
             
             // Add placeholder text for each media section.
             $('.media-container').each( function() {
