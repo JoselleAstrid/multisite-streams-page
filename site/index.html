@@ -152,6 +152,43 @@
             <option value="ゲーム">ゲーム</option>
             <option value="ゲーム, 一般">ゲーム OR 一般</option>
           </select>
+          
+          <span id="help-nicoSearchKeywords-button" class="help-button">(?)</span>
+          <div id="help-nicoSearchKeywords" class="long-help-text-container">
+            <div class="help-text">
+              <p>練習 means practice, ゲーム means game, 一般 means general.</p>
+            
+              <p>Nicovideo's API is pretty limited when it comes to
+              checking the live status of specific communities.
+              The fastest way we found is to
+              search ALL live streams on the site, and then check the search
+              results for the communities you follow.</p>
+              
+              <p>You must pick the search keywords to balance between making the
+              search fast, versus making sure the search doesn't miss any
+              streamers you follow.</p>
+              
+              <p><strong>rta OR (練習 AND ゲーム)</strong>: Fast.
+              Gets streams labeled as RTA
+              (in the stream tags, title, or community name),
+              and streams labeled as practice in Nico's game category. If these
+              words are only found in the community tags, then it doesn't work.</p>
+              
+              <p><strong>ゲーム</strong>: Slow, especially on weekends and
+              peak hours in Japan.
+              Gets all streams in Nico's game category.</p>
+              
+              <p><strong>ゲーム OR 一般</strong>: Slower.
+              Gets all streams in Nico's game category and general category.
+              If any of your followed streamers sometimes do non-gaming things
+              like drawing, coding, etc. then you could consider using this.</p>
+              
+              <p>If you want to really make sure you're not missing any
+              particular streams, log into Nicovideo, join the communities that
+              interest you, and go to
+              <a href="http://live.nicovideo.jp/my" target="_blank">this page</a>.</p>
+            </div>
+          </div>
           <br /><br />
           
           <div class="help-text">

@@ -453,6 +453,30 @@ var Main = (function() {
             Settings.show(Util.refreshPage, null);
         }
         
+        // Initialize help buttons.
+        $('.help-button').each( function() {
+            var buttonIdRegex = /^(.+)-button$/;
+            var result = buttonIdRegex.exec(this.id);
+            var helpTextId = result[1];
+            
+            // When this help button is clicked, open the corresponding
+            // help text in a modal window.
+            var clickCallback = function(helpTextId_, helpButtonE) {
+                $('#'+helpTextId_).dialog({
+                    modal: true,
+                    width: 500,
+                    position: {
+                      my: "center bottom",
+                      at: "right top",
+                      of: helpButtonE
+                    }
+                });
+            };
+            $(this).click(
+                Util.curry(clickCallback, helpTextId, this)
+            );
+        });
+        
         // Initialize settings button.
         $('#settings-button').click(
             function() {

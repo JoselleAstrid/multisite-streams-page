@@ -99,6 +99,17 @@ makes all its anchors black by default */
   font-size: 14.4px; font-size: 0.9rem;
 }
 
+.long-help-text-container {
+  display: none;
+}
+
+.help-button {
+  /* Without styling, this "button" is just some text, so indicate
+  that this is clickable. */
+  cursor: pointer;
+  color: blue;
+}
+
 
 
 
