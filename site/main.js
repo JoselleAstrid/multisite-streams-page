@@ -442,6 +442,21 @@ var Main = (function() {
             }
             videoObjs.splice(index + 1, 0, obj);
             videoEs.splice(index + 1, 0, $videoE[0]);
+            
+            
+            // We request the top <videoLimit> videos from each site, so we'll
+            // generally be getting 2x or more videos than the limit. Prune
+            // the video listing down to the limit.
+            //
+            // It may seem weird to discard media that we've already fetched,
+            // but the goal is to give an *accurate* listing of the
+            // top <videoLimit> videos given the sort criteria. The only way
+            // to do that with multiple sites is to fetch some extra data.
+            if (videoObjs.length > Settings.get('videoLimit')) {
+                videoObjs.pop();
+                var lastVideoE = videoEs.pop();
+                $(lastVideoE).remove();
+            }
         });
     }
     

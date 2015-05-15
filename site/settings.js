@@ -13,7 +13,7 @@ var Settings = {
         
         'hitboxUsername': '',
         'gameDisplay': 'boximage',
-        'videoLimit': 10,
+        'videoLimit': 30,
         'hitboxThumbnailServer': 'vie',
         
         'nicoCommunities': [],
