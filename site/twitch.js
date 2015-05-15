@@ -10,6 +10,8 @@ var Twitch = (function() {
     var numTotalRequests = 0;
     var numCompletedRequests = 0;
     
+    var TWITCH_STREAM_LIMIT = 100;
+    
     
     function setOAuth2Token() {
         /*
@@ -195,7 +197,7 @@ var Twitch = (function() {
         
         ajaxRequest(
             'https://api.twitch.tv/kraken/streams/followed',
-            {'limit': Settings.get('streamLimit')},
+            {'limit': TWITCH_STREAM_LIMIT},
             setStreams
         );
     }

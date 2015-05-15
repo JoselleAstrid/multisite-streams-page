@@ -11,6 +11,10 @@ var Hitbox = (function() {
     var numTotalRequests = 0;
     var numCompletedRequests = 0;
     
+    // Limit doesn't actually seem to be 100 (it has been seen returning
+    // 134 streams before), but it's a reasonable limit anyway.
+    var HITBOX_STREAM_LIMIT = 100;
+    
     
     
     function hitboxDateStrToObj(dateStr) {
@@ -145,7 +149,7 @@ var Hitbox = (function() {
         var url = 'https://www.hitbox.tv/api/media/live/list';
         var params = {
             'follower_id': userId,
-            'limit': Settings.get('streamLimit')
+            'limit': HITBOX_STREAM_LIMIT
         };
         
         ajaxRequest(

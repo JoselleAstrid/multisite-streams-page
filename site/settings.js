@@ -13,7 +13,6 @@ var Settings = {
         
         'hitboxUsername': '',
         'gameDisplay': 'boximage',
-        'streamLimit': 25,
         'videoLimit': 10,
         'hitboxThumbnailServer': 'vie',
         
