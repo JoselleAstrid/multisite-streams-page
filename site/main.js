@@ -7,15 +7,10 @@
 
 var Main = (function() {
     
-    var streamDicts = [];
-    var videoDicts = [];
-    var $streamElements = [];
-    var $hostElements = [];
-    var $gameElements = [];
-    var $videoElements = [];
-    
     var requestStatusE = null;
-    var mediaContainerEs = null;
+    var mediaContainerEs = {};
+    var mediaElementArrays = {};
+    var mediaObjArrays = {};
     
     var SITE_NAMES = ['Twitch', 'Hitbox', 'Nico'];
     var SITE_NAMES_TO_MODULES = {
@@ -120,25 +115,43 @@ var Main = (function() {
     
     
     
-    function addGameDisplay(d, $container, $thumbnailCtnr) {
+    function addMediaThumbnail(obj, $thumbnailCtnr) {
+        /* Add a stream or video thumbnail. */
+        if (obj.site === 'Twitch') {
+            $thumbnailCtnr.addClass('twitch');
+        }
+        else if (obj.site === 'Hitbox') {
+            $thumbnailCtnr.addClass('hitbox');
+        }
+        else if (obj.site === 'Nico') {
+            $thumbnailCtnr.addClass('nico');
+        }
+        
+        var $thumbnail = $('<img>');
+        $thumbnail.attr('class', 'media-thumbnail');
+        $thumbnail.attr('src', obj.thumbnailUrl);
+        $thumbnailCtnr.append($thumbnail);
+    }
+    
+    function addGameDisplay(obj, $mediaE, $thumbnailCtnr) {
         /* Add a display indicating the game being played, for a
         stream, video, or host. */
             
-        if (d.gameName === "Not supported on this site") {
+        if (obj.gameName === "Not supported on this site") {
             return;
         }
         
         if (Settings.get('gameDisplay') === 'boximage') {
             // Game as box image
-            if (d.gameName !== null) {
+            if (obj.gameName !== null) {
                 var $gameImageCtnr = $('<a>');
-                $gameImageCtnr.attr('href', d.gameLink);
+                $gameImageCtnr.attr('href', obj.gameLink);
                 $thumbnailCtnr.append($gameImageCtnr);
             
                 var $gameImage = $('<img>');
                 $gameImage.attr('class', 'game-image');
-                $gameImage.attr('src', d.gameImage);
-                $gameImage.attr('title', d.gameName);
+                $gameImage.attr('src', obj.gameImage);
+                $gameImage.attr('title', obj.gameName);
                 $gameImageCtnr.append($gameImage);
             }
         }
@@ -146,331 +159,289 @@ var Main = (function() {
             // Game as name text
             var $game = $('<div>');
             $game.attr('class', 'media-game');
-            if (d.gameName !== null) {
-                $game.text(d.gameName);
+            if (obj.gameName !== null) {
+                $game.text(obj.gameName);
             }
             else {
                 $game.text("No game selected");
             }
-            $container.append($game);
+            $mediaE.append($game);
         }
         // Else, game display is 'none'
+    }
+    
+    function addSiteIndicator(obj, $textContainer) {
+        /* Add a colored icon/symbol to denote which site this media
+        item is from.
+        The icon/symbol is just an empty span whose appearance is determined
+        entirely by CSS. */
+        var $siteIndicator = $('<span>');
+        $siteIndicator.addClass('site-indicator');
+        if (obj.site === 'Twitch') {
+            $siteIndicator.addClass('twitch');
+        }
+        else if (obj.site === 'Hitbox') {
+            $siteIndicator.addClass('hitbox');
+        }
+        else if (obj.site === 'Nico') {
+            $siteIndicator.addClass('nico');
+        }
+        $textContainer.append($siteIndicator);
     }
     
     
     
     function addStreams(pendingStreams) {
         
-        var $container = $('#streams');
+        var container = mediaContainerEs['streams'];
+        var streamEs = mediaElementArrays['streams'];
+        var streamObjs = mediaObjArrays['streams'];
         
         // Do sorting by view count, highest first.
         var compareFunc = function(a, b) {
             return parseInt(b.viewCount) - parseInt(a.viewCount);
         };
         
-        if ($streamElements.length === 0 && pendingStreams.length > 0) {
-            $container.find('span.empty-section-text').remove();
+        if (streamEs.length === 0 && pendingStreams.length > 0) {
+            $(container).find('span.empty-section-text').remove();
         }
         
-        
-        pendingStreams.forEach(function(d) {
+        pendingStreams.forEach(function(obj) {
                 
-            var $streamContainer = $('<a>');
-            $streamContainer.attr('href', d.channelLink);
-            $streamContainer.attr('title', d.title);
-            
+            var $streamE = $('<a>');
+            $streamE.attr('href', obj.channelLink);
+            $streamE.attr('title', obj.streamTitle);
             
             var $thumbnailCtnr = $('<div>');
-            $thumbnailCtnr.attr('class', 'thumbnail-ctnr');
-            $streamContainer.append($thumbnailCtnr);
-            if (d.site === 'Twitch') {
-                $thumbnailCtnr.addClass('twitch-stream');
-            }
-            else if (d.site === 'Nico') {
-                $thumbnailCtnr.addClass('nico-stream');
-            }
+            $thumbnailCtnr.addClass('thumbnail-ctnr stream');
+            $streamE.append($thumbnailCtnr);
             
-            var $thumbnail = $('<img>');
-            $thumbnail.attr('class', 'media-thumbnail');
-            $thumbnail.attr('src', d.thumbnailUrl);
-            $thumbnailCtnr.append($thumbnail);
-            
+            addMediaThumbnail(obj, $thumbnailCtnr);
             
             var $title = $('<div>');
-            $title.text(d.title);
-            $streamContainer.append($title);
+            $title.text(obj.streamTitle);
+            $streamE.append($title);
             
-            
-            addGameDisplay(d, $streamContainer, $thumbnailCtnr);
-            
+            addGameDisplay(obj, $streamE, $thumbnailCtnr);
             
             var $channelNameAndViews = $('<div>');
             
             var $textSpan1 = $('<span>');
-            $textSpan1.text(d.viewCount);
+            $textSpan1.text(obj.viewCount);
             $channelNameAndViews.append($textSpan1);
             
-            var $siteIndicator = $('<span>');
-            $siteIndicator.addClass('site-indicator');
-            if (d.site === 'Twitch') {
-                $siteIndicator.addClass('twitch');
-            }
-            else if (d.site === 'Hitbox') {
-                $siteIndicator.addClass('hitbox');
-            }
-            else {  // Nico
-                $siteIndicator.addClass('nico');
-            }
-            $channelNameAndViews.append($siteIndicator);
+            addSiteIndicator(obj, $channelNameAndViews);
             
             var $textSpan2 = $('<span>');
-            $textSpan2.text(d.channelName);
+            $textSpan2.text(obj.channelName);
             $channelNameAndViews.append($textSpan2);
             
-            $streamContainer.append($channelNameAndViews);
+            $streamE.append($channelNameAndViews);
             
             
-            var index = Util.sortedLocation(d, streamDicts, compareFunc);
+            var index = Util.sortedLocation(obj, streamObjs, compareFunc);
             // Add stream element to the page in sorted order
             if (index >= 0) {
-                $streamContainer.insertAfter($streamElements[index]);
+                $streamE.insertAfter(streamEs[index]);
             }
             else {
                 // index is -1, indicating that this goes at the beginning
-                $container.prepend($streamContainer);
+                $(container).prepend($streamE);
             }
-            // Add to sorted list of stream dicts, which we maintain so we
+            // Add to sorted list of stream objs, which we maintain so we
             // can find the sorted order of each element
-            streamDicts.splice(index + 1, 0, d);
+            streamObjs.splice(index + 1, 0, obj);
             // Add to sorted list of stream elements, which we maintain so we
             // can refer to these for insertAfter()
-            $streamElements.splice(index + 1, 0, $streamContainer);
+            streamEs.splice(index + 1, 0, $streamE[0]);
         });
     }
     
     
     function addHosts(pendingHosts) {
         
-        var $outerContainer = $('#hosts');
+        var container = mediaContainerEs['hosts'];
+        var hostEs = mediaElementArrays['hosts'];
         
-        if ($hostElements.length === 0 && pendingHosts.length > 0) {
-            $outerContainer.find('span.empty-section-text').remove();
+        if (hostEs.length === 0 && pendingHosts.length > 0) {
+            $(container).find('span.empty-section-text').remove();
         }
         
-        
-        pendingHosts.forEach(function(d) {
+        pendingHosts.forEach(function(obj) {
             
-            var $container = $('<a>');
-            $container.attr('href', d.streamLink);
-            $container.attr('title', d.streamTitle);
-            
+            var $hostE = $('<a>');
+            $hostE.attr('href', obj.channelLink);
+            $hostE.attr('title', obj.streamTitle);
             
             var $thumbnailCtnr = $('<div>');
-            $thumbnailCtnr.attr('class', 'thumbnail-ctnr');
-            $container.append($thumbnailCtnr);
+            $thumbnailCtnr.addClass('thumbnail-ctnr stream');
+            $hostE.append($thumbnailCtnr);
             
-            $thumbnailCtnr.addClass('twitch-stream');
-            
-            var $thumbnail = $('<img>');
-            $thumbnail.attr('class', 'media-thumbnail');
-            $thumbnail.attr('src', d.streamThumbnailUrl);
-            $thumbnailCtnr.append($thumbnail);
-            
+            addMediaThumbnail(obj, $thumbnailCtnr);
             
             var $hostingText = $('<div>');
-            $hostingText.text(d.hosterName + " hosting " + d.streamerName);
-            $container.append($hostingText);
-            
+            $hostingText.text(obj.hosterName + " hosting " + obj.streamerName);
+            $hostE.append($hostingText);
             
             var $title = $('<div>');
-            $title.text(d.streamTitle);
+            $title.text(obj.streamTitle);
             $title.attr('class', 'minor-text');
-            $container.append($title);
+            $hostE.append($title);
             
-            
-            addGameDisplay(d, $container, $thumbnailCtnr);
-            
+            addGameDisplay(obj, $hostE, $thumbnailCtnr);
             
             var $channelNameAndViews = $('<div>');
             
             var $textSpan1 = $('<span>');
-            $textSpan1.text(d.viewCount);
+            $textSpan1.text(obj.viewCount);
             $channelNameAndViews.append($textSpan1);
             
-            var $siteIndicator = $('<span>');
-            $siteIndicator.addClass('site-indicator');
-            $siteIndicator.addClass('twitch');
-            $channelNameAndViews.append($siteIndicator);
+            addSiteIndicator(obj, $channelNameAndViews);
             
             var $textSpan2 = $('<span>');
-            $textSpan2.text(d.streamerName);
+            $textSpan2.text(obj.streamerName);
             $channelNameAndViews.append($textSpan2);
             
-            $container.append($channelNameAndViews);
+            $hostE.append($channelNameAndViews);
             
             
             // No sort algorithm needed since it's only from
             // one site (Twitch).
-            $outerContainer.append($container);
-            $hostElements.push($container);
+            $(container).append($hostE);
+            hostEs.push($hostE[0]);
         });
     }
     
     
     function addGames(pendingGames) {
         
-        var $container = $('#games');
+        var container = mediaContainerEs['games'];
+        var gameEs = mediaElementArrays['games'];
         
-        if ($gameElements.length === 0 && pendingGames.length > 0) {
-            $container.find('span.empty-section-text').remove();
+        if (gameEs.length === 0 && pendingGames.length > 0) {
+            $(container).find('span.empty-section-text').remove();
         }
         
-        
-        pendingGames.forEach(function(d) {
+        pendingGames.forEach(function(obj) {
             
-            var $gameContainer = $('<a>');
-            $gameContainer.attr('href', d.gameLink);
-            $gameContainer.attr('title', d.name);
-            
+            var $gameE = $('<a>');
+            $gameE.attr('href', obj.gameLink);
+            $gameE.attr('title', obj.name);
             
             var $gameImage = $('<img>');
             $gameImage.attr('class', 'followed-game');
-            $gameImage.attr('src', d.gameImage);
-            $gameContainer.append($gameImage);
-            
+            $gameImage.attr('src', obj.gameImage);
+            $gameE.append($gameImage);
             
             var $gameName = $('<div>');
-            $gameName.text(d.name);
-            $gameContainer.append($gameName);
-            
+            $gameName.text(obj.name);
+            $gameE.append($gameName);
             
             var $viewAndChannelCount = $('<div>');
             
             var $textSpan1 = $('<span>');
-            $textSpan1.text(d.viewCount);
+            $textSpan1.text(obj.viewCount);
             $viewAndChannelCount.append($textSpan1);
             
-            var $siteIndicator = $('<span>');
-            $siteIndicator.addClass('site-indicator twitch');
-            $viewAndChannelCount.append($siteIndicator);
+            addSiteIndicator(obj, $viewAndChannelCount);
             
             var $textSpan2 = $('<span>');
             var channelWord;
-            if (d.channelCount === 1) {
+            if (obj.channelCount === 1) {
                 channelWord = "channel";
             }
             else {
                 channelWord = "channels";
             }
-            $textSpan2.text(d.channelCount + " " + channelWord);
+            $textSpan2.text(obj.channelCount + " " + channelWord);
             $viewAndChannelCount.append($textSpan2);
             
             $viewAndChannelCount.attr('class', 'channel-name');
-            $gameContainer.append($viewAndChannelCount);
+            $gameE.append($viewAndChannelCount);
             
             
             // No sort algorithm needed since it's only from
             // one site (Twitch).
-            $container.append($gameContainer);
-            $gameElements.push($gameContainer);
+            $(container).append($gameE);
+            gameEs.push($gameE[0]);
         });
     }
     
     
     function addVideos(pendingVideos) {
         
-        var $container = $('#videos');
+        var container = mediaContainerEs['videos'];
+        var videoEs = mediaElementArrays['videos'];
+        var videoObjs = mediaObjArrays['videos'];
         
         // Do sorting by date, latest to earliest.
         var compareFunc = function(a, b) {
             return parseInt(b.unixTimestamp) - parseInt(a.unixTimestamp);
         };
         
-        if ($videoElements.length === 0 && pendingVideos.length > 0) {
-            $container.find('span.empty-section-text').remove();
+        if (videoEs.length === 0 && pendingVideos.length > 0) {
+            $(container).find('span.empty-section-text').remove();
         }
         
-        
-        pendingVideos.forEach(function(d) {
+        pendingVideos.forEach(function(obj) {
             
-            var $videoContainer = $('<a>');
-            $videoContainer.attr('href', d.videoLink);
-            $videoContainer.attr('title', d.videoTitle);
-            
+            var $videoE = $('<a>');
+            $videoE.attr('href', obj.videoLink);
+            $videoE.attr('title', obj.videoTitle);
             
             var $thumbnailCtnr = $('<div>');
-            $thumbnailCtnr.attr('class', 'thumbnail-ctnr');
-            $videoContainer.append($thumbnailCtnr);
-            if (d.site === 'Twitch') {
-                $thumbnailCtnr.addClass('twitch-video');
-            }
+            $thumbnailCtnr.addClass('thumbnail-ctnr video');
+            $videoE.append($thumbnailCtnr);
             
-            var $thumbnail = $('<img>');
-            $thumbnail.attr('class', 'media-thumbnail');
-            $thumbnail.attr('src', d.thumbnailUrl);
-            $thumbnailCtnr.append($thumbnail);
+            addMediaThumbnail(obj, $thumbnailCtnr);
             
             var $viewCount = $('<div>');
-            $viewCount.text(d.viewCount);
+            $viewCount.text(obj.viewCount);
             $viewCount.attr('class', 'video-view-count');
             $thumbnailCtnr.append($viewCount);
             
             var $duration = $('<div>');
-            $duration.text(d.duration);
+            $duration.text(obj.duration);
             $duration.attr('class', 'video-duration');
             $thumbnailCtnr.append($duration);
             
-            
             var $title = $('<div>');
-            $title.text(d.videoTitle);
-            $videoContainer.append($title);
+            $title.text(obj.videoTitle);
+            $videoE.append($title);
             
             var $description = $('<div>');
-            $description.text(d.description);
+            $description.text(obj.description);
             $description.attr('class', 'minor-text');
-            $videoContainer.append($description);
+            $videoE.append($description);
             
-            
-            addGameDisplay(d, $videoContainer, $thumbnailCtnr);
-            
+            addGameDisplay(obj, $videoE, $thumbnailCtnr);
             
             var $channelNameAndDate = $('<div>');
             
             var $textSpan1 = $('<span>');
-            $textSpan1.text(d.channelName);
+            $textSpan1.text(obj.channelName);
             $channelNameAndDate.append($textSpan1);
             
-            var $siteIndicator = $('<span>');
-            $siteIndicator.addClass('site-indicator');
-            if (d.site === 'Twitch') {
-                $siteIndicator.addClass('twitch');
-            }
-            else if (d.site === 'Hitbox') {
-                $siteIndicator.addClass('hitbox');
-            }
-            else {  // Nico
-                $siteIndicator.addClass('nico');
-            }
-            $channelNameAndDate.append($siteIndicator);
+            addSiteIndicator(obj, $channelNameAndDate);
             
             var $textSpan2 = $('<span>');
-            $textSpan2.text(d.dateDisplay);
+            $textSpan2.text(obj.dateDisplay);
             $channelNameAndDate.append($textSpan2);
             
-            $videoContainer.append($channelNameAndDate);
+            $videoE.append($channelNameAndDate);
             
             
-            var index = Util.sortedLocation(d, videoDicts, compareFunc);
+            var index = Util.sortedLocation(obj, videoObjs, compareFunc);
             // Add element to the page in sorted order
             if (index >= 0) {
-                $videoContainer.insertAfter($videoElements[index]);
+                $videoE.insertAfter(videoEs[index]);
             }
             else {
                 // index is -1, indicating that this goes at the beginning
-                $container.prepend($videoContainer);
+                $(container).prepend($videoE);
             }
-            videoDicts.splice(index + 1, 0, d);
-            $videoElements.splice(index + 1, 0, $videoContainer);
+            videoObjs.splice(index + 1, 0, obj);
+            videoEs.splice(index + 1, 0, $videoE[0]);
         });
     }
     
@@ -577,6 +548,20 @@ var Main = (function() {
                     $(headerE).hide();
                 }
             });
+            
+            // Other initialization.
+            mediaElementArrays = {
+                'streams': [],
+                'hosts': [],
+                'games': [],
+                'videos': []
+            };
+            mediaObjArrays = {
+                'streams': [],
+                'hosts': [],
+                'games': [],
+                'videos': []
+            };
             
             startGettingMedia();
         }

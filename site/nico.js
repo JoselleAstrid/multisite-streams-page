@@ -344,7 +344,7 @@ var Nico = (function() {
             else {
                 d.thumbnailUrl = vInfo.community.thumbnail;
             }
-            d.title = vInfo.video.title;
+            d.streamTitle = vInfo.video.title;
             d.gameName = "Not supported on this site";
             d.viewCount = vInfo.video.view_counter;
             d.channelName = vInfo.community.name;

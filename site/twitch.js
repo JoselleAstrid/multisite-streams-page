@@ -308,7 +308,7 @@ var Twitch = (function() {
             
             streamDict.channelLink = stream.channel.url;
             streamDict.thumbnailUrl = stream.preview.medium;
-            streamDict.title = stream.channel.status;
+            streamDict.streamTitle = stream.channel.status;
             
             if (stream.channel.game) {
                 streamDict.gameName = stream.channel.game;
@@ -417,10 +417,11 @@ var Twitch = (function() {
             
             var hostDict = {};
             
+            hostDict.site = 'Twitch';
             hostDict.hosterName = host.display_name;
             hostDict.streamerName = host.target.channel.display_name;
-            hostDict.streamLink = 'http://www.twitch.tv/' + host.name;
-            hostDict.streamThumbnailUrl = host.target.preview;
+            hostDict.channelLink = 'http://www.twitch.tv/' + host.name;
+            hostDict.thumbnailUrl = host.target.preview;
             hostDict.viewCount = host.target.viewers;
             hostDict.streamTitle = host.target.title;
             
@@ -462,6 +463,7 @@ var Twitch = (function() {
             
             var gameDict = {};
             
+            gameDict.site = 'Twitch';
             gameDict.name = game.game.name;
             gameDict.viewCount = game.viewers;
             gameDict.channelCount = game.channels;

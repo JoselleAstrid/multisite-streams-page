@@ -179,21 +179,21 @@ h2.section {
   /* Ensure that this matches the stream container width */
   width: 240px;
 }
-.thumbnail-ctnr.twitch-stream img.media-thumbnail {
+.thumbnail-ctnr.twitch.stream img.media-thumbnail {
   /* Twitch streams only:
   Apparently we should squash the thumbnail to make it 16:9?
   At least Twitch following does the same thing. I'm not sure why the
   thumbnails are actually 14.4:9 though (e.g. 320x200).*/
   height: 135px;
 }
-.thumbnail-ctnr.twitch-video img.media-thumbnail {
+.thumbnail-ctnr.twitch.video img.media-thumbnail {
   /* Twitch videos only:
   Cut off the black bar on the top.
   The parent's overflow:hidden hides the black bar on the bottom.
   After cutting off the black bars, the result ends up being about 16:9. */
   margin-top: -23px;
 }
-.thumbnail-ctnr.nico-stream {
+.thumbnail-ctnr.nico.stream {
   /* Nico streams only:
   In general we'll only have the community icon, which is 128x128.
   That needs to be sized and positioned appropriately in the 16:9 space,
@@ -201,7 +201,7 @@ h2.section {
   text-align: center;
   background-color: black;
 }
-.thumbnail-ctnr.nico-stream img.media-thumbnail {
+.thumbnail-ctnr.nico.stream img.media-thumbnail {
   width: 135px;
 }
 

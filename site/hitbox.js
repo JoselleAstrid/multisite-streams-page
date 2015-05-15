@@ -204,7 +204,7 @@ var Hitbox = (function() {
             streamDict.thumbnailUrl = 'http://edge.'
                 + Settings.get('hitboxThumbnailServer')
                 + '.hitbox.tv' + stream.media_thumbnail;
-            streamDict.title = stream.media_status;
+            streamDict.streamTitle = stream.media_status;
             
             if (stream.category_name) {
                 streamDict.gameName = stream.category_name;
