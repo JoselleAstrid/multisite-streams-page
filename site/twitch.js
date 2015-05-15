@@ -306,12 +306,21 @@ var Twitch = (function() {
             
             var streamDict = {};
             
-            streamDict.channelLink = stream.channel.url;
-            streamDict.thumbnailUrl = stream.preview.medium;
-            streamDict.streamTitle = stream.channel.status;
+            // Three of the fields we use sometimes come up as blank in
+            // Twitch's streams response:
+            // channel.url, channel.game, and channel.status.
+            // So we have backup values for each of those fields.
             
-            if (stream.channel.game) {
-                streamDict.gameName = stream.channel.game;
+            streamDict.channelLink = stream.channel.url
+              || 'http://www.twitch.tv/' + stream.channel.name;
+              
+            streamDict.thumbnailUrl = stream.preview.medium;
+            
+            streamDict.streamTitle = stream.channel.status
+              || "(Failed to load title)";
+            
+            if (stream.channel.game || stream.game) {
+                streamDict.gameName = stream.channel.game || stream.game;
                 streamDict.gameLink = 'http://www.twitch.tv/directory/game/'
                     + stream.channel.game;
                 // If the image doesn't exist then it'll give us
