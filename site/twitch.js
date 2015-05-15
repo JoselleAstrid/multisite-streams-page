@@ -11,6 +11,8 @@ var Twitch = (function() {
     var numCompletedRequests = 0;
     
     var TWITCH_STREAM_LIMIT = 100;
+    var TWITCH_HOST_LIMIT = 100;
+    var TWITCH_GAME_LIMIT = 100;
     
     
     function setOAuth2Token() {
@@ -250,10 +252,7 @@ var Twitch = (function() {
             + username
             + '/followed/hosting';
         
-        // TODO: Make a setting for a host limit? If so, should it be
-        // tied into the stream limit somehow?
-        // (Twitch's site uses a limit of 40.)
-        ajaxRequest(url, {'limit': '40'}, setHosts);
+        ajaxRequest(url, {'limit': TWITCH_HOST_LIMIT}, setHosts);
     }
     
     function getGames() {
@@ -267,11 +266,7 @@ var Twitch = (function() {
             + username
             + '/follows/games/live';
         
-        // TODO: Make a setting for a game limit? If so, should it be
-        // tied into the stream limit somehow?
-        // (Twitch's site doesn't specify a game limit. But there is a
-        // parameter for it named 'limit'.)
-        ajaxRequest(url, {}, setGames);
+        ajaxRequest(url, {'limit': TWITCH_GAME_LIMIT}, setGames);
     }
     
     
