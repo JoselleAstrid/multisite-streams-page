@@ -128,7 +128,12 @@ var Main = (function() {
         }
         
         var compareFunc;
-        if (sortType === 'channelsDesc') {
+        if (sortType === 'channelsAsc') {
+            compareFunc = function(a, b) {
+                return parseInt(a.channelCount) - parseInt(b.channelCount);
+            };
+        }
+        else if (sortType === 'channelsDesc') {
             compareFunc = function(a, b) {
                 return parseInt(b.channelCount) - parseInt(a.channelCount);
             };
