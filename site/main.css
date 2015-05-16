@@ -117,19 +117,20 @@ makes all its anchors black by default */
 
 /* Section headers */
 h2.section {
-  /* Go under any streams/videos of the previous section */
+  /* Ensure that this element goes under all streams/videos of the
+  previous section (not to the side) */
   clear: both;
 }
 
 
-/* Container for all streams / all videos */
+/* Container for all streams, container for all videos, etc. */
 .media-container {
   /* Ensure that the element size includes the floating elements. This allows
   the header of the next container to be decently spaced from this container. */
   overflow: auto;
 }
 
-/* Container for single stream/video */
+/* Container for single stream, video, etc. */
 .media-container a {
   /* Allow media to be placed side by side */
   float: left;
@@ -149,7 +150,7 @@ h2.section {
 }
 
 .media-container a:hover {
-  /* Makes the stream block's background color change on mouseover. */
+  /* Makes the media item's background color change on mouseover. */
   background-color: #222;
 }
 
@@ -298,8 +299,19 @@ img.followed-game {
 
 
 
+.empty-section-text {
+  padding-left: 10px;
+}
+
+
+
 #footer {
+  /* Have some separation from the rest of the page content */
   margin-top: 100px;
+  /* Have some separation from the bottom of the page, so that the browser's
+  link text has some space to be shown when hovering over a footer link */
+  margin-bottom: 30px;
+  
   font-size: 12px; font-size: 0.75rem;
 }
 

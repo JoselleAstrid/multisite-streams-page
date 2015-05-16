@@ -90,9 +90,14 @@ var Main = (function() {
                 // If the section is still empty, change the placeholder text
                 // to reflect this.
                 var mediaContainerE = mediaContainerEs[mediaType];
-                $(mediaContainerE).find('span.empty-section-text').text(
-                    "No " + mediaType + " found"
-                );
+                var text;
+                if (mediaType === 'videos') {
+                    text = "No " + mediaType + " found";
+                }
+                else {
+                    text = "No live " + mediaType;
+                }
+                $(mediaContainerE).find('span.empty-section-text').text(text);
             }
         });
         
