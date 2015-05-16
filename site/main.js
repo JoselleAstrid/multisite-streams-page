@@ -115,6 +115,43 @@ var Main = (function() {
     
     
     
+    function getMediaCompareFunc(mediaType) {
+        var sortType;
+        if (mediaType === 'streams' || mediaType === 'hosts') {
+            sortType = Settings.get('sortStreams');
+        }
+        else if (mediaType === 'games') {
+            sortType = Settings.get('sortGames');
+        }
+        else if (mediaType === 'videos') {
+            sortType = 'videoDateDesc';
+        }
+        
+        var compareFunc;
+        if (sortType === 'channelsDesc') {
+            compareFunc = function(a, b) {
+                return parseInt(b.channelCount) - parseInt(a.channelCount);
+            };
+        }
+        else if (sortType === 'videoDateDesc') {
+            compareFunc = function(a, b) {
+                return parseInt(b.unixTimestamp) - parseInt(a.unixTimestamp);
+            };
+        }
+        else if (sortType === 'viewersAsc') {
+            compareFunc = function(a, b) {
+                return parseInt(a.viewCount) - parseInt(b.viewCount);
+            };
+        }
+        else if (sortType === 'viewersDesc') {
+            compareFunc = function(a, b) {
+                return parseInt(b.viewCount) - parseInt(a.viewCount);
+            };
+        }
+        
+        return compareFunc;
+    }
+    
     function addMediaThumbnail(obj, $thumbnailCtnr) {
         /* Add a stream or video thumbnail. */
         if (obj.site === 'Twitch') {
@@ -189,6 +226,26 @@ var Main = (function() {
         $textContainer.append($siteIndicator);
     }
     
+    function addMediaItemSorted(
+        mediaE, obj, mediaEs, objs, container, compareFunc) {
+            
+        var index = Util.sortedLocation(obj, objs, compareFunc);
+        // Add stream element to the page in sorted order
+        if (index >= 0) {
+            $(mediaE).insertAfter(mediaEs[index]);
+        }
+        else {
+            // index is -1, indicating that this goes at the beginning
+            $(container).prepend(mediaE);
+        }
+        // Add to sorted list of stream objs, which we maintain so we
+        // can find the sorted order of each element
+        objs.splice(index + 1, 0, obj);
+        // Add to sorted list of stream elements, which we maintain so we
+        // can refer to these for insertAfter()
+        mediaEs.splice(index + 1, 0, mediaE);
+    }
+    
     
     
     function addStreams(pendingStreams) {
@@ -197,10 +254,7 @@ var Main = (function() {
         var streamEs = mediaElementArrays['streams'];
         var streamObjs = mediaObjArrays['streams'];
         
-        // Do sorting by view count, highest first.
-        var compareFunc = function(a, b) {
-            return parseInt(b.viewCount) - parseInt(a.viewCount);
-        };
+        var compareFunc = getMediaCompareFunc('streams');
         
         if (streamEs.length === 0 && pendingStreams.length > 0) {
             $(container).find('span.empty-section-text').remove();
@@ -238,22 +292,9 @@ var Main = (function() {
             
             $streamE.append($channelNameAndViews);
             
-            
-            var index = Util.sortedLocation(obj, streamObjs, compareFunc);
-            // Add stream element to the page in sorted order
-            if (index >= 0) {
-                $streamE.insertAfter(streamEs[index]);
-            }
-            else {
-                // index is -1, indicating that this goes at the beginning
-                $(container).prepend($streamE);
-            }
-            // Add to sorted list of stream objs, which we maintain so we
-            // can find the sorted order of each element
-            streamObjs.splice(index + 1, 0, obj);
-            // Add to sorted list of stream elements, which we maintain so we
-            // can refer to these for insertAfter()
-            streamEs.splice(index + 1, 0, $streamE[0]);
+            addMediaItemSorted(
+                $streamE[0], obj, streamEs, streamObjs, container, compareFunc
+            );
         });
     }
     
@@ -262,6 +303,9 @@ var Main = (function() {
         
         var container = mediaContainerEs['hosts'];
         var hostEs = mediaElementArrays['hosts'];
+        var hostObjs = mediaObjArrays['hosts'];
+        
+        var compareFunc = getMediaCompareFunc('hosts');
         
         if (hostEs.length === 0 && pendingHosts.length > 0) {
             $(container).find('span.empty-section-text').remove();
@@ -304,11 +348,9 @@ var Main = (function() {
             
             $hostE.append($channelNameAndViews);
             
-            
-            // No sort algorithm needed since it's only from
-            // one site (Twitch).
-            $(container).append($hostE);
-            hostEs.push($hostE[0]);
+            addMediaItemSorted(
+                $hostE[0], obj, hostEs, hostObjs, container, compareFunc
+            );
         });
     }
     
@@ -317,6 +359,9 @@ var Main = (function() {
         
         var container = mediaContainerEs['games'];
         var gameEs = mediaElementArrays['games'];
+        var gameObjs = mediaObjArrays['games'];
+        
+        var compareFunc = getMediaCompareFunc('games');
         
         if (gameEs.length === 0 && pendingGames.length > 0) {
             $(container).find('span.empty-section-text').remove();
@@ -359,11 +404,9 @@ var Main = (function() {
             $viewAndChannelCount.attr('class', 'channel-name');
             $gameE.append($viewAndChannelCount);
             
-            
-            // No sort algorithm needed since it's only from
-            // one site (Twitch).
-            $(container).append($gameE);
-            gameEs.push($gameE[0]);
+            addMediaItemSorted(
+                $gameE[0], obj, gameEs, gameObjs, container, compareFunc
+            );
         });
     }
     
@@ -374,10 +417,7 @@ var Main = (function() {
         var videoEs = mediaElementArrays['videos'];
         var videoObjs = mediaObjArrays['videos'];
         
-        // Do sorting by date, latest to earliest.
-        var compareFunc = function(a, b) {
-            return parseInt(b.unixTimestamp) - parseInt(a.unixTimestamp);
-        };
+        var compareFunc = getMediaCompareFunc('videos');
         
         if (videoEs.length === 0 && pendingVideos.length > 0) {
             $(container).find('span.empty-section-text').remove();
@@ -430,19 +470,9 @@ var Main = (function() {
             
             $videoE.append($channelNameAndDate);
             
-            
-            var index = Util.sortedLocation(obj, videoObjs, compareFunc);
-            // Add element to the page in sorted order
-            if (index >= 0) {
-                $videoE.insertAfter(videoEs[index]);
-            }
-            else {
-                // index is -1, indicating that this goes at the beginning
-                $(container).prepend($videoE);
-            }
-            videoObjs.splice(index + 1, 0, obj);
-            videoEs.splice(index + 1, 0, $videoE[0]);
-            
+            addMediaItemSorted(
+                $videoE[0], obj, videoEs, videoObjs, container, compareFunc
+            );
             
             // We request the top <videoLimit> videos from each site, so we'll
             // generally be getting 2x or more videos than the limit. Prune

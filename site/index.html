@@ -67,7 +67,7 @@
       
         <ul>
           <li><a href="#settings-main">Main</a></li>
-          <li><a href="#settings-twitchhitbox">Twitch + Hitbox</a></li>
+          <li><a href="#settings-twitchhitbox">Hitbox</a></li>
           <li><a href="#settings-nico">Nicovideo</a></li>
         </ul>
         
@@ -86,13 +86,7 @@
           <input type="checkbox" name="nicoEnabled" id="field-nicoEnabled" />
           <label for="field-nicoEnabled">Include Nicovideo in listing </label>
           </div>
-        </div>
-        
-        <div id="settings-twitchhitbox">
-          <div>
-          <label for="field-hitboxUsername">Hitbox username: </label>
-          <input type="text" name="hitboxUsername" id="field-hitboxUsername" size="12" />
-          </div>
+          <br /><br />
           
           <div>
           <label for="field-gameDisplay">Game display: </label>
@@ -104,8 +98,31 @@
           </div>
           
           <div>
+          <label for="field-sortStreams">Sort streams/hosts by: </label>
+          <select name="sortStreams" id="field-sortStreams">
+            <option value="viewersDesc">Viewers, highest first</option>
+            <option value="viewersAsc">Viewers, lowest first</option>
+          </select>
+          </div>
+          
+          <div>
+          <label for="field-sortGames">Sort games by: </label>
+          <select name="sortGames" id="field-sortGames">
+            <option value="viewersDesc">Viewers, highest first</option>
+            <option value="channelsDesc">Channels, highest first</option>
+          </select>
+          </div>
+          
+          <div>
           <label for="field-videoLimit">Max number of videos (1-100): </label>
           <input type="text" name="videoLimit" id="field-videoLimit" size="3" />
+          </div>
+        </div>
+        
+        <div id="settings-twitchhitbox">
+          <div>
+          <label for="field-hitboxUsername">Hitbox username: </label>
+          <input type="text" name="hitboxUsername" id="field-hitboxUsername" size="12" />
           </div>
           
           <div>

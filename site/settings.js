@@ -10,10 +10,12 @@ var Settings = {
         'twitchEnabled': true,
         'hitboxEnabled': true,
         'nicoEnabled': false,
+        'gameDisplay': 'boximage',
+        'sortStreams': 'viewersDesc',
+        'sortGames': 'viewersDesc',
+        'videoLimit': 30,
         
         'hitboxUsername': '',
-        'gameDisplay': 'boximage',
-        'videoLimit': 30,
         'hitboxThumbnailServer': 'vie',
         
         'nicoCommunities': [],
