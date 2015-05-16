@@ -360,7 +360,7 @@ var Nico = (function() {
                 d.thumbnailUrl = vInfo.community.thumbnail;
             }
             d.streamTitle = vInfo.video.title;
-            d.gameName = "Not supported on this site";
+            d.gameName = "Not supported";
             d.viewCount = vInfo.video.view_counter;
             d.channelName = vInfo.community.name;
             d.site = 'Nico';

@@ -257,7 +257,8 @@ var Hitbox = (function() {
                 + Settings.get('hitboxThumbnailServer')
                 + '.hitbox.tv' + video.media_thumbnail;
             videoDict.videoTitle = video.media_status;
-            videoDict.description = video.media_description || "No description";
+            videoDict.description = video.media_description
+                || "-";
             
             if (video.category_name) {
                 videoDict.gameName = video.category_name;

@@ -178,14 +178,10 @@ var Main = (function() {
     function addGameDisplay(obj, $mediaE, $thumbnailCtnr) {
         /* Add a display indicating the game being played, for a
         stream, video, or host. */
-            
-        if (obj.gameName === "Not supported on this site") {
-            return;
-        }
         
         if (Settings.get('gameDisplay') === 'boximage') {
             // Game as box image
-            if (obj.gameName !== null) {
+            if (obj.gameName !== null && obj.gameName !== "Not supported") {
                 var $gameImageCtnr = $('<a>');
                 $gameImageCtnr.attr('href', obj.gameLink);
                 $thumbnailCtnr.append($gameImageCtnr);
@@ -201,11 +197,14 @@ var Main = (function() {
             // Game as name text
             var $game = $('<div>');
             $game.attr('class', 'media-game');
-            if (obj.gameName !== null) {
-                $game.text(obj.gameName);
+            if (obj.gameName === null) {
+                $game.text("No game selected");
+            }
+            else if (obj.gameName === "Not supported") {
+                $game.text("-");
             }
             else {
-                $game.text("No game selected");
+                $game.text(obj.gameName);
             }
             $mediaE.append($game);
         }
