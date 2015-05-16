@@ -272,8 +272,13 @@ var Hitbox = (function() {
             
             videoDict.viewCount = video.media_views;
             videoDict.channelName = video.media_user_name;
-            videoDict.duration = Util.timeSecToHMS(video.media_duration);
             videoDict.site = 'Hitbox';
+            // Hitbox video durations are given to 0.0001s precision. Just
+            // work with whole seconds though; that precision isn't needed
+            // for display.
+            videoDict.duration = Util.timeSecToHMS(
+                Math.floor(video.media_duration)
+            );
             
             var dateObj = hitboxDateStrToObj(video.media_date_added);
             videoDict.unixTimestamp = dateObj.getTime();
