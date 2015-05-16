@@ -217,7 +217,6 @@ var Nico = (function() {
             Main.showNotification(
                 "You haven't specified any Nicovideo communities to watch for."
             );
-            setStreams();
             return;
         }
         
