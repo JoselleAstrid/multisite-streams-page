@@ -51,15 +51,33 @@ var Nico = (function() {
     
     
     
-    function proxyAjax(url, params, callback, attemptNum, wasQueued) {
+    function proxyAjax(
+        url, params, callback, tracked, attemptNum, wasQueued) {
+        /* tracked: boolean. If true, we'll track this request in the
+        request status display, and we'll factor this request into logic
+        that checks whether all the requests are done.
         
-        if (attemptNum === 1 && wasQueued !== true) {
+        attemptNum: Number of times we've attempted this particular
+        server request. If the server response is a generic failure, then
+        we'll make another attempt, until we hit the max number of attempts.
+        
+        wasQueued: boolean. If true, that means this request was previously
+        queued because we had reached the max number of active requests. */
+    
+        if (tracked === undefined) {tracked = true;}
+        if (attemptNum === undefined) {attemptNum = 1;}
+        if (wasQueued === undefined) {wasQueued = false;}
+        
+        if (tracked && attemptNum === 1 && !wasQueued) {
             incTotalRequests();
         }
         
         if (numActiveCalls >= MAX_ACTIVE_CALLS) {
             callQueue.push(
-                Util.curry(proxyAjax, url, params, callback, attemptNum, true)
+                Util.curry(
+                    proxyAjax, url, params, callback,
+                    tracked, attemptNum, true
+                )
             );
             return;
         }
@@ -71,7 +89,7 @@ var Nico = (function() {
         var proxyRequestServer = Config.proxyRequestServer || 'yql';
         
         var successCallback = Util.curry(
-            function(callback_, response){
+            function(callback_, tracked_, response){
                 numActiveCalls--;
                 if (callQueue.length > 0) {
                     var waitingAjaxCall = callQueue.shift();
@@ -79,12 +97,12 @@ var Nico = (function() {
                 }
                 
                 callback_(response);
-                incCompletedRequests();
+                if (tracked_) {incCompletedRequests();}
             },
-            callback
+            callback, tracked
         );
         var errorCallback = Util.curry(
-            function(url_, params_, callback_, attemptNum_, response){
+            function(url_, params_, callback_, tracked_, attemptNum_, response){
                 numActiveCalls--;
                 
                 // If any pending Ajax calls are waiting, dequeue a call. 
@@ -101,20 +119,20 @@ var Nico = (function() {
                        === 'maintenance') {
                     // Nicolive is under maintenance.
                     callback_(maintenanceIndicator);
-                    incCompletedRequests();
+                    if (tracked_) {incCompletedRequests();}
                 }
                 else if (attemptNum_ >= MAX_CALL_ATTEMPTS) {
                     // Reached the max number of attempts for this call;
                     // giving up.
                     callback_(errorIndicator);
-                    incCompletedRequests();
+                    if (tracked_) {incCompletedRequests();}
                 }
                 else {
                     // Trying again.
-                    proxyAjax(url_, params_, callback_, attemptNum_+1);
+                    proxyAjax(url_, params_, callback_, tracked_, attemptNum_+1);
                 }
             },
-            url, params, callback, attemptNum
+            url, params, callback, tracked, attemptNum
         );
         
         var proxyUrl;
@@ -231,8 +249,7 @@ var Nico = (function() {
             proxyAjax(
                 'http://api.ce.nicovideo.jp/liveapi/v1/video.search.solr',
                 params,
-                Util.curry(continueGettingLiveStreams, keyword),
-                1
+                Util.curry(continueGettingLiveStreams, keyword)
             );
         });
     }
@@ -280,8 +297,7 @@ var Nico = (function() {
             proxyAjax(
                 'http://api.ce.nicovideo.jp/liveapi/v1/video.search.solr',
                 paramSet,
-                setStreams,
-                1
+                setStreams
             );
         });
         
@@ -443,6 +459,7 @@ var Nico = (function() {
             $coTableBody.append($row);
         });
         
+        // Get the community names from the server.
         var params = {
             '__format': 'json',
             'id': noTypoCos.join(',')
@@ -451,7 +468,7 @@ var Nico = (function() {
             'http://api.ce.nicovideo.jp/api/v1/community.array',
             params,
             refreshCommunityLinks,
-            1
+            false
         );
     }
     

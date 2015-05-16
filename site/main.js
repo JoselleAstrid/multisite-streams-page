@@ -490,103 +490,6 @@ var Main = (function() {
         
         requestStatusE = document.getElementById('request-status');
         $(requestStatusE).hide();
-            
-        if (Settings.hasStorage()) {
-            Settings.storageToFields();
-            
-            if (Settings.get('twitchEnabled')) {
-                var nowRedirecting = Twitch.setOAuth2Token();
-                
-                if (nowRedirecting) {
-                    // Don't do anything else here, we're redirecting
-                    // so we can get the token.
-                    return;
-                }
-            }
-            
-            // Add placeholder text for each media section.
-            $('.media-container').each( function() {
-                var spanE = document.createElement('span');
-                spanE.textContent = "Waiting...";
-                $(spanE).addClass('empty-section-text');
-                this.appendChild(spanE);
-            });
-        
-            // Track which sites will provide what kinds of media types.
-            mediaTypesToSites = {};
-            var mediaTypesToSiteNames = {
-                'streams': ['Twitch', 'Hitbox', 'Nico'],
-                'hosts': ['Twitch'],
-                'games': ['Twitch'],
-                'videos': ['Twitch', 'Hitbox']
-            };
-            $.each(mediaTypesToSiteNames, function(mediaType, siteStrs){
-                mediaTypesToSites[mediaType] = [];
-                
-                siteStrs.forEach( function(s){
-                    if (haveEnabledSite(s)) {
-                        mediaTypesToSites[mediaType].push(
-                            SITE_NAMES_TO_MODULES[s]
-                        );
-                    }
-                });
-            });
-            
-            // Show/hide media sections depending on which sites are being
-            // used.
-            mediaContainerEs = {};
-            var containerIds = {
-                'streams': 'streams',
-                'hosts': 'hosts',
-                'games': 'games',
-                'videos': 'videos'
-            };
-            mediaContainerEs.streams = document.getElementById('streams');
-            mediaContainerEs.hosts = document.getElementById('hosts');
-            mediaContainerEs.games = document.getElementById('games');
-            mediaContainerEs.videos = document.getElementById('videos');
-                                               
-            $.each(mediaTypesToSites, function(mediaType, sites) {
-                mediaContainerEs[mediaType] = document.getElementById(
-                    containerIds[mediaType]
-                );
-                var headerE = document.getElementById(
-                    containerIds[mediaType] + '-header'
-                );
-                    
-                if (sites.length > 0) {
-                    $(mediaContainerEs[mediaType]).show();
-                    $(headerE).show();
-                }
-                else {
-                    $(mediaContainerEs[mediaType]).hide();
-                    $(headerE).hide();
-                }
-            });
-            
-            // Other initialization.
-            mediaElementArrays = {
-                'streams': [],
-                'hosts': [],
-                'games': [],
-                'videos': []
-            };
-            mediaObjArrays = {
-                'streams': [],
-                'hosts': [],
-                'games': [],
-                'videos': []
-            };
-            
-            startGettingMedia();
-        }
-        else {
-            // No settings stored yet. Initialize with defaults.
-            Settings.fillFieldsWithDefaults();
-            Settings.fieldsToStorage();
-            // Prompt the user to set settings for the first time.
-            Settings.show(Util.refreshPage, null);
-        }
         
         // Initialize help buttons.
         $('.help-button').each( function() {
@@ -611,6 +514,102 @@ var Main = (function() {
                 Util.curry(clickCallback, helpTextId, this)
             );
         });
+            
+            
+        if (Settings.hasStorage()) {
+            Settings.storageToFields();
+            
+            if (Settings.get('twitchEnabled')) {
+                var nowRedirecting = Twitch.setOAuth2Token();
+                
+                if (nowRedirecting) {
+                    // Don't do anything else here, we're redirecting
+                    // so we can get the token.
+                    return;
+                }
+            }
+            
+            // Add placeholder text for each media section.
+            $('.media-container').each( function() {
+                var spanE = document.createElement('span');
+                spanE.textContent = "Waiting...";
+                $(spanE).addClass('empty-section-text');
+                this.appendChild(spanE);
+            });
+    
+            // Track which sites will provide what kinds of media types.
+            mediaTypesToSites = {};
+            var mediaTypesToSiteNames = {
+                'streams': ['Twitch', 'Hitbox', 'Nico'],
+                'hosts': ['Twitch'],
+                'games': ['Twitch'],
+                'videos': ['Twitch', 'Hitbox']
+            };
+            $.each(mediaTypesToSiteNames, function(mediaType, siteStrs){
+                mediaTypesToSites[mediaType] = [];
+                
+                siteStrs.forEach( function(s){
+                    if (haveEnabledSite(s)) {
+                        mediaTypesToSites[mediaType].push(
+                            SITE_NAMES_TO_MODULES[s]
+                        );
+                    }
+                });
+            });
+            
+            // Initialize container elements for streams, videos, etc.
+            //
+            // And show/hide media sections depending on which sites
+            // are being used.
+            mediaContainerEs = {};
+            var containerIds = {
+                'streams': 'streams',
+                'hosts': 'hosts',
+                'games': 'games',
+                'videos': 'videos'
+            };                             
+            $.each(mediaTypesToSites, function(mediaType, sites) {
+                mediaContainerEs[mediaType] = document.getElementById(
+                    containerIds[mediaType]
+                );
+                var headerE = document.getElementById(
+                    containerIds[mediaType] + '-header'
+                );
+                    
+                if (sites.length > 0) {
+                    $(mediaContainerEs[mediaType]).show();
+                    $(headerE).show();
+                }
+                else {
+                    $(mediaContainerEs[mediaType]).hide();
+                    $(headerE).hide();
+                }
+            });
+            
+            // Initialize elements that track the media added so far.
+            mediaElementArrays = {
+                'streams': [],
+                'hosts': [],
+                'games': [],
+                'videos': []
+            };
+            mediaObjArrays = {
+                'streams': [],
+                'hosts': [],
+                'games': [],
+                'videos': []
+            };
+            
+            startGettingMedia();
+        }
+        else {
+            // No settings stored yet. Initialize with defaults.
+            Settings.fillFieldsWithDefaults();
+            Settings.fieldsToStorage();
+            // Prompt the user to set settings for the first time.
+            Settings.show(Util.refreshPage, null);
+        }
+        
         
         // Initialize settings button.
         $('#settings-button').click(
