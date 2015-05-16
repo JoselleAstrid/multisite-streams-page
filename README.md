@@ -1,7 +1,7 @@
 multisite-streams-page
 ======================
 
-A single webpage showing the live streams and videos of channels you follow, from multiple sites (currently Twitch and Hitbox).
+A single webpage showing the live streams and videos of channels you follow, from multiple sites (currently Twitch, Hitbox, and Nicovideo).
 
 
 Hosting status
@@ -12,24 +12,21 @@ Now hosted by Nmaster64 at http://speedruntools.com/following/, and not seeking 
 But feel free to test the page on your local machine (see "How to host the page" below) for educational purposes.
 
 
-Screenshots
------------
-
-In this Imgur album: http://imgur.com/a/XeE7I
-
-
 How it works
 ------------
 
-The page uses the Twitch and Hitbox APIs to get the streams and videos.
+The page uses the Twitch, Hitbox, and Nicovideo APIs to get the streams and videos.
 
 The Twitch part uses OAuth2. So if you are using the page for the first time, or if you are logging in, you will be redirected to a Twitch page asking if you will authorize the multi-site streams page to use your account. The "will have access to:" list should be empty, because the page only requests the basic `user_read` scope (to get your followed channels' streams and videos).
 
-The Hitbox part doesn't use OAuth2 (because Hitbox doesn't support this yet), so it can't automatically figure out your Hitbox account even if you're logged into Hitbox. Instead, this page has a Settings form where you need to specify your Hitbox username.
+The Hitbox part doesn't use OAuth2 (because Hitbox doesn't support this yet), so it can't automatically figure out your Hitbox account even if you're logged into Hitbox. So you need to specify your Hitbox username in the Settings (button at the upper-right corner of the page).
 
-The Settings form allows you to specify your Hitbox username, turn Twitch and Hitbox listings on/off, and change how many streams you load from each site. Later, there may be more settings for customizing the page look and/or layout. Page settings are saved using a cookie.
+The Nicovideo part also doesn't use OAuth2, and additionally it poses two other challenges:
 
-The page code is nothing fancy. The only plugins used are jQuery, and jQuery UI (for the settings dialog).
+* The Nicovideo API doesn't support CORS or JSONP access, which means a proxy server must be used to access the API via Javascript. The proxy server is Yahoo's YQL by default, but another proxy can be specified using `config.js` (described below).
+* The Nicovideo API doesn't provide a way to directly get your followed streams and videos, especially since the use of a proxy server means doing authenticated requests is impossible. For live streams, the best we can do is request all live streams on the site (filtered by certain keywords) and then pick out the stream communities you follow (which you specify in Settings). This can be slow depending on the keywords used (configurable in Settings) and the amount of streaming activity on Nicovideo. Videos aren't supported yet, but those will also be a challenge.
+
+The only code plugins used are jQuery, and jQuery UI (for the settings dialog). The Settings are saved with localStorage.
 
 
 How to host the page
@@ -39,14 +36,17 @@ Go to your Settings on twitch.tv, click the "Connections" tab, and then under "D
 
 Download the `site` subdirectory from this repository (either with a `git clone`, or just download here from GitHub if you don't plan on keeping up to date regularly).
 
-Add one file to your downloaded `site` subdirectory, called `config.js`. The contents should be the following:
+Add one file to your downloaded `site` subdirectory, called `config.js`. The contents should look like the following:
 
 ```
 Config = {
-    clientId: "yourclientidhere"
+    clientId: "yourclientidhere",
+    proxyRequestServer: "yourproxyserverhere"
 };
 ```
 Replace `yourclientidhere` with the "Client ID" of the Developer Application you registered with Twitch.
+
+Replace `yourproxyserverhere` with the proxy server you'll use to handle Nicovideo requests. For example, if you use https://www.npmjs.com/package/cors-anywhere to run your own Node.js-powered proxy server, this will be `http://127.0.0.1:8080/` if you use the default IP and port. Your chosen proxy server must work by simply appending the request URL to a base URL (which is the proxyRequestServer value), and must return the request as-is instead of wrapping it (unlike YQL). If you are fine with using Yahoo's YQL or you don't have another proxy server to use, then you can leave out the `proxyRequestServer` line altogether (and don't forget to remove the comma to keep proper Javascript syntax).
 
 Then serve the `site` subdirectory in a webserver.
 
@@ -56,4 +56,8 @@ Here's a simple way to test the page on your local machine with Python: open a c
 Acknowledgments
 ----------------
 
-Thanks to Hitakashi for guiding me to the right API calls to use, especially for Hitbox.
+Thanks to:
+
+Hitakashi, for guiding me to the right API calls to use for Twitch and especially Hitbox.
+
+Cronikeys, for making http://speedrun.tv/nico, demonstrating the most workable avenue for getting Nicovideo streams at this time of writing.
