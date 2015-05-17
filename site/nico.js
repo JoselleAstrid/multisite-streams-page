@@ -49,6 +49,20 @@ var Nico = (function() {
         return numTotalRequests === numCompletedRequests;
     }
     
+    function reportFailedRequest() {
+        numFailedRequests++;
+        Main.showNotification(
+            "Nicovideo requests failed after "
+            + MAX_CALL_ATTEMPTS.toString()
+            + " tries: "
+            + numFailedRequests.toString() + " of "
+            + numCompletedRequests.toString());
+    }
+    function reportMaintenance() {
+        Main.showNotification(
+            "Nicolive is currently under maintenance.");
+    }
+    
     
     
     function proxyAjax(
@@ -113,19 +127,33 @@ var Nico = (function() {
                 
                 // Check the response (which jQuery wraps under the responseJSON
                 // key) for Nico's maintenance status.
-                if (response.responseJSON
+                //
+                // Note that the response can be null, if YQL gave us null and
+                // we're relaying the result here. So check for that before
+                // checking the response fields.
+                if (response !== null
                     && response.responseJSON.nicovideo_response
                     && response.responseJSON.nicovideo_response['@status']
                        === 'maintenance') {
                     // Nicolive is under maintenance.
-                    callback_(maintenanceIndicator);
-                    if (tracked_) {incCompletedRequests();}
+                    if (tracked_) {
+                        incCompletedRequests();
+                        reportMaintenance();
+                    }
+                    else {
+                        callback_(maintenanceIndicator);
+                    }
                 }
                 else if (attemptNum_ >= MAX_CALL_ATTEMPTS) {
                     // Reached the max number of attempts for this call;
                     // giving up.
-                    callback_(errorIndicator);
-                    if (tracked_) {incCompletedRequests();}
+                    if (tracked_) {
+                        incCompletedRequests();
+                        reportFailedRequest();
+                    }
+                    else {
+                        callback_(errorIndicator);
+                    }
                 }
                 else {
                     // Trying again.
@@ -255,12 +283,6 @@ var Nico = (function() {
     
     function continueGettingLiveStreams(keyword, response) {
         
-        if (response === errorIndicator || response === maintenanceIndicator) {
-            // Just process this one response and finish.
-            setStreams(response);
-            return;
-        }
-        
         var nlvResponse = response.nicolive_video_response;
         var totalCount = parseInt(nlvResponse.total_count.filtered);
         
@@ -310,29 +332,14 @@ var Nico = (function() {
         
         var streams = [];
         
-        if (response === errorIndicator) {
-            numFailedRequests++;
-            Main.showNotification(
-                "Nicovideo requests failed after "
-                + MAX_CALL_ATTEMPTS.toString()
-                + " tries: "
-                + numFailedRequests.toString() + " of "
-                + numCompletedRequests.toString());
-        }
-        else if (response === maintenanceIndicator) {
-            Main.showNotification(
-                "Nicolive is currently under maintenance.");
-        }
-        else {
-            var nlvResponse = response.nicolive_video_response;
-            
-            // If count is 0 then there is no video_info key, so need to check
-            // for that case.
-            if (nlvResponse.count > 0) {
-                nlvResponse.video_info.forEach(function(videoInfo){
-                    streams.push(videoInfo);
-                });
-            }
+        var nlvResponse = response.nicolive_video_response;
+        
+        // If count is 0 then there is no video_info key, so need to check
+        // for that case.
+        if (nlvResponse.count > 0) {
+            nlvResponse.video_info.forEach(function(videoInfo){
+                streams.push(videoInfo);
+            });
         }
         
         
