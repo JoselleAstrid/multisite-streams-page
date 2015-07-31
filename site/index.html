@@ -80,18 +80,19 @@
         </ul>
         
         <div id="settings-main">
-          <input type="checkbox" name="twitchEnabled" id="field-twitchEnabled"
-                 title="Include twitch.tv in listing"/>
-          <label for="field-twitchEnabled">Twitch</label>
-          
-          <input type="checkbox" name="hitboxEnabled" id="field-hitboxEnabled"
-                 title="Include hitbox.tv in listing"/>
-          <label for="field-hitboxEnabled">Hitbox</label>
-          
-          <input type="checkbox" name="nicoEnabled" id="field-nicoEnabled"
-                 title="Include nicovideo.jp in listing"/>
-          <label for="field-nicoEnabled">Nicovideo</label>
-          <br /><br />
+          <div>
+            <input type="checkbox" name="twitchEnabled" id="field-twitchEnabled"
+                   title="Include twitch.tv in listing"/>
+            <label for="field-twitchEnabled">Twitch</label>
+            
+            <input type="checkbox" name="hitboxEnabled" id="field-hitboxEnabled"
+                   title="Include hitbox.tv in listing"/>
+            <label for="field-hitboxEnabled">Hitbox</label>
+            
+            <input type="checkbox" name="nicoEnabled" id="field-nicoEnabled"
+                   title="Include nicovideo.jp in listing"/>
+            <label for="field-nicoEnabled">Nicovideo</label>
+          </div>
           
           <div>
           <label for="field-gameDisplay">Game display: </label>
@@ -118,6 +119,11 @@
             <option value="channelsDesc">Channels, highest first</option>
             <option value="channelsAsc">Channels, lowest first</option>
           </select>
+          </div>
+          
+          <div>
+          <input type="checkbox" name="mergeHosts" id="field-mergeHosts" />
+          <label for="field-mergeHosts">Group hosts who are hosting the same channel</label>
           </div>
           
           <div>

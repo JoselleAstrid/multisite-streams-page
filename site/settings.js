@@ -13,6 +13,7 @@ var Settings = {
         'gameDisplay': 'boximage',
         'sortStreams': 'viewersDesc',
         'sortGames': 'viewersDesc',
+        'mergeHosts': true,
         'videoLimit': 30,
         'sectionOrder': ['streams', 'hosts', 'games', 'videos'],
         

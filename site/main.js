@@ -316,6 +316,46 @@ var Main = (function() {
         
         var compareFunc = getMediaCompareFunc('hosts');
         
+        if (Settings.get('mergeHosts') === true) {
+            
+            var uniqueHosts = {};
+            pendingHosts.forEach(function(obj) {
+                var name = obj.streamerName
+                if (uniqueHosts.hasOwnProperty(name)) {
+                    // Already seen this streamer hosted by at least one other
+                    // channel.
+                    var existingObj = uniqueHosts[name]
+                    existingObj.hostCount += 1;
+                    if (existingObj.hostCount === 2) {
+                        // Currently: hoster1
+                        // Want: hoster1 & hoster2
+                        existingObj.hosterName =
+                            existingObj.hosterName + " & " + obj.hosterName;
+                    }
+                    else if (existingObj.hostCount >= 3) {
+                        // Currently: hoster1 & hoster2
+                        // Want: hoster1 & x others
+                        var andIndex = existingObj.hosterName.indexOf('&');
+                        existingObj.hosterName =
+                            existingObj.hosterName.slice(0, andIndex) + "& "
+                            + (existingObj.hostCount-1).toString() + " others";
+                    }
+                }
+                else {
+                    obj.hostCount = 1;
+                    uniqueHosts[name] = obj;
+                }
+            });
+            
+            // Make pendingHosts an array version of uniqueHosts (which is
+            // an object)
+            pendingHosts = [];
+            for (var streamerName in uniqueHosts) {
+                if (!uniqueHosts.hasOwnProperty(streamerName)) {continue;}
+                pendingHosts.push(uniqueHosts[streamerName]);
+            }
+        }
+        
         if (hostEs.length === 0 && pendingHosts.length > 0) {
             $(container).find('span.empty-section-text').remove();
         }
