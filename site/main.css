@@ -72,6 +72,15 @@ body {
   padding: 0;
 }
 
+.sectionOrder-text {
+  display: inline-block;
+  text-align: center;
+  width: 70px;
+}
+.sectionOrder-button {
+  padding: 0;
+}
+
 #nicoCommunities-table-container {
   width: 350px;
   height: 350px;
@@ -116,7 +125,7 @@ makes all its anchors black by default */
 
 
 /* Section headers */
-h2.section {
+h2.section-header {
   /* Ensure that this element goes under all streams/videos of the
   previous section (not to the side) */
   clear: both;
@@ -156,7 +165,7 @@ h2.section {
 
 /* Container for single game (only specifying differences
    from streams/videos here) */
-.media-container.games a {
+#games a {
   width: 140px;
 }
 

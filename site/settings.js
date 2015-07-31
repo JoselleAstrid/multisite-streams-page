@@ -14,6 +14,7 @@ var Settings = {
         'sortStreams': 'viewersDesc',
         'sortGames': 'viewersDesc',
         'videoLimit': 30,
+        'sectionOrder': ['streams', 'hosts', 'games', 'videos'],
         
         'hitboxUsername': '',
         'hitboxThumbnailServer': 'vie',
@@ -26,10 +27,19 @@ var Settings = {
     
     // Settings values that aren't just strings, and thus need to be
     // stored somewhere other than an input field
+    sectionOrder: null,
     nicoCommunities: null,
     
     $container: null,
     nicoTabInitialized: false,
+    
+    sectionNames: {
+        streams: "Streams",
+        hosts: "Hosts",
+        games: "Games",
+        videos: "Videos"
+    },
+    mainTabInitialized: false,
     
     
     
@@ -70,6 +80,11 @@ var Settings = {
             // No cancel callback: Don't add a Cancel button, and also
             // specify a CSS class that hides the close button
             dialogClass = "no-close";
+        }
+        
+        if (!Settings.mainTabInitialized) {
+            Settings.initMainSettings();
+            Settings.mainTabInitialized = true;
         }
         
         Settings.$container.dialog({
@@ -202,11 +217,63 @@ var Settings = {
     
     
     
+    initMainSettings: function() {
+        var sectionOrder = Settings.get('sectionOrder');
+        
+        var i;
+        for (i = 0; i < sectionOrder.length; i++) {
+            // Set value of one section order item
+            var sectionVal = sectionOrder[i];
+            var $input = $('#field-sectionOrder-' + i.toString());
+            $input.val(sectionVal);
+            // Set display of one section order item
+            var $span = $('#sectionOrder-' + i.toString() + '-text');
+            $span.text(Settings.sectionNames[sectionVal]);
+        }
+        
+        $('button.sectionOrder-button').click(function() {
+            var name = $(this).attr('name');
+            // name is 2 numerical digits, representing the two sections
+            // that the button will switch
+            var sectionNum1 = name.slice(0,1);
+            var sectionNum2 = name.slice(1);
+            
+            var $span1 = $('#sectionOrder-' + sectionNum1 + '-text');
+            var $span2 = $('#sectionOrder-' + sectionNum2 + '-text');
+            var $input1 = $('#field-sectionOrder-' + sectionNum1);
+            var $input2 = $('#field-sectionOrder-' + sectionNum2);
+            
+            var value1 = $input1.val();
+            var value2 = $input2.val();
+            $input1.val(value2);
+            $input2.val(value1);
+            
+            var text1 = $span1.text();
+            var text2 = $span2.text();
+            $span1.text(text2);
+            $span2.text(text1);
+        
+            var sectionOrder = [];
+            var numOfSections = Object.keys(Settings.sectionNames).length;
+            var i;
+            for (i = 0; i < numOfSections; i++) {
+                var $input = $('#field-sectionOrder-' + i.toString());
+                var sectionVal = $input.val();
+                sectionOrder.push(sectionVal);
+            }
+            Settings.setInField('sectionOrder', sectionOrder);
+        });
+    },
+    
+    
+    
     init: function() {
         // Get the container element which has all the settings
         Settings.$container = $('#settings');
-        // Initialize the tabbed layout of the settings 
+        
+        // Initialize the tabbed layout of the settings.
         Settings.$container.tabs({
+            // Function to run before we switch to another tab.
             beforeActivate: function(event, ui) {
                 if (ui.newTab.context.hash === '#settings-nico') {
                     if (!Settings.nicoTabInitialized) {

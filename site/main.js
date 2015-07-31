@@ -558,14 +558,16 @@ var Main = (function() {
         if (Settings.hasStorage()) {
             Settings.storageToFields();
             
-            if (Settings.get('twitchEnabled')) {
-                var nowRedirecting = Twitch.setOAuth2Token();
-                
-                if (nowRedirecting) {
-                    // Don't do anything else here, we're redirecting
-                    // so we can get the token.
-                    return;
-                }
+            // Order the sections.
+            var $sectionsContainer = $('#sections');
+            var sectionOrder = Settings.get('sectionOrder');
+            var i;
+            for (i = 0; i < sectionOrder.length; i++) {
+                var sectionId = sectionOrder[i];
+                var $section = $('#'+sectionId+'-section');
+                // The sections are already in the desired parent element, but
+                // we call append for each section to re-order them.
+                $sectionsContainer.append($section);
             }
             
             // Add placeholder text for each media section.
@@ -575,6 +577,16 @@ var Main = (function() {
                 $(spanE).addClass('empty-section-text');
                 this.appendChild(spanE);
             });
+            
+            if (Settings.get('twitchEnabled')) {
+                var nowRedirecting = Twitch.setOAuth2Token();
+                
+                if (nowRedirecting) {
+                    // Don't do anything else here, we're redirecting
+                    // so we can get the token.
+                    return;
+                }
+            }
     
             // Track which sites will provide what kinds of media types.
             mediaTypesToSites = {};
@@ -611,17 +623,15 @@ var Main = (function() {
                 mediaContainerEs[mediaType] = document.getElementById(
                     containerIds[mediaType]
                 );
-                var headerE = document.getElementById(
-                    containerIds[mediaType] + '-header'
+                var sectionE = document.getElementById(
+                    containerIds[mediaType] + '-section'
                 );
                     
                 if (sites.length > 0) {
-                    $(mediaContainerEs[mediaType]).show();
-                    $(headerE).show();
+                    $(sectionE).show();
                 }
                 else {
-                    $(mediaContainerEs[mediaType]).hide();
-                    $(headerE).hide();
+                    $(sectionE).hide();
                 }
             });
             
