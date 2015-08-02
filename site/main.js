@@ -12,11 +12,12 @@ var Main = (function() {
     var mediaElementArrays = {};
     var mediaObjArrays = {};
     
-    var SITE_NAMES = ['Twitch', 'Hitbox', 'Nico'];
+    var SITE_NAMES = ['Twitch', 'Hitbox', 'Nico', 'Cavetube'];
     var SITE_NAMES_TO_MODULES = {
         'Twitch': Twitch,
         'Hitbox': Hitbox,
-        'Nico': Nico
+        'Nico': Nico,
+        'Cavetube': Cavetube
     };
     var mediaTypesToSites = null;
     
@@ -31,6 +32,9 @@ var Main = (function() {
         }
         else if (siteName === 'Nico') {
             return Settings.get('nicoEnabled');
+        }
+        else if (siteName === 'Cavetube') {
+            return Settings.get('cavetubeEnabled');
         }
     }
     
@@ -173,6 +177,9 @@ var Main = (function() {
         else if (obj.site === 'Nico') {
             $thumbnailCtnr.addClass('nico');
         }
+        else if (obj.site === 'Cavetube') {
+            $thumbnailCtnr.addClass('cavetube');
+        }
         
         var $thumbnail = $('<img>');
         $thumbnail.attr('class', 'media-thumbnail');
@@ -231,6 +238,9 @@ var Main = (function() {
         }
         else if (obj.site === 'Nico') {
             $siteIndicator.addClass('nico');
+        }
+        else if (obj.site === 'Cavetube') {
+            $siteIndicator.addClass('cavetube');
         }
         $textContainer.append($siteIndicator);
     }
@@ -631,7 +641,7 @@ var Main = (function() {
             // Track which sites will provide what kinds of media types.
             mediaTypesToSites = {};
             var mediaTypesToSiteNames = {
-                'streams': ['Twitch', 'Hitbox', 'Nico'],
+                'streams': ['Twitch', 'Hitbox', 'Nico', 'Cavetube'],
                 'hosts': ['Twitch'],
                 'games': ['Twitch'],
                 'videos': ['Twitch', 'Hitbox']

@@ -81,27 +81,37 @@ body {
   padding: 0;
 }
 
-#nicoCommunities-table-container {
+#nicoCommunities-table-container,
+#cavetubeUsers-table-container {
   width: 350px;
   height: 350px;
   overflow-y: auto;
   padding: 8px;
   border: 1px solid rgb(200,200,200);
 }
-#nicoCommunities-table-container table {
+#nicoCommunities-table-container table,
+#cavetubeUsers-table-container table {
   border-collapse: collapse;
   background-color: rgb(240,240,240);
 }
-#nicoCommunities-table-container table tbody tr td {
+#nicoCommunities-table-container table tbody tr td,
+#cavetubeUsers-table-container table tbody tr td {
   border: 1px solid black;
   padding: 4px;
 }
 /* Set table anchor colors to be browser-standard colors, since jQuery UI
 makes all its anchors black by default */
-#nicoCommunities-table-container table tbody tr td a:link { color: #0000EE; }
-#nicoCommunities-table-container table tbody tr td a:visited { color: #551A8B; }
-/* Textarea for editing communities list */
-#textarea-nicoCommunities {
+#nicoCommunities-table-container table tbody tr td a:link,
+#cavetubeUsers-table-container table tbody tr td a:link {
+  color: #0000EE;
+}
+#nicoCommunities-table-container table tbody tr td a:visited,
+#cavetubeUsers-table-container table tbody tr td a:visited {
+  color: #551A8B;
+}
+/* Textarea for editing communities/users list */
+#textarea-nicoCommunities,
+#textarea-cavetubeUsers {
   width: 150px;
   height: 320px;
 }
@@ -193,14 +203,18 @@ h2.section-header {
   /* Twitch streams only:
   Apparently we should squash the thumbnail to make it 16:9?
   At least Twitch following does the same thing. I'm not sure why the
-  thumbnails are actually 14.4:9 though (e.g. 320x200).*/
+  thumbnails are actually 14.4:9 though (e.g. 320x200).
+  TODO: This may no longer be needed, seems they fixed the thumbnail aspect? */
   height: 135px;
 }
 .thumbnail-ctnr.twitch.video img.media-thumbnail {
   /* Twitch videos only:
-  Cut off the black bar on the top.
+  Preview is 4:3 with top/bottom black bars.
+  This margin cuts off the black bar on the top.
   The parent's overflow:hidden hides the black bar on the bottom.
-  After cutting off the black bars, the result ends up being about 16:9. */
+  After cutting off the black bars, the result ends up being about 16:9.
+  None of the actual picture is cut off for 16:9 streams (the majority of
+  streams on Twitch). Not entirely sure for non-16:9 streams though. */
   margin-top: -23px;
 }
 .thumbnail-ctnr.nico.stream {
@@ -213,6 +227,17 @@ h2.section-header {
 }
 .thumbnail-ctnr.nico.stream img.media-thumbnail {
   width: 135px;
+}
+.thumbnail-ctnr.cavetube.stream img.media-thumbnail {
+  /* Cavetube streams only:
+  The stream previews are 4:3, but quite a few streamers stream in 16:9
+  and the result ends up having black bars on the top and bottom.
+  So we'll crop out the top and bottom of the stream preview. This means
+  (1) perfect display for the 16:9 streams, and (2) cropping out some actual
+  picture from 4:3 streams. Arguably better than the alternative of zooming
+  out to make the entire picture show - this'll mean all-around black bars for
+  (1) and side black bars for (2). */
+  margin-top: -23px;
 }
 
 
@@ -274,6 +299,9 @@ img.followed-game {
 }
 .media-container span.site-indicator.nico {
   background-color: rgb(160,160,160);
+}
+.media-container span.site-indicator.cavetube {
+  background-color: rgb(29,87,11);
 }
 
 .media-container div.media-game {

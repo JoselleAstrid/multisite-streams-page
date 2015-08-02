@@ -10,6 +10,7 @@ var Settings = {
         'twitchEnabled': true,
         'hitboxEnabled': true,
         'nicoEnabled': false,
+        'cavetubeEnabled': false,
         'gameDisplay': 'boximage',
         'sortStreams': 'viewersDesc',
         'sortGames': 'viewersDesc',
@@ -21,7 +22,9 @@ var Settings = {
         'hitboxThumbnailServer': 'vie',
         
         'nicoCommunities': [],
-        'nicoSearchKeywords': 'rta, 練習+ゲーム'
+        'nicoSearchKeywords': 'rta, 練習+ゲーム',
+        
+        'cavetubeUsers': []
     },
     
     fieldTypes: ['input', 'select', 'textarea'],
@@ -30,9 +33,13 @@ var Settings = {
     // stored somewhere other than an input field
     sectionOrder: null,
     nicoCommunities: null,
+    cavetubeUsers: null,
     
     $container: null,
+    
+    mainTabInitialized: false,
     nicoTabInitialized: false,
+    cavetubeTabInitialized: false,
     
     sectionNames: {
         streams: "Streams",
@@ -40,7 +47,6 @@ var Settings = {
         games: "Games",
         videos: "Videos"
     },
-    mainTabInitialized: false,
     
     
     
@@ -280,6 +286,12 @@ var Settings = {
                     if (!Settings.nicoTabInitialized) {
                         Nico.initSettings();
                         Settings.nicoTabInitialized = true;
+                    }
+                }
+                else if (ui.newTab.context.hash === '#settings-cavetube') {
+                    if (!Settings.cavetubeTabInitialized) {
+                        Cavetube.initSettings();
+                        Settings.cavetubeTabInitialized = true;
                     }
                 }
             }
