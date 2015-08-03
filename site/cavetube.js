@@ -51,7 +51,7 @@ var Cavetube = (function() {
     function reportFailedRequest() {
         numFailedRequests++;
         Main.showNotification(
-            "Nicovideo requests failed after "
+            "Cavetube requests failed after "
             + MAX_CALL_ATTEMPTS.toString()
             + " tries: "
             + numFailedRequests.toString() + " of "
@@ -151,15 +151,20 @@ var Cavetube = (function() {
             
             successCallback = Util.curry(
                 function(succCallback, errCallback, response){
-                    var results = response.query.results;
+                    // In the response element there's a query element, and
+                    // in that is the results element.
+                    var results = response.children[0].children[0];
                     
-                    if (results !== null) {
-                        succCallback(results);
+                    // In that results element is the root XML element from
+                    // the website.
+                    if (results.children.length > 0) {
+                        // Wrap in a documentElement property so that it can be
+                        // handled the same way as a non-YQL-wrapped response.
+                        succCallback({'documentElement': results.children[0]});
                     }
                     else {
-                        // results should be null if YQL failed to get
-                        // the response.
-                        errCallback(results);
+                        // YQL failed to get the website's response.
+                        errCallback(null);
                     }
                 },
                 successCallback, errorCallback
@@ -266,7 +271,9 @@ var Cavetube = (function() {
                 + props['ct:stream_name'] + '&' + Date.now().toString();
             d.streamTitle = props.title;
             d.gameName = "Not supported";
-            d.viewCount = props['ct:viewer'];
+            // ct:viewer is total views, not necessarily current viewers.
+            // ct:listener is current viewers.
+            d.viewCount = props['ct:listener'];
             d.channelName = props.author;
             d.site = 'Cavetube';
             
