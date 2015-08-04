@@ -39,6 +39,16 @@ var Util = {
         return s.replace(/^\s\s*/, '').replace(/\s\s*$/, '');
     },
     
+    zfill: function(str, desiredLength) {
+        /* Left-pad a string with 0s until the desired string length
+        is reached. */
+        var outStr = str;
+        while (outStr.length < desiredLength) {
+            outStr = '0' + outStr;
+        }
+        return outStr;
+    },
+    
     
     
     /* Arrays */
@@ -145,24 +155,31 @@ var Util = {
         return "At an unknown date";
     },
     
+    dateObjToHMElapsed: function(dateObj) {
+        var time = dateObj.getTime();
+        var currentTime = Date.now();
+        
+        var totalMillis = currentTime - time;
+        var totalMinutes = totalMillis / (1000*60);
+        var minutes = totalMinutes % 60;
+        var hours = (totalMinutes-minutes)/60;
+        
+        var hoursStr = hours.toFixed();
+        var minutesStrPadded = Util.zfill(minutes.toFixed(), 2);
+        
+        return (hoursStr + ":" + minutesStrPadded); 
+    },
+    
     timeSecToHMS: function(totalSeconds) {
         var seconds = totalSeconds % 60;
         var totalMinutes = (totalSeconds-seconds)/60;
         var minutes = totalMinutes % 60;
         var hours = (totalMinutes-minutes)/60;
         
-        var zfill = function(str, desiredLength){
-            var outStr = str;
-            while (outStr.length < desiredLength) {
-                outStr = '0' + outStr;
-            }
-            return outStr;
-        };
-        
         var hoursStr = hours.toFixed();
         var minutesStr = minutes.toFixed();
-        var minutesStrPadded = zfill(minutes.toFixed(), 2);
-        var secondsStr = zfill(seconds.toFixed(), 2);
+        var minutesStrPadded = Util.zfill(minutes.toFixed(), 2);
+        var secondsStr = Util.zfill(seconds.toFixed(), 2);
         
         if (hours === 0) {
             return (minutesStr + ":" + secondsStr);

@@ -1,5 +1,8 @@
 var Nico = (function() {
     
+    // 2014-01-17 00:45:02
+    var nicoDateRegex = /^(\d\d\d\d)-(\d\d)-(\d\d) (\d\d):(\d\d):(\d\d)$/;
+    
     var $coTableContainer = null;
     var $coEditArea = null;
     var $coEditButton = null;
@@ -33,6 +36,36 @@ var Nico = (function() {
     
     var followingCos = [];
     var addedStreamCos = [];
+    
+    
+    
+    function dateStrToObj(dateStr) {
+        // From: API's date/time format, which is in Japan time
+        // To: Javascript Date obj, in local timezone
+        
+        var results = nicoDateRegex.exec(dateStr);
+        var year = results[1];
+        var month = results[2] - 1;  // JS Dates start months from 0...
+        var day = results[3];
+        var hour = results[4];
+        var minute = results[5];
+        var second = results[6];
+        
+        var japanDate = new Date(year, month, day, hour, minute, second, 0);
+        
+        // getTimezoneOffset() returns the number of minutes that UTC
+        // is ahead of your local time. Take that and add 9*60 to
+        // get the minutes Japan (UTC+9 with no DST) is ahead of you.
+        //
+        // It doesn't matter what Date object you call getTimezoneOffset() from.
+        var japanTimestamp = japanDate.getTime();
+        var japanAheadAmount =
+            (japanDate.getTimezoneOffset() + 9*60) * 60 * 1000;
+        var localTimestamp = japanTimestamp - japanAheadAmount;
+        var localDate = new Date(localTimestamp);
+        
+        return localDate;
+    }
     
     
     
@@ -370,6 +403,7 @@ var Nico = (function() {
             d.gameName = "Not supported";
             d.viewCount = vInfo.video.view_counter;
             d.channelName = vInfo.community.name;
+            d.startDate = dateStrToObj(vInfo.video.start_time);
             d.site = 'Nico';
             
             streamDicts.push(d);

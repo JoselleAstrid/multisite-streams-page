@@ -13,6 +13,7 @@ var Settings = {
         'cavetubeEnabled': false,
         'gameDisplay': 'boximage',
         'sortStreams': 'viewersDesc',
+        'sortHosts': 'viewersDesc',
         'sortGames': 'viewersDesc',
         'mergeHosts': true,
         'videoLimit': 30,

@@ -17,7 +17,7 @@ var Hitbox = (function() {
     
     
     
-    function hitboxDateStrToObj(dateStr) {
+    function dateStrToObj(dateStr) {
         // From: API's date/time format, which is in UTC
         // To: Javascript Date obj, in local timezone
         
@@ -223,6 +223,7 @@ var Hitbox = (function() {
             
             streamDict.viewCount = stream.media_views;
             streamDict.channelName = stream.media_user_name;
+            streamDict.startDate = dateStrToObj(stream.media_live_since);
             streamDict.site = 'Hitbox';
             
             hitboxStreamDicts.push(streamDict);
@@ -281,7 +282,7 @@ var Hitbox = (function() {
                 Math.floor(video.media_duration)
             );
             
-            var dateObj = hitboxDateStrToObj(video.media_date_added);
+            var dateObj = dateStrToObj(video.media_date_added);
             videoDict.unixTimestamp = dateObj.getTime();
             
             // Can also use video.media_time_ago to get this directly as a

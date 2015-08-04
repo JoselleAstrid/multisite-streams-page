@@ -110,8 +110,18 @@
           </div>
           
           <div>
-          <label for="field-sortStreams">Sort streams/hosts by: </label>
+          <label for="field-sortStreams">Sort streams by: </label>
           <select name="sortStreams" id="field-sortStreams">
+            <option value="viewersDesc">Viewers, highest first</option>
+            <option value="viewersAsc">Viewers, lowest first</option>
+            <option value="uptimeAsc">Uptime, shortest first</option>
+            <option value="uptimeDesc">Uptime, longest first</option>
+          </select>
+          </div>
+          
+          <div>
+          <label for="field-sortHosts">Sort hosts by: </label>
+          <select name="sortHosts" id="field-sortHosts">
             <option value="viewersDesc">Viewers, highest first</option>
             <option value="viewersAsc">Viewers, lowest first</option>
           </select>

@@ -126,8 +126,11 @@ var Main = (function() {
     
     function getMediaCompareFunc(mediaType) {
         var sortType;
-        if (mediaType === 'streams' || mediaType === 'hosts') {
+        if (mediaType === 'streams') {
             sortType = Settings.get('sortStreams');
+        }
+        else if (mediaType === 'hosts') {
+            sortType = Settings.get('sortHosts');
         }
         else if (mediaType === 'games') {
             sortType = Settings.get('sortGames');
@@ -145,6 +148,16 @@ var Main = (function() {
         else if (sortType === 'channelsDesc') {
             compareFunc = function(a, b) {
                 return parseInt(b.channelCount) - parseInt(a.channelCount);
+            };
+        }
+        else if (sortType === 'uptimeAsc') {
+            compareFunc = function(a, b) {
+                return b.startDate - a.startDate;
+            };
+        }
+        else if (sortType === 'uptimeDesc') {
+            compareFunc = function(a, b) {
+                return a.startDate - b.startDate;
             };
         }
         else if (sortType === 'videoDateDesc') {
@@ -279,6 +292,9 @@ var Main = (function() {
             $(container).find('span.empty-section-text').remove();
         }
         
+        var isSortedByUptime =
+            Settings.get('sortStreams').indexOf('uptime') !== -1;
+        
         pendingStreams.forEach(function(obj) {
                 
             var $streamE = $('<a>');
@@ -300,7 +316,13 @@ var Main = (function() {
             var $channelNameAndViews = $('<div>');
             
             var $textSpan1 = $('<span>');
-            $textSpan1.text(obj.viewCount);
+            var uptimeStr = Util.dateObjToHMElapsed(obj.startDate);
+            if (isSortedByUptime) {
+                $textSpan1.text(uptimeStr + " (" + obj.viewCount + ")");
+            }
+            else {
+                $textSpan1.text(obj.viewCount + " (" + uptimeStr + ")");
+            }
             $channelNameAndViews.append($textSpan1);
             
             addSiteIndicator(obj, $channelNameAndViews);

@@ -179,6 +179,17 @@ var Twitch = (function() {
     
     
     
+    function dateStrToObj(s) {
+        // The Twitch API gives dates as strings like: 2015-08-03T21:05:57Z
+        // This is a "simplification of the ISO 8601 Extended Format"
+        // which new Date() can take. The "Z" denotes UTC.
+        // https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/Date
+        // http://www.ecma-international.org/ecma-262/5.1/#sec-15.9.1.15
+        return new Date(s);
+    }
+    
+    
+    
     function getUsername() {
         if (twitchOAuth2Token === errorIndicator) {
             setUsername(errorIndicator);
@@ -332,6 +343,7 @@ var Twitch = (function() {
             
             streamDict.viewCount = stream.viewers;
             streamDict.channelName = stream.channel.display_name;
+            streamDict.startDate = dateStrToObj(stream.created_at);
             streamDict.site = 'Twitch';
             
             twitchStreamDicts.push(streamDict);
@@ -394,7 +406,7 @@ var Twitch = (function() {
             videoDict.duration = Util.timeSecToHMS(video.length);
             videoDict.site = 'Twitch';
             
-            var dateObj = new Date(video.recorded_at);
+            var dateObj = dateStrToObj(video.recorded_at);
             videoDict.unixTimestamp = dateObj.getTime();
             videoDict.dateDisplay = Util.dateObjToTimeAgo(dateObj);
             

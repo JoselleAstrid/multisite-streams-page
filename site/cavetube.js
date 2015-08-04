@@ -35,6 +35,18 @@ var Cavetube = (function() {
     
     
     
+    function dateStrToObj(s) {
+        // (Part of) the Cavetube API gives dates as strings like
+        // 2015-08-03T21:05:57Z
+        // This is a "simplification of the ISO 8601 Extended Format"
+        // which new Date() can take. The "Z" denotes UTC.
+        // https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/Date
+        // http://www.ecma-international.org/ecma-262/5.1/#sec-15.9.1.15
+        return new Date(s);
+    }
+    
+    
+    
     function incTotalRequests() {
         numTotalRequests++;
         Main.updateRequestStatus("Cavetube", numTotalRequests, numCompletedRequests);
@@ -275,6 +287,7 @@ var Cavetube = (function() {
             // ct:listener is current viewers.
             d.viewCount = props['ct:listener'];
             d.channelName = props.author;
+            d.startDate = dateStrToObj(props['dc:date']);
             d.site = 'Cavetube';
             
             streamDicts.push(d);
