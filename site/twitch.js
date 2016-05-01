@@ -46,13 +46,8 @@ var Twitch = (function() {
                 + '&redirect_uri='
                 + redirectUri;
             
-            // If we needed special permission scopes, we'd add that as
-            // '&scope=<scopes go here> at the end of the URL. But we
-            // don't need to request any special permission scopes,
-            // since we're only reading non-sensitive data.
-            //
-            // Dev note: When testing different scopes, be sure to remove the
-            // auth token from the URL, so it actually re-authenticates.
+            // Permission scopes required by our API calls.
+            authUrl += '&scope=user_read';
         
             // Redirect to the authentication URL.
             window.location = authUrl;
@@ -73,9 +68,8 @@ var Twitch = (function() {
             //
             // How to test: Type garbage after the #.
             Main.showNotification(
-                "Couldn't find the Twitch authentication token. "
-                + "Try removing everything after the # in the URL, "
-                + "and load the page again."
+                "Couldn't find the Twitch authentication token."
+                + " If there's a # in the URL, try removing the # and everything after it, then load the page again."
             );
             twitchOAuth2Token = errorIndicator;
             return false;
@@ -88,9 +82,9 @@ var Twitch = (function() {
     
     function onAuthFail() {
         Main.showNotification(
-            "There was a problem with Twitch authentication. "
-            + "Try removing everything after the # in the URL, "
-            + "and load the page again."
+            "There was a problem with Twitch authentication. Possible fixes:"
+            + " (1) If there's a # in the URL, try removing the # and everything after it, then load the page again."
+            + " (2) Go to twitch.tv, log out, log in again, and then try loading this page again."
         );
     }
     
