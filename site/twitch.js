@@ -17,16 +17,38 @@ var Twitch = (function() {
     
     function setOAuth2Token() {
         /*
-        If the twitch OAuth2 token is available: set it.
-        If it's not there yet: redirect to get it.
-        If it's broken: set it to errorIndicator, and put up a notification.
+        If we detect a OAuth2 URI mismatch error: set the Twitch OAuth2
+         token to errorIndicator, and put up a notification.
+        If the token is not there yet: redirect to get it.
+        If the token is broken: set it to errorIndicator, and put up a
+         notification.
+        Otherwise: the token is good, so set it.
         
         Return true if we're redirecting, false otherwise.
         */
         
+        var urlSearchArgs = window.location.search.substr(1).split("&");
+        if (urlSearchArgs.indexOf('error=redirect_mismatch') !== -1) {
+            // OAuth failed because we didn't give the exact URI that
+            // auth expects.
+            //
+            // This happens predictably when testing the following page with
+            // python http.server, but how it happens in production is
+            // unknown.
+            // Until that is known, we can't attempt to autocorrect the URL.
+            // So we'll just show an error message for now.
+            
+            Main.showNotification(
+                "There was a URL-related problem with Twitch authentication."
+                + " Try loading the page again from a link or bookmark."
+            );
+            twitchOAuth2Token = errorIndicator;
+            return false;
+        }
+        
         // The urlFragment, if any, should be the OAuth2 token.
         // If we don't have the token yet, then get it.
-        var urlFragment = document.location.hash;
+        var urlFragment = window.location.hash;
         
         if (urlFragment === "") {
             // Go to Twitch Settings -> Connections and create a new
