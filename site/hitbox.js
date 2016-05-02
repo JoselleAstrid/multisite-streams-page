@@ -188,9 +188,17 @@ var Hitbox = (function() {
         var livestreams;
         
         if (liveList === errorIndicator) {
-            // This is our case when the Hitbox streams response is an error.
-            // This could either be an actual error or just no streams...
-            // not knowing any better, we'll treat it as no streams.
+            // This is our case when the Hitbox media response is an error,
+            // like a 404.
+            // This could either be an actual error or just no media...
+            // not knowing any better, we'll treat it as no media.
+            livestreams = [];
+        }
+        else if (liveList.error === true
+            && liveList.error_msg === 'no_media_found') {
+            // Another case is that the response is 200 OK, but the response
+            // content indicates an "error" or "no_media_found". This is
+            // definitely no media.
             livestreams = [];
         }
         else {
@@ -236,11 +244,18 @@ var Hitbox = (function() {
         var videos;
         
         if (videoList === errorIndicator) {
-            // This is our case when the Hitbox videos response is an error.
-            // This could either be an actual error or just no videos...
-            // not knowing any better, we'll treat it as no videos.
+            // This is our case when the Hitbox media response is an error,
+            // like a 404.
+            // This could either be an actual error or just no media...
+            // not knowing any better, we'll treat it as no media.
             videos = [];
-            return;
+        }
+        else if (videoList.error === true
+            && videoList.error_msg === 'no_media_found') {
+            // Another case is that the response is 200 OK, but the response
+            // content indicates an "error" or "no_media_found". This is
+            // definitely no media.
+            videos = [];
         }
         else {
             videos = videoList.video;
