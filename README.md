@@ -21,7 +21,7 @@ How it works
 
 The page uses the Twitch, Hitbox, Nicovideo, and Cavetube APIs to get the streams and videos.
 
-The Twitch part uses OAuth2. So if you are using the page for the first time, or if you are logging in, you will be redirected to a Twitch page asking if you will authorize the multi-site streams page to use your account. The "will have access to:" list should be empty, because the page only requests the basic `user_read` scope (to get your followed channels' streams and videos).
+The Twitch part uses OAuth2. So if you are using the page for the first time, or if you are logging in, you will be redirected to a Twitch page asking if you will authorize the multi-site streams page to use your account. On the authorization page, it'll say that the application will be able to read your email address. This doesn't mean that this page ever reads your email address (or even retrieves it from the server); it just means that Twitch lumps 'read followed live streams' and 'read email addresses' into the same API permission level, for some reason.
 
 The Hitbox part doesn't use OAuth2 (because Hitbox doesn't support this yet), so it can't automatically figure out your Hitbox account even if you're logged into Hitbox. So you need to specify your Hitbox username in the Settings (button at the upper-right corner of the page).
 
