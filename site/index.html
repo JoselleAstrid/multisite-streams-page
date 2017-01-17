@@ -147,6 +147,16 @@
           <input type="text" name="videoLimit" id="field-videoLimit" size="3" />
           </div>
           
+          <!-- Only Twitch is known to have a configurable video type. -->
+          <div>
+          <label for="field-videoType">Twitch video type: </label>
+          <select name="videoType" id="field-videoType">
+            <option value="highlight">Highlights</option>
+            <option value="archive">Past broadcasts</option>
+            <option value="all">All</option>
+          </select>
+          </div>
+          
           <div>
           <span>Section order:</span>
           <div>

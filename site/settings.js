@@ -17,6 +17,7 @@ var Settings = {
         'sortGames': 'viewersDesc',
         'mergeHosts': true,
         'videoLimit': 30,
+        'videoType': 'highlight',
         'sectionOrder': ['streams', 'hosts', 'games', 'videos'],
         
         'hitboxUsername': '',

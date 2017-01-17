@@ -239,7 +239,10 @@ var Twitch = (function() {
         
         ajaxRequest(
             'https://api.twitch.tv/kraken/videos/followed',
-            {'limit': Settings.get('videoLimit')},
+            {
+                'limit': Settings.get('videoLimit'),
+                'broadcast_type': Settings.get('videoType')
+            },
             setVideos
         );
     }
