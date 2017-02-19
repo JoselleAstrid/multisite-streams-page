@@ -160,12 +160,13 @@ var Util = {
         var currentTime = Date.now();
         
         var totalMillis = currentTime - time;
-        var totalMinutes = totalMillis / (1000*60);
+        // Round down to the minute
+        var totalMinutes = Math.floor(totalMillis / (1000*60));
         var minutes = totalMinutes % 60;
-        var hours = (totalMinutes-minutes)/60;
+        var hours = Math.floor(totalMinutes / 60);
         
-        var hoursStr = hours.toFixed();
-        var minutesStrPadded = Util.zfill(minutes.toFixed(), 2);
+        var hoursStr = hours.toString();
+        var minutesStrPadded = Util.zfill(minutes.toString(), 2);
         
         return (hoursStr + ":" + minutesStrPadded); 
     },
