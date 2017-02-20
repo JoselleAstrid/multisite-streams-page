@@ -266,6 +266,27 @@ var Nico = (function() {
     
     
     
+    function queryStreamsAPI(keyword, from, callback) {
+        var params = {
+            '__format': 'json',
+            'word': keyword,
+            'from': from,
+            'limit': MAX_STREAMS_IN_CALL.toString(),
+            // Add a constantly-changing param to prevent caching
+            // (Nico responses seem to be cached up to a day at times;
+            // not sure if due to Nico or YQL).
+            'timestamp': Date.now().toString()
+        };
+        
+        // To call Nico's API without getting a Cross Origin error, use CORS
+        // via proxy.
+        proxyAjax(
+            'http://api.ce.nicovideo.jp/liveapi/v1/video.search.solr',
+            params,
+            callback
+        );
+    }
+    
     function startGettingAllLiveStreams() {
         
         var followingCommunities = Settings.get('nicoCommunities');
@@ -294,23 +315,10 @@ var Nico = (function() {
         }
         
         searchKeywords.forEach(function(keyword){
-                
             // Make an API call to get the first 'page' of live streams under
             // this keyword.
-            //
-            // To call Nico's API without getting a Cross Origin error, use CORS
-            // via proxy.
-            var params = {
-                '__format': 'json',
-                'word': keyword,
-                'limit': MAX_STREAMS_IN_CALL.toString()
-            };
-            
-            proxyAjax(
-                'http://api.ce.nicovideo.jp/liveapi/v1/video.search.solr',
-                params,
-                Util.curry(continueGettingLiveStreams, keyword)
-            );
+            queryStreamsAPI(
+                keyword, '0', Util.curry(continueGettingLiveStreams, keyword));
         });
     }
     
@@ -318,13 +326,6 @@ var Nico = (function() {
         
         var nlvResponse = response.nicolive_video_response;
         var totalCount = parseInt(nlvResponse.total_count.filtered);
-        
-        if (totalCount <= MAX_STREAMS_IN_CALL) {
-            // Oh, we've already retrieved all the live streams.
-            // Just process this one response and finish.
-            setStreams(response);
-            return;
-        }
         
         // So far we've made one call and obtained the total stream count.
         // Build the rest of the calls, using the total count to know when
@@ -334,30 +335,16 @@ var Nico = (function() {
         // so far. For some reason the API may not give any streams at
         // indices 0 to 2.)
         var currentIndex = MAX_STREAMS_IN_CALL;
-        var paramSets = [];
-        
         while (currentIndex < totalCount) {
-            paramSets.push({
-                '__format': 'json',
-                'word': keyword,
-                'from': currentIndex.toString(),
-                'limit': MAX_STREAMS_IN_CALL.toString()
-            });
-            
+            queryStreamsAPI(
+                keyword, currentIndex.toString(), setStreams);
             currentIndex += MAX_STREAMS_IN_CALL;
         }
         
-        paramSets.forEach(function(paramSet){
-            proxyAjax(
-                'http://api.ce.nicovideo.jp/liveapi/v1/video.search.solr',
-                paramSet,
-                setStreams
-            );
-        });
-        
         // Add the streams obtained from our first call.
-        // (Should do this AFTER increasing the calls expected, otherwise the
-        // calls completed will match up with the calls expected too soon.)
+        // (Should do this AFTER making other calls, otherwise the
+        // calls completed will already match up with the calls expected,
+        // and the Nico status will be marked as done.)
         setStreams(response);
     }
     
