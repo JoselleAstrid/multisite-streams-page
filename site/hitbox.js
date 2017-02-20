@@ -188,20 +188,14 @@ var Hitbox = (function() {
         var livestreams;
         
         if (liveList === errorIndicator) {
-            // This is our case when the Hitbox media response is an error,
-            // like a 404.
-            // This could either be an actual error or just no media...
-            // not knowing any better, we'll treat it as no media.
             livestreams = [];
         }
-        else if (liveList.error === true
-            && liveList.error_msg === 'no_media_found') {
-            // Another case is that the response is 200 OK, but the response
-            // content indicates an "error" or "no_media_found". This is
-            // definitely no media.
+        else if (liveList.livestream === null) {
+            // No known error, but no followed streams are live.
             livestreams = [];
         }
         else {
+            // One or more followed streams are live.
             livestreams = liveList.livestream;
         }
         
