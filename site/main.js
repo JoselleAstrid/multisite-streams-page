@@ -308,7 +308,8 @@ var Main = (function() {
             addMediaThumbnail(obj, $thumbnailCtnr);
             
             var $title = $('<div>');
-            $title.text(obj.streamTitle);
+            // Hitbox streams may have no title.
+            $title.text(obj.streamTitle || "(No title)");
             $streamE.append($title);
             
             addGameDisplay(obj, $streamE, $thumbnailCtnr);
@@ -409,7 +410,8 @@ var Main = (function() {
             $hostE.append($hostingText);
             
             var $title = $('<div>');
-            $title.text(obj.streamTitle);
+            // Hitbox streams may have no title.
+            $title.text(obj.streamTitle || "(No title)");
             $title.attr('class', 'minor-text');
             $hostE.append($title);
             
