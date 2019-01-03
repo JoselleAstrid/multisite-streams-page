@@ -1,14 +1,14 @@
 <!DOCTYPE html>
-  
+
 <html lang="en">
-  
+
   <head>
-    
+
     <title>Multi-site Stream Listing</title>
     <meta charset="utf-8" />
-    
-    <script src="//ajax.googleapis.com/ajax/libs/jquery/1.11.1/jquery.min.js"></script>
-    <script src="//ajax.googleapis.com/ajax/libs/jqueryui/1.11.0/jquery-ui.min.js"></script>
+
+    <script src="//ajax.googleapis.com/ajax/libs/jquery/3.3.1/jquery.min.js"></script>
+    <script src="//ajax.googleapis.com/ajax/libs/jqueryui/1.12.1/jquery-ui.min.js"></script>
     <script src="config.js"></script>
     <script src="util.js"></script>
     <script src="settings.js"></script>
@@ -17,89 +17,89 @@
     <script src="nico.js"></script>
     <script src="cavetube.js"></script>
     <script src="main.js"></script>
-    
+
     <link rel="stylesheet"
-          href="//ajax.googleapis.com/ajax/libs/jqueryui/1.11.0/themes/smoothness/jquery-ui.css" />
+          href="//ajax.googleapis.com/ajax/libs/jqueryui/1.12.1/themes/smoothness/jquery-ui.css" />
     <link rel="stylesheet" type="text/css" media="screen"
           href="main.css" />
-    
+
   </head>
-  
-  
+
+
   <body>
-    
+
     <div id="notifications">
     </div>
-    
+
     <div id="overall-container">
-      
+
       <div id="top-bar">
         <button type="button" id="settings-button">Settings</button>
-      
+
         <div id="request-status">Server requests: </div>
       </div>
-      
+
       <div id="sections">
-      
+
         <div id="streams-section">
           <h2 class="section-header">LIVE STREAMS</h2>
           <div id="streams" class="media-container"></div>
         </div>
-      
+
         <div id="hosts-section">
           <h2 class="section-header">LIVE HOSTS</h2>
           <div id="hosts" class="media-container"></div>
         </div>
-      
+
         <div id="games-section">
           <h2 class="section-header">LIVE GAMES</h2>
           <div id="games" class="media-container"></div>
         </div>
-      
+
         <div id="videos-section">
           <h2 class="section-header">RECENT VIDEOS</h2>
           <div id="videos" class="media-container"></div>
         </div>
-      
+
       </div>
-      
+
       <div id="footer">
         This page is open source on
         <a href="https://github.com/yoshifan/multisite-streams-page"
           target="_blank">GitHub</a>.
       </div>
     </div>
-      
+
     <div id="hidden-elements-container" style="display:none;">
-    
+
       <div id="settings">
-      
+
         <ul>
           <li><a href="#settings-main">Main</a></li>
           <li><a href="#settings-twitchhitbox">Hitbox</a></li>
           <li><a href="#settings-nico">Nicovideo</a></li>
           <li><a href="#settings-cavetube">Cavetube</a></li>
         </ul>
-        
+
         <div id="settings-main">
           <div>
             <input type="checkbox" name="twitchEnabled" id="field-twitchEnabled"
                    title="Include twitch.tv in listing"/>
             <label for="field-twitchEnabled">Twitch</label>
-            
+
             <input type="checkbox" name="hitboxEnabled" id="field-hitboxEnabled"
                    title="Include hitbox.tv in listing"/>
             <label for="field-hitboxEnabled">Hitbox</label>
-            
+
             <input type="checkbox" name="nicoEnabled" id="field-nicoEnabled"
                    title="Include nicovideo.jp in listing"/>
             <label for="field-nicoEnabled">Nicovideo</label>
-            
+
             <input type="checkbox" name="cavetubeEnabled" id="field-cavetubeEnabled"
                    title="Include gae.cavelis.net in listing"/>
             <label for="field-cavetubeEnabled">Cavetube</label>
           </div>
-          
+
           <div>
           <label for="field-gameDisplay">Game display: </label>
           <select name="gameDisplay" id="field-gameDisplay">
@@ -108,7 +108,7 @@
             <option value="none">None</option>
           </select>
           </div>
-          
+
           <div>
           <label for="field-sortStreams">Sort streams by: </label>
           <select name="sortStreams" id="field-sortStreams">
@@ -118,7 +118,7 @@
             <option value="uptimeDesc">Uptime, longest first</option>
           </select>
           </div>
-          
+
           <div>
           <label for="field-sortHosts">Sort hosts by: </label>
           <select name="sortHosts" id="field-sortHosts">
@@ -126,7 +126,7 @@
             <option value="viewersAsc">Viewers, lowest first</option>
           </select>
           </div>
-          
+
           <div>
           <label for="field-sortGames">Sort games by: </label>
           <select name="sortGames" id="field-sortGames">
@@ -136,17 +136,17 @@
             <option value="channelsAsc">Channels, lowest first</option>
           </select>
           </div>
-          
+
           <div>
           <input type="checkbox" name="mergeHosts" id="field-mergeHosts" />
           <label for="field-mergeHosts">Group hosts who are hosting the same channel</label>
           </div>
-          
+
           <div>
           <label for="field-videoLimit">Max number of videos (1-100): </label>
           <input type="text" name="videoLimit" id="field-videoLimit" size="3" />
           </div>
-          
+
           <!-- Only Twitch is known to have a configurable video type. -->
           <div>
           <label for="field-videoType">Twitch video type: </label>
@@ -156,7 +156,7 @@
             <option value="all">All</option>
           </select>
           </div>
-          
+
           <div>
           <span>Section order:</span>
           <div>
@@ -177,13 +177,13 @@
           </div>
           </div>
         </div>
-        
+
         <div id="settings-twitchhitbox">
           <div>
           <label for="field-hitboxUsername">Hitbox username: </label>
           <input type="text" name="hitboxUsername" id="field-hitboxUsername" size="12" />
           </div>
-          
+
           <div>
           <label for="field-hitboxThumbnailServer">Hitbox thumbnail server: </label>
           <select name="hitboxThumbnailServer" id="field-hitboxThumbnailServer">
@@ -194,7 +194,7 @@
           </select>
           </div>
         </div>
-        
+
         <div id="settings-nico">
           <div>Communities to watch for
             (<span id="nico-community-count">0</span>):</div>
@@ -218,44 +218,44 @@
             </div>
           </div>
           <br /><br />
-          
+
           <label for="field-nicoSearchKeywords">Search keywords: </label>
           <select name="nicoSearchKeywords" id="field-nicoSearchKeywords">
             <option value="rta, 練習+ゲーム">rta OR (練習 AND ゲーム)</option>
             <option value="ゲーム">ゲーム</option>
             <option value="ゲーム, 一般">ゲーム OR 一般</option>
           </select>
-          
+
           <span id="help-nicoSearchKeywords-button" class="help-button">(?)</span>
           <div id="help-nicoSearchKeywords" class="long-help-text-container">
             <div class="help-text">
               <p>練習 means practice, ゲーム means game, 一般 means general.</p>
-            
+
               <p>Nicovideo's API is pretty limited when it comes to
               checking the live status of specific communities.
               The fastest way we found is to
               search ALL live streams on the site, and then check the search
               results for the communities you follow.</p>
-              
+
               <p>You must pick the search keywords to balance between making the
               search fast, versus making sure the search doesn't miss any
               streamers you follow.</p>
-              
+
               <p><strong>rta OR (練習 AND ゲーム)</strong>: Fast.
               Gets streams labeled as RTA
               (in the stream tags, title, or community name),
               and streams labeled as practice in Nico's game category. If these
               words are only found in the community tags, then it doesn't work.</p>
-              
+
               <p><strong>ゲーム</strong>: Slow, especially on weekends and
               peak hours in Japan.
               Gets all streams in Nico's game category.</p>
-              
+
               <p><strong>ゲーム OR 一般</strong>: Slower.
               Gets all streams in Nico's game category and general category.
               If any of your followed streamers sometimes do non-gaming things
               like drawing, coding, etc. then you could consider using this.</p>
-              
+
               <p>If you want to really make sure you're not missing any
               particular streams, log into Nicovideo, join the communities that
               interest you, and go to
@@ -263,12 +263,12 @@
             </div>
           </div>
           <br /><br />
-          
+
           <div class="help-text">
             For now, only Nico streams are supported, not videos.
           </div>
         </div>
-        
+
         <div id="settings-cavetube">
           <div>Users to watch for
             (<span id="cavetube-user-count">0</span>):</div>
@@ -291,22 +291,22 @@
             </div>
           </div>
           <br /><br />
-          
+
           <div class="help-text">
             For now, only Cavetube streams are supported, not videos.
           </div>
         </div>
-        
+
       </div>
-      
+
     </div>
-    
-    
+
+
     <script type="text/javascript">
       Settings.init();
       Main.init();
     </script>
-    
+
   </body>
-  
+
 </html>

@@ -6,12 +6,12 @@
 // http://stackoverflow.com/a/1479341
 
 var Main = (function() {
-    
+
     var requestStatusE = null;
     var mediaContainerEs = {};
     var mediaElementArrays = {};
     var mediaObjArrays = {};
-    
+
     var SITE_NAMES = ['Twitch', 'Hitbox', 'Nico', 'Cavetube'];
     var SITE_NAMES_TO_MODULES = {
         'Twitch': Twitch,
@@ -20,9 +20,9 @@ var Main = (function() {
         'Cavetube': Cavetube
     };
     var mediaTypesToSites = null;
-    
-    
-    
+
+
+
     function haveEnabledSite(siteName) {
         if (siteName === 'Twitch') {
             return Settings.get('twitchEnabled');
@@ -37,19 +37,19 @@ var Main = (function() {
             return Settings.get('cavetubeEnabled');
         }
     }
-    
-    
-    
+
+
+
     function showNotification(notificationText) {
         var $notificationArea = $('div#notifications');
-        
+
         $notificationArea.text(notificationText);
         $notificationArea.show();
     }
-    
+
     function updateRequestStatus(
         siteName, numTotalRequests, numCompletedRequests) {
-    
+
         // Look for an element of id request-status-<siteName>. This is the
         // element where we show this site's requests status.
         var statusId = 'request-status-' + siteName;
@@ -60,7 +60,7 @@ var Main = (function() {
             siteStatusE.id = statusId;
             requestStatusE.appendChild(siteStatusE);
         }
-    
+
         // Update the status.
         if (numTotalRequests === numCompletedRequests) {
             // All sent requests have completed
@@ -69,24 +69,27 @@ var Main = (function() {
         }
         else {
             // Still some requests left to go
-            siteStatusE.textContent = 
+            siteStatusE.textContent =
                 siteName + ": " + numCompletedRequests.toString() + " of "
                 + numTotalRequests.toString();
             $(siteStatusE).show();
         }
-        
+
         // If we know a particular media section is done (due to all the
         // relevant sites' requests being done), AND there were no media found
         // for that section, then update the placeholder text accordingly.
         //
         // Here we loop over each media type.
         $.each(mediaTypesToSites, function(mediaType, sites) {
-                
+
             var allSitesWithThisMediaAreDone =
                 mediaTypesToSites[mediaType].every(function(siteModule){
+                    // Twitch is in limbo for now.
+                    if (siteModule.siteName === 'Twitch') {return true;}
+
                     return siteModule.requestsAreDone();
                 });
-                
+
             if (allSitesWithThisMediaAreDone) {
                 // All sites dealing with this media type have completed all
                 // of their requests.
@@ -104,13 +107,16 @@ var Main = (function() {
                 $(mediaContainerE).find('span.empty-section-text').text(text);
             }
         });
-        
+
         // Check if there are any pending requests from any site.
         // If not:
         // - Hide the entire request status container.
         // - Show the page footer. (Showing this earlier makes it move all
         //   the place during page loading, which seems weird.)
         var requestsAreDone = SITE_NAMES.every(function(siteName){
+            // Twitch is in limbo for now.
+            if (siteName === 'Twitch') {return true;}
+
             return SITE_NAMES_TO_MODULES[siteName].requestsAreDone();
         });
         if (requestsAreDone) {
@@ -121,9 +127,9 @@ var Main = (function() {
             $(requestStatusE).show();
         }
     }
-    
-    
-    
+
+
+
     function getMediaCompareFunc(mediaType) {
         var sortType;
         if (mediaType === 'streams') {
@@ -138,7 +144,7 @@ var Main = (function() {
         else if (mediaType === 'videos') {
             sortType = 'videoDateDesc';
         }
-        
+
         var compareFunc;
         if (sortType === 'channelsAsc') {
             compareFunc = function(a, b) {
@@ -175,10 +181,10 @@ var Main = (function() {
                 return parseInt(b.viewCount) - parseInt(a.viewCount);
             };
         }
-        
+
         return compareFunc;
     }
-    
+
     function addMediaThumbnail(obj, $thumbnailCtnr) {
         /* Add a stream or video thumbnail. */
         if (obj.site === 'Twitch') {
@@ -193,24 +199,24 @@ var Main = (function() {
         else if (obj.site === 'Cavetube') {
             $thumbnailCtnr.addClass('cavetube');
         }
-        
+
         var $thumbnail = $('<img>');
         $thumbnail.attr('class', 'media-thumbnail');
         $thumbnail.attr('src', obj.thumbnailUrl);
         $thumbnailCtnr.append($thumbnail);
     }
-    
+
     function addGameDisplay(obj, $mediaE, $thumbnailCtnr) {
         /* Add a display indicating the game being played, for a
         stream, video, or host. */
-        
+
         if (Settings.get('gameDisplay') === 'boximage') {
             // Game as box image
             if (obj.gameName !== null && obj.gameName !== "Not supported") {
                 var $gameImageCtnr = $('<a>');
                 $gameImageCtnr.attr('href', obj.gameLink);
                 $thumbnailCtnr.append($gameImageCtnr);
-            
+
                 var $gameImage = $('<img>');
                 $gameImage.attr('class', 'game-image');
                 $gameImage.attr('src', obj.gameImage);
@@ -235,7 +241,7 @@ var Main = (function() {
         }
         // Else, game display is 'none'
     }
-    
+
     function addSiteIndicator(obj, $textContainer) {
         /* Add a colored icon/symbol to denote which site this media
         item is from.
@@ -257,10 +263,10 @@ var Main = (function() {
         }
         $textContainer.append($siteIndicator);
     }
-    
+
     function addMediaItemSorted(
         mediaE, obj, mediaEs, objs, container, compareFunc) {
-            
+
         var index = Util.sortedLocation(obj, objs, compareFunc);
         // Add stream element to the page in sorted order
         if (index >= 0) {
@@ -277,45 +283,45 @@ var Main = (function() {
         // can refer to these for insertAfter()
         mediaEs.splice(index + 1, 0, mediaE);
     }
-    
-    
-    
+
+
+
     function addStreams(pendingStreams) {
-        
+
         var container = mediaContainerEs['streams'];
         var streamEs = mediaElementArrays['streams'];
         var streamObjs = mediaObjArrays['streams'];
-        
+
         var compareFunc = getMediaCompareFunc('streams');
-        
+
         if (streamEs.length === 0 && pendingStreams.length > 0) {
             $(container).find('span.empty-section-text').remove();
         }
-        
+
         var isSortedByUptime =
             Settings.get('sortStreams').indexOf('uptime') !== -1;
-        
+
         pendingStreams.forEach(function(obj) {
-                
+
             var $streamE = $('<a>');
             $streamE.attr('href', obj.channelLink);
             $streamE.attr('title', obj.streamTitle);
-            
+
             var $thumbnailCtnr = $('<div>');
             $thumbnailCtnr.addClass('thumbnail-ctnr stream');
             $streamE.append($thumbnailCtnr);
-            
+
             addMediaThumbnail(obj, $thumbnailCtnr);
-            
+
             var $title = $('<div>');
             // Hitbox streams may have no title.
             $title.text(obj.streamTitle || "(No title)");
             $streamE.append($title);
-            
+
             addGameDisplay(obj, $streamE, $thumbnailCtnr);
-            
+
             var $channelNameAndViews = $('<div>');
-            
+
             var $textSpan1 = $('<span>');
             var uptimeStr = Util.dateObjToHMElapsed(obj.startDate);
             if (isSortedByUptime) {
@@ -325,32 +331,32 @@ var Main = (function() {
                 $textSpan1.text(obj.viewCount + " (" + uptimeStr + ")");
             }
             $channelNameAndViews.append($textSpan1);
-            
+
             addSiteIndicator(obj, $channelNameAndViews);
-            
+
             var $textSpan2 = $('<span>');
             $textSpan2.text(obj.channelName);
             $channelNameAndViews.append($textSpan2);
-            
+
             $streamE.append($channelNameAndViews);
-            
+
             addMediaItemSorted(
                 $streamE[0], obj, streamEs, streamObjs, container, compareFunc
             );
         });
     }
-    
-    
+
+
     function addHosts(pendingHosts) {
-        
+
         var container = mediaContainerEs['hosts'];
         var hostEs = mediaElementArrays['hosts'];
         var hostObjs = mediaObjArrays['hosts'];
-        
+
         var compareFunc = getMediaCompareFunc('hosts');
-        
+
         if (Settings.get('mergeHosts') === true) {
-            
+
             var uniqueHosts = {};
             pendingHosts.forEach(function(obj) {
                 var name = obj.streamerName
@@ -379,7 +385,7 @@ var Main = (function() {
                     uniqueHosts[name] = obj;
                 }
             });
-            
+
             // Make pendingHosts an array version of uniqueHosts (which is
             // an object)
             pendingHosts = [];
@@ -388,91 +394,91 @@ var Main = (function() {
                 pendingHosts.push(uniqueHosts[streamerName]);
             }
         }
-        
+
         if (hostEs.length === 0 && pendingHosts.length > 0) {
             $(container).find('span.empty-section-text').remove();
         }
-        
+
         pendingHosts.forEach(function(obj) {
-            
+
             var $hostE = $('<a>');
             $hostE.attr('href', obj.channelLink);
             $hostE.attr('title', obj.streamTitle);
-            
+
             var $thumbnailCtnr = $('<div>');
             $thumbnailCtnr.addClass('thumbnail-ctnr stream');
             $hostE.append($thumbnailCtnr);
-            
+
             addMediaThumbnail(obj, $thumbnailCtnr);
-            
+
             var $hostingText = $('<div>');
             $hostingText.text(obj.hosterName + " hosting " + obj.streamerName);
             $hostE.append($hostingText);
-            
+
             var $title = $('<div>');
             // Hitbox streams may have no title.
             $title.text(obj.streamTitle || "(No title)");
             $title.attr('class', 'minor-text');
             $hostE.append($title);
-            
+
             addGameDisplay(obj, $hostE, $thumbnailCtnr);
-            
+
             var $channelNameAndViews = $('<div>');
-            
+
             var $textSpan1 = $('<span>');
             $textSpan1.text(obj.viewCount);
             $channelNameAndViews.append($textSpan1);
-            
+
             addSiteIndicator(obj, $channelNameAndViews);
-            
+
             var $textSpan2 = $('<span>');
             $textSpan2.text(obj.streamerName);
             $channelNameAndViews.append($textSpan2);
-            
+
             $hostE.append($channelNameAndViews);
-            
+
             addMediaItemSorted(
                 $hostE[0], obj, hostEs, hostObjs, container, compareFunc
             );
         });
     }
-    
-    
+
+
     function addGames(pendingGames) {
-        
+
         var container = mediaContainerEs['games'];
         var gameEs = mediaElementArrays['games'];
         var gameObjs = mediaObjArrays['games'];
-        
+
         var compareFunc = getMediaCompareFunc('games');
-        
+
         if (gameEs.length === 0 && pendingGames.length > 0) {
             $(container).find('span.empty-section-text').remove();
         }
-        
+
         pendingGames.forEach(function(obj) {
-            
+
             var $gameE = $('<a>');
             $gameE.attr('href', obj.gameLink);
             $gameE.attr('title', obj.name);
-            
+
             var $gameImage = $('<img>');
             $gameImage.attr('class', 'followed-game');
             $gameImage.attr('src', obj.gameImage);
             $gameE.append($gameImage);
-            
+
             var $gameName = $('<div>');
             $gameName.text(obj.name);
             $gameE.append($gameName);
-            
+
             var $viewAndChannelCount = $('<div>');
-            
+
             var $textSpan1 = $('<span>');
             $textSpan1.text(obj.viewCount);
             $viewAndChannelCount.append($textSpan1);
-            
+
             addSiteIndicator(obj, $viewAndChannelCount);
-            
+
             var $textSpan2 = $('<span>');
             var channelWord;
             if (obj.channelCount === 1) {
@@ -483,80 +489,80 @@ var Main = (function() {
             }
             $textSpan2.text(obj.channelCount + " " + channelWord);
             $viewAndChannelCount.append($textSpan2);
-            
+
             $viewAndChannelCount.attr('class', 'channel-name');
             $gameE.append($viewAndChannelCount);
-            
+
             addMediaItemSorted(
                 $gameE[0], obj, gameEs, gameObjs, container, compareFunc
             );
         });
     }
-    
-    
+
+
     function addVideos(pendingVideos) {
-        
+
         var container = mediaContainerEs['videos'];
         var videoEs = mediaElementArrays['videos'];
         var videoObjs = mediaObjArrays['videos'];
-        
+
         var compareFunc = getMediaCompareFunc('videos');
-        
+
         if (videoEs.length === 0 && pendingVideos.length > 0) {
             $(container).find('span.empty-section-text').remove();
         }
-        
+
         pendingVideos.forEach(function(obj) {
-            
+
             var $videoE = $('<a>');
             $videoE.attr('href', obj.videoLink);
             $videoE.attr('title', obj.videoTitle);
-            
+
             var $thumbnailCtnr = $('<div>');
             $thumbnailCtnr.addClass('thumbnail-ctnr video');
             $videoE.append($thumbnailCtnr);
-            
+
             addMediaThumbnail(obj, $thumbnailCtnr);
-            
+
             var $viewCount = $('<div>');
             $viewCount.text(obj.viewCount);
             $viewCount.attr('class', 'video-view-count');
             $thumbnailCtnr.append($viewCount);
-            
+
             var $duration = $('<div>');
             $duration.text(obj.duration);
             $duration.attr('class', 'video-duration');
             $thumbnailCtnr.append($duration);
-            
+
             var $title = $('<div>');
             $title.text(obj.videoTitle);
             $videoE.append($title);
-            
+
             var $description = $('<div>');
             $description.text(obj.description);
             $description.attr('class', 'minor-text');
             $videoE.append($description);
-            
+
             addGameDisplay(obj, $videoE, $thumbnailCtnr);
-            
+
             var $channelNameAndDate = $('<div>');
-            
+
             var $textSpan1 = $('<span>');
             $textSpan1.text(obj.channelName);
             $channelNameAndDate.append($textSpan1);
-            
+
             addSiteIndicator(obj, $channelNameAndDate);
-            
+
             var $textSpan2 = $('<span>');
             $textSpan2.text(obj.dateDisplay);
             $channelNameAndDate.append($textSpan2);
-            
+
             $videoE.append($channelNameAndDate);
-            
+
             addMediaItemSorted(
                 $videoE[0], obj, videoEs, videoObjs, container, compareFunc
             );
-            
+
             // We request the top <videoLimit> videos from each site, so we'll
             // generally be getting 2x or more videos than the limit. Prune
             // the video listing down to the limit.
@@ -572,44 +578,72 @@ var Main = (function() {
             }
         });
     }
-    
-    
-    function startGettingMedia() {
-        
+
+
+    async function startGettingMedia() {
+
         var numEnabledSites = 0;
-        
+
         // For each site, we have to make one or more API calls via Ajax.
         // The function we call here will start the chain of API calls for
         // that site, to retrieve streams, videos, etc.
-        SITE_NAMES.forEach(function(siteName){
+        SITE_NAMES.forEach(async function(siteName){
             if (haveEnabledSite(siteName)) {
-                SITE_NAMES_TO_MODULES[siteName].startGettingMedia();
                 numEnabledSites++;
+                if (siteName === 'Twitch') {
+                    // With Twitch, we're starting to move to a new scheme.
+                    // Planning to also port the other sites to this scheme
+                    // later.
+                    try {
+                        // TODO: We want to get multiple of these calls going
+                        // at once (including calling multiple sites at once).
+                        // To do so, we'll have to drop `await` in
+                        // favor of Promises.
+                        await SITE_NAMES_TO_MODULES[siteName].updateFollowedStreams();
+                        //SITE_NAMES_TO_MODULES[siteName].getHosts();
+                        //SITE_NAMES_TO_MODULES[siteName].getGames();
+                        await SITE_NAMES_TO_MODULES[siteName].updateVideos();
+                    }
+                    catch (e) {
+                        if (e.toString().startsWith('AuthError')) {
+                            showNotification(e);
+                        }
+                        else {
+                            showNotification(
+                              `There was an unexpected error. Please contact`
+                              + ` the developer(s). Details: "${e}"`);
+                            console.error(e);
+                        }
+                    }
+                }
+                else {
+                    SITE_NAMES_TO_MODULES[siteName].startGettingMedia();
+                }
             }
         });
-        
+
         if (numEnabledSites === 0) {
             showNotification(
                 "No stream sites are enabled! Go to Settings to enable a site."
             );
         }
     }
-    
-    
-    
+
+
+
     function init() {
-        
+
         $(document.getElementById('footer')).hide();
-        
+
         requestStatusE = document.getElementById('request-status');
         $(requestStatusE).hide();
-        
+
         // Initialize help buttons.
         $('.help-button').each( function() {
             var buttonIdRegex = /^(.+)-button$/;
             var result = buttonIdRegex.exec(this.id);
             var helpTextId = result[1];
-            
+
             // When this help button is clicked, open the corresponding
             // help text in a modal window.
             var clickCallback = function(helpTextId_, helpButtonE) {
@@ -627,11 +661,11 @@ var Main = (function() {
                 Util.curry(clickCallback, helpTextId, this)
             );
         });
-            
-            
+
+
         if (Settings.hasStorage()) {
             Settings.storageToFields();
-            
+
             // Order the sections.
             var $sectionsContainer = $('#sections');
             var sectionOrder = Settings.get('sectionOrder');
@@ -643,7 +677,7 @@ var Main = (function() {
                 // we call append for each section to re-order them.
                 $sectionsContainer.append($section);
             }
-            
+
             // Add placeholder text for each media section.
             $('.media-container').each( function() {
                 var spanE = document.createElement('span');
@@ -651,17 +685,7 @@ var Main = (function() {
                 $(spanE).addClass('empty-section-text');
                 this.appendChild(spanE);
             });
-            
-            if (Settings.get('twitchEnabled')) {
-                var nowRedirecting = Twitch.setOAuth2Token();
-                
-                if (nowRedirecting) {
-                    // Don't do anything else here, we're redirecting
-                    // so we can get the token.
-                    return;
-                }
-            }
-    
+
             // Track which sites will provide what kinds of media types.
             mediaTypesToSites = {};
             var mediaTypesToSiteNames = {
@@ -672,7 +696,7 @@ var Main = (function() {
             };
             $.each(mediaTypesToSiteNames, function(mediaType, siteStrs){
                 mediaTypesToSites[mediaType] = [];
-                
+
                 siteStrs.forEach( function(s){
                     if (haveEnabledSite(s)) {
                         mediaTypesToSites[mediaType].push(
@@ -681,7 +705,7 @@ var Main = (function() {
                     }
                 });
             });
-            
+
             // Initialize container elements for streams, videos, etc.
             //
             // And show/hide media sections depending on which sites
@@ -692,7 +716,7 @@ var Main = (function() {
                 'hosts': 'hosts',
                 'games': 'games',
                 'videos': 'videos'
-            };                             
+            };
             $.each(mediaTypesToSites, function(mediaType, sites) {
                 mediaContainerEs[mediaType] = document.getElementById(
                     containerIds[mediaType]
@@ -700,7 +724,7 @@ var Main = (function() {
                 var sectionE = document.getElementById(
                     containerIds[mediaType] + '-section'
                 );
-                    
+
                 if (sites.length > 0) {
                     $(sectionE).show();
                 }
@@ -708,7 +732,7 @@ var Main = (function() {
                     $(sectionE).hide();
                 }
             });
-            
+
             // Initialize elements that track the media added so far.
             mediaElementArrays = {
                 'streams': [],
@@ -722,7 +746,7 @@ var Main = (function() {
                 'games': [],
                 'videos': []
             };
-            
+
             startGettingMedia();
         }
         else {
@@ -732,8 +756,8 @@ var Main = (function() {
             // Prompt the user to set settings for the first time.
             Settings.show(Util.refreshPage, null);
         }
-        
-        
+
+
         // Initialize settings button.
         $('#settings-button').click(
             function() {
@@ -741,24 +765,24 @@ var Main = (function() {
             }
         );
     }
-    
-    
-    
+
+
+
     // Public methods
-    
+
     return {
-        
+
         init: function() {
             init();
         },
-        
+
         showNotification: function(notificationText) {
             showNotification(notificationText);
         },
         updateRequestStatus: function(site, numTotalRequests, numCompletedRequests) {
             updateRequestStatus(site, numTotalRequests, numCompletedRequests);
         },
-        
+
         addStreams: function(streams) {
             addStreams(streams);
         },
