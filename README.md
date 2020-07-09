@@ -1,19 +1,23 @@
 multisite-streams-page
 ======================
 
+
+Project status
+--------------
+
+As of July 2020, this project is officially retired. It became a bit too challenging to support the various stream sites' API changes.
+
+Thanks to Nmaster64 for generously hosting the page for many years.
+
+
+Overview
+--------
+
 A single webpage showing the live streams and videos of channels you follow. Supports multiple sites - currently Twitch, Hitbox, Nicovideo, and Cavetube.
 
 The main motivation for this page was to help people expand their stream watching from Twitch to other streaming sites such as Hitbox. If your preferred way to check Twitch streams is with a following page, and you want to expand your watching to Hitbox, then you would also have to check your Hitbox following page regularly; and since there are much fewer streamers on Hitbox, it's easy to get lazy about checking there. By using this single page to check multiple stream sites, you can devote equal attention to both Twitch and Hitbox streams - and any other site that's supported here.
 
 In addition to the multi-site support, there are a few features that you don't normally get on a Twitch/Hitbox following page, such as alternate stream sorting methods (e.g. lowest view count first, shortest uptime first) and grouping Twitch hosts who are hosting the same channel.
-
-
-Hosting status
---------------
-
-Now hosted by Nmaster64 at http://speedruntools.com/following/, and not seeking an alternate host at this time.
-
-But feel free to test the page on your local machine (see "How to host the page" below) for educational purposes.
 
 
 How it works
